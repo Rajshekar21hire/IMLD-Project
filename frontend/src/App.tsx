@@ -4,6 +4,8 @@ import { Wind } from 'lucide-react';
 import { FilterProvider } from './hooks/useFilters';
 import { HomePage } from './pages/HomePage';
 import { DashboardPage } from './pages/DashboardPage';
+import { AnalyticsPage } from './pages/AnalyticsPage';
+import { RealtimePollutionPage } from './pages/RealtimePollutionPage';
 import './styles/App.css';
 
 function App() {
@@ -29,7 +31,19 @@ function App() {
                   to="/dashboard"
                   className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
                 >
-                  Dashboard
+                  Story Studio
+                </Link>
+                <Link
+                  to="/analytics"
+                  className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                >
+                  Analytics
+                </Link>
+                <Link
+                  to="/realtime"
+                  className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                >
+                  Real-Time
                 </Link>
               </div>
             </div>
@@ -39,6 +53,8 @@ function App() {
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/dashboard" element={<DashboardPage />} />
+            <Route path="/analytics" element={<AnalyticsPage />} />
+            <Route path="/realtime" element={<RealtimePollutionPage />} />
           </Routes>
 
           {/* Footer */}
@@ -55,14 +71,16 @@ function App() {
                   <h4 className="text-lg font-semibold mb-4">Quick Links</h4>
                   <ul className="space-y-2 text-gray-400">
                     <li><Link to="/" className="hover:text-white transition-colors">Home</Link></li>
-                    <li><Link to="/dashboard" className="hover:text-white transition-colors">Dashboard</Link></li>
+                    <li><Link to="/dashboard" className="hover:text-white transition-colors">Story Studio</Link></li>
+                    <li><Link to="/analytics" className="hover:text-white transition-colors">Analytics</Link></li>
+                    <li><Link to="/realtime" className="hover:text-white transition-colors">Real-Time</Link></li>
                   </ul>
                 </div>
                 <div>
                   <h4 className="text-lg font-semibold mb-4">Information</h4>
                   <ul className="space-y-2 text-gray-400">
-                    <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                    <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
+                    <li><a href="mailto:hello@airstory.local" className="hover:text-white transition-colors">About</a></li>
+                    <li><a href="mailto:support@airstory.local" className="hover:text-white transition-colors">Contact</a></li>
                   </ul>
                 </div>
               </div>

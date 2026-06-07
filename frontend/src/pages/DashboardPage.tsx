@@ -1,251 +1,341 @@
-import React, { useState, useEffect } from 'react';
-import { FilterComponent } from '../components/FilterComponent';
-import { StoryDisplay } from '../components/StoryDisplay';
-import { RatingModal } from '../components/RatingModal';
-import { Chart } from '../components/Chart';
-import { useFilters } from '../hooks/useFilters';
-import { dataAPI, storyAPI, ratingAPI } from '../services/api';
-import { AlertCircle, Loader } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { BookOpen, Copy, Layers, Sparkles } from 'lucide-react';
+import { storyAPI } from '../services/api';
+import { storyModes, storyThemes, StoryMode, StoryTheme, StorySection } from '../data/storyThemes';
+
+const buildPrompt = (theme: StoryTheme, mode: StoryMode) => {
+  const sectionTitles = theme.humanSections.length
+    ? theme.humanSections.map((section) => section.title).join(', ')
+    : 'No source sections provided yet';
+
+  return [
+    `You are an AI storytelling agent.`,
+    `Theme: ${theme.title}`,
+    `Mode: ${mode === 'human' ? 'Human-curated source story' : 'AI/Ollama-generated story'}`,
+    `Prompt focus: ${theme.promptFocus}`,
+    `Subtopics to cover: ${sectionTitles}`,
+    'Write in a clear, accessible, story-first style with short sections, strong transitions, and factual grounding.',
+    'Keep the narrative aligned with the same theme and subtopic structure.',
+    'Do not copy the human story wording; rewrite it in a fresh voice with different examples and transitions.',
+  ].join('\n');
+};
 
 export const DashboardPage: React.FC = () => {
-  const filters = useFilters();
-  const [countries, setCountries] = useState<string[]>([]);
-  const [cities, setCities] = useState<{ city: string; country: string }[]>([]);
-  const [story, setStory] = useState<any>(null);
-  const [statistics, setStatistics] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-  const [showRatingModal, setShowRatingModal] = useState(false);
-  const [addingSampleData, setAddingSampleData] = useState(false);
+  const [selectedThemeId, setSelectedThemeId] = useState(storyThemes[0].id);
+  const [selectedMode, setSelectedMode] = useState<StoryMode>('human');
+  const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
+  const [aiStories, setAiStories] = useState<Record<string, { title: string; summary: string; sections: StorySection[]; provider?: string }>>({});
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiRequested, setAiRequested] = useState<Record<string, boolean>>({});
+  const [aiError, setAiError] = useState('');
 
-  // Fetch countries on mount
-  useEffect(() => {
-    const fetchCountries = async () => {
-      try {
-        const response = await dataAPI.getCountries();
-        if (response.data.success) {
-          setCountries(response.data.data);
-        }
-      } catch (err) {
-        console.error('Error fetching countries:', err);
-      }
-    };
+  const selectedTheme = useMemo(
+    () => storyThemes.find((theme) => theme.id === selectedThemeId) ?? storyThemes[0],
+    [selectedThemeId]
+  );
 
-    fetchCountries();
-  }, []);
+  const selectedAiStory = aiStories[selectedTheme.id];
+  const activeSections = useMemo(
+    () => (selectedMode === 'human' ? selectedTheme.humanSections : selectedAiStory?.sections || []),
+    [selectedTheme, selectedMode, selectedAiStory]
+  );
+  const promptText = buildPrompt(selectedTheme, selectedMode);
 
-  // Fetch cities when country changes
-  useEffect(() => {
-    const fetchCities = async () => {
-      try {
-        const response = await dataAPI.getCities(filters.country || undefined);
-        if (response.data.success) {
-          setCities(response.data.data);
-        }
-      } catch (err) {
-        console.error('Error fetching cities:', err);
-      }
-    };
-
-    if (filters.country) {
-      fetchCities();
+  const generateAiStory = useCallback(async () => {
+    if (selectedTheme.status !== 'ready') {
+      setAiError('This theme is waiting for source story content before AI generation is enabled.');
+      return;
     }
-  }, [filters.country]);
 
-  const handleGenerateStory = async () => {
-    setLoading(true);
-    setError('');
+    setAiLoading(true);
+    setAiError('');
+
     try {
-      // First, generate the story
-      const storyResponse = await storyAPI.generateStory({
-        country: filters.country,
-        city: filters.city,
-        pollution_type: filters.pollutionType,
-        days: filters.days,
+      const response = await storyAPI.generateThemeStory({
+        mode: 'ai',
+        theme: {
+          id: selectedTheme.id,
+          title: selectedTheme.title,
+          overview: selectedTheme.overview,
+          promptFocus: selectedTheme.promptFocus,
+          sections: selectedTheme.humanSections,
+        },
       });
 
-      if (storyResponse.data.success) {
-        setStory(storyResponse.data.data);
-
-        // Then fetch statistics
-        const statsResponse = await dataAPI.getStatistics({
-          country: filters.country,
-          city: filters.city,
-          pollution_type: filters.pollutionType,
-          days: filters.days,
-        });
-
-        if (statsResponse.data.success) {
-          setStatistics(statsResponse.data);
-        }
+      if (response.data?.success) {
+        const story = response.data.data.story;
+        setAiStories((current) => ({
+          ...current,
+          [selectedTheme.id]: {
+            title: story.title || selectedTheme.title,
+            summary: story.summary || selectedTheme.overview,
+            sections: story.sections || selectedTheme.humanSections,
+            provider: response.data.data.provider,
+          },
+        }));
+        setAiRequested((current) => ({
+          ...current,
+          [selectedTheme.id]: true,
+        }));
       } else {
-        setError('Failed to generate story');
+        throw new Error(response.data?.error || 'Failed to generate AI story');
       }
-    } catch (err: any) {
-      setError(err.response?.data?.error || 'Error generating story');
+    } catch (error: any) {
+      setAiError(error.response?.data?.error || error.message || 'Failed to generate AI story');
     } finally {
-      setLoading(false);
+      setAiLoading(false);
     }
-  };
+  }, [selectedTheme]);
 
-  const handleAddSampleData = async () => {
-    setAddingSampleData(true);
+  useEffect(() => {
+    if (selectedMode === 'ai' && selectedTheme.status === 'ready' && aiRequested[selectedTheme.id] && !selectedAiStory && !aiLoading) {
+      generateAiStory();
+    }
+  }, [selectedMode, selectedThemeId, selectedTheme.id, selectedTheme.status, selectedAiStory, aiLoading, generateAiStory, aiRequested]);
+
+  const handleCopyPrompt = async () => {
     try {
-      await dataAPI.addSampleData();
-      alert('Sample data added successfully!');
-      // Refresh countries list
-      const response = await dataAPI.getCountries();
-      if (response.data.success) {
-        setCountries(response.data.data);
-      }
-    } catch (err) {
-      alert('Error adding sample data');
-    } finally {
-      setAddingSampleData(false);
+      await navigator.clipboard.writeText(promptText);
+      setCopyState('copied');
+      window.setTimeout(() => setCopyState('idle'), 1500);
+    } catch (error) {
+      console.error('Failed to copy prompt:', error);
     }
-  };
-
-  const handleRateStory = async (ratingData: any) => {
-    try {
-      await ratingAPI.addRating(story.id, ratingData);
-      alert('Thank you for your rating!');
-      // Refresh story to get updated rating
-      const response = await storyAPI.getStory(story.id);
-      if (response.data.success) {
-        setStory(response.data.data);
-      }
-    } catch (err) {
-      alert('Error submitting rating');
-    }
-  };
-
-  const formatTrendsForChart = () => {
-    if (!statistics?.trends) return [];
-    return Object.entries(statistics.trends)
-      .map(([date, data]: any) => ({
-        name: date.slice(-5), // MM-DD format
-        ...data,
-      }))
-      .slice(-14); // Last 14 days
-  };
-
-  const formatAQIDistribution = () => {
-    if (!statistics?.aqi_distribution) return [];
-    return Object.entries(statistics.aqi_distribution).map(([category, count]: any) => ({
-      name: category,
-      value: count,
-    }));
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 py-6">
-          <h1 className="text-3xl font-bold text-gray-900">Air Quality Dashboard</h1>
-          <p className="text-gray-600 mt-2">Generate and explore air quality data stories</p>
-        </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        {/* Add Sample Data Button */}
-        {countries.length === 0 && (
-          <div className="mb-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <AlertCircle className="w-5 h-5 text-yellow-600" />
-              <p className="text-yellow-800">No data available. Add sample data to get started.</p>
-            </div>
-            <button
-              onClick={handleAddSampleData}
-              disabled={addingSampleData}
-              className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors disabled:opacity-50"
-            >
-              {addingSampleData ? 'Adding...' : 'Add Sample Data'}
-            </button>
-          </div>
-        )}
-
-        {/* Filter Component */}
-        <FilterComponent
-          countries={countries}
-          cities={cities}
-          selectedCountry={filters.country}
-          selectedCity={filters.city}
-          selectedPollutionType={filters.pollutionType}
-          selectedDays={filters.days}
-          onCountryChange={filters.setCountry}
-          onCityChange={filters.setCity}
-          onPollutionTypeChange={filters.setPollutionType}
-          onDaysChange={filters.setDays}
-          onGenerateStory={handleGenerateStory}
-          loading={loading}
-        />
-
-        {/* Error Message */}
-        {error && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-            <p className="text-red-800">{error}</p>
-          </div>
-        )}
-
-        {/* Loading State */}
-        {loading && (
-          <div className="flex items-center justify-center py-12">
-            <Loader className="w-8 h-8 animate-spin text-blue-600 mr-3" />
-            <p className="text-gray-600">Generating your story...</p>
-          </div>
-        )}
-
-        {/* Story Section */}
-        {story && !loading && (
-          <>
-            <StoryDisplay
-              story={story}
-              onRate={() => setShowRatingModal(true)}
-              averageRating={story.average_rating}
-            />
-
-            {/* Statistics and Charts */}
-            {statistics && (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
-                <Chart
-                  title="Pollution Trends (Last 14 Days)"
-                  data={formatTrendsForChart()}
-                  dataKeys={[
-                    { key: filters.pollutionType, name: filters.pollutionType.toUpperCase(), color: '#3b82f6' },
-                  ]}
-                  type="line"
-                />
-
-                <Chart
-                  title="AQI Category Distribution"
-                  data={formatAQIDistribution()}
-                  dataKeys={[
-                    { key: 'value', name: 'Count', color: '#10b981' },
-                  ]}
-                  type="bar"
-                />
+    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.18),_transparent_30%),linear-gradient(180deg,_#0f172a_0%,_#111827_45%,_#f8fafc_45%,_#f8fafc_100%)]">
+      <div className="max-w-7xl mx-auto px-4 py-10 lg:py-14">
+        <div className="rounded-3xl bg-slate-950/90 text-white border border-white/10 shadow-2xl overflow-hidden">
+          <div className="p-6 md:p-10 border-b border-white/10 bg-gradient-to-r from-sky-950 via-slate-950 to-indigo-950">
+            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+              <div className="max-w-3xl">
+                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold tracking-wide text-sky-100">
+                  <Sparkles className="w-4 h-4" />
+                  Theme-based storytelling dashboard
+                </div>
+                <h1 className="mt-5 text-4xl md:text-5xl font-black tracking-tight">
+                  Story studio for human and AI-generated air narratives
+                </h1>
+                <p className="mt-4 text-base md:text-lg text-slate-300 leading-relaxed">
+                  Choose one of the four story themes, switch between the human version and the AI/Olamala version,
+                  and drill into subtopics that keep the same subject structure across both modes.
+                </p>
               </div>
-            )}
 
-            {/* Rating Modal */}
-            {showRatingModal && (
-              <RatingModal
-                storyId={story.id}
-                onSubmit={handleRateStory}
-                onClose={() => setShowRatingModal(false)}
-              />
-            )}
-          </>
-        )}
-
-        {/* Empty State */}
-        {!story && !loading && countries.length > 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-600 text-lg">Select filters and click "Generate Data Story" to begin</p>
+              <div className="grid grid-cols-2 gap-3 text-sm min-w-[260px]">
+                <div className="rounded-2xl bg-white/10 p-4 border border-white/10">
+                  <div className="text-slate-300">Themes</div>
+                  <div className="text-3xl font-bold mt-1">{storyThemes.length}</div>
+                </div>
+                <div className="rounded-2xl bg-white/10 p-4 border border-white/10">
+                  <div className="text-slate-300">Modes</div>
+                  <div className="text-3xl font-bold mt-1">{storyModes.length}</div>
+                </div>
+              </div>
+            </div>
           </div>
-        )}
+
+          <div className="p-6 md:p-10 bg-slate-50 text-slate-900">
+            <div className="grid grid-cols-1 xl:grid-cols-[300px_1fr] gap-6">
+              <aside className="space-y-6">
+                <div className="rounded-3xl bg-white border border-slate-200 shadow-sm p-5">
+                  <div className="flex items-center gap-2 text-slate-900 font-bold text-lg">
+                    <Layers className="w-5 h-5 text-sky-600" />
+                    Story themes
+                  </div>
+                  <div className="mt-4 space-y-3">
+                    {storyThemes.map((theme) => {
+                      const active = theme.id === selectedThemeId;
+
+                      return (
+                        <button
+                          key={theme.id}
+                          type="button"
+                          onClick={() => setSelectedThemeId(theme.id)}
+                          className={`w-full text-left rounded-2xl border p-4 transition-all duration-200 ${
+                            active
+                              ? 'border-sky-500 bg-sky-50 shadow-md'
+                              : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">
+                                {theme.badge}
+                              </div>
+                              <div className="mt-1 font-bold text-slate-900">{theme.title}</div>
+                            </div>
+                            <div className={`mt-1 h-3 w-3 rounded-full ${active ? 'bg-sky-500' : 'bg-slate-300'}`} />
+                          </div>
+                          <p className="mt-2 text-sm text-slate-600">{theme.shortDescription}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div className="rounded-3xl bg-slate-950 text-white p-5 shadow-lg">
+                  <div className="flex items-center gap-2 font-bold text-lg">
+                    <BookOpen className="w-5 h-5 text-sky-300" />
+                    AI prompt
+                  </div>
+                  <p className="mt-3 text-sm text-slate-300 leading-relaxed">
+                    This is the prompt you can send to your AI agent to generate a similar story for the same theme
+                    and subtopic structure.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleCopyPrompt}
+                    className="mt-4 inline-flex items-center gap-2 rounded-xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-400 transition-colors"
+                  >
+                    <Copy className="w-4 h-4" />
+                    {copyState === 'copied' ? 'Prompt copied' : 'Copy prompt'}
+                  </button>
+                  <pre className="mt-4 whitespace-pre-wrap rounded-2xl bg-white/5 p-4 text-xs leading-6 text-slate-200 border border-white/10">
+                    {promptText}
+                  </pre>
+                </div>
+              </aside>
+
+              <main className="space-y-6">
+                <div className="rounded-3xl bg-white border border-slate-200 shadow-sm p-6 md:p-8">
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div className="max-w-3xl">
+                      <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600">
+                        {selectedTheme.badge}
+                      </div>
+                      <h2 className="mt-4 text-3xl font-black text-slate-950">{selectedTheme.title}</h2>
+                      <p className="mt-3 text-slate-600 leading-relaxed">
+                        {selectedTheme.status === 'awaiting-source'
+                          ? 'This theme is waiting for the story text you will send next.'
+                          : selectedMode === 'human'
+                          ? selectedTheme.overview
+                          : selectedAiStory?.summary || selectedTheme.overview}
+                      </p>
+                      {selectedMode === 'ai' && selectedTheme.status === 'ready' && (
+                        <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+                          <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700 border border-emerald-200">
+                            Powered by {selectedAiStory?.provider || 'Ollama'}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={generateAiStory}
+                            disabled={aiLoading}
+                            className="rounded-full bg-slate-950 px-3 py-1 font-semibold text-white disabled:opacity-60"
+                          >
+                            {aiLoading ? 'Generating...' : selectedAiStory ? 'Regenerate story' : 'Generate AI story'}
+                          </button>
+                        </div>
+                      )}
+                      {aiError && selectedMode === 'ai' && (
+                        <p className="mt-3 text-sm text-red-600">{aiError}</p>
+                      )}
+                    </div>
+
+                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2 shadow-inner">
+                      <div className="grid grid-cols-2 gap-2">
+                        {storyModes.map((mode) => {
+                          const active = mode.id === selectedMode;
+
+                          return (
+                            <button
+                              key={mode.id}
+                              type="button"
+                              onClick={() => setSelectedMode(mode.id)}
+                              className={`rounded-xl px-4 py-3 text-left transition-all ${
+                                active
+                                  ? 'bg-slate-950 text-white shadow-md'
+                                  : 'bg-transparent text-slate-600 hover:bg-white'
+                              }`}
+                            >
+                              <div className="font-semibold">{mode.label}</div>
+                              <div className={`mt-1 text-xs leading-4 ${active ? 'text-slate-300' : 'text-slate-500'}`}>
+                                {mode.description}
+                              </div>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                  {activeSections.map((section, index) => (
+                    <article
+                      key={`${selectedTheme.id}-${selectedMode}-${section.title}`}
+                      className="rounded-3xl bg-white border border-slate-200 shadow-sm p-6 hover:shadow-md transition-shadow"
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <div className="text-xs font-bold uppercase tracking-[0.22em] text-sky-700">
+                            Subtopic {index + 1}
+                          </div>
+                          <h3 className="mt-2 text-xl font-bold text-slate-950">{section.title}</h3>
+                        </div>
+                        <div className="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">
+                          {selectedMode === 'human' ? 'Human story' : 'AI/Ollama story'}
+                        </div>
+                      </div>
+
+                      <p className="mt-4 text-slate-700 leading-relaxed">{section.body}</p>
+
+                      {section.bullets && section.bullets.length > 0 && (
+                        <ul className="mt-4 space-y-2">
+                          {section.bullets.map((bullet) => (
+                            <li key={bullet} className="flex gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                              <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-sky-500" />
+                              <span>{bullet}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </article>
+                  ))}
+                </div>
+
+                <div className="rounded-3xl border border-slate-200 bg-gradient-to-r from-sky-50 to-indigo-50 p-6 md:p-8">
+                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                    <div className="max-w-3xl">
+                      <h3 className="text-2xl font-black text-slate-950">Prompt handoff for the AI agent</h3>
+                      <p className="mt-2 text-slate-600 leading-relaxed">
+                        Send the prompt on the left to your agent whenever you want a similar story generated for the
+                        selected theme. The structure stays consistent, so human and AI stories can be compared
+                        side-by-side.
+                      </p>
+                    </div>
+                    <div className="rounded-2xl bg-slate-950 px-5 py-4 text-white">
+                      <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Current view</div>
+                      <div className="mt-1 text-lg font-bold">
+                        {selectedTheme.badge} {selectedMode === 'human' ? 'Human' : 'AI'} mode
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {selectedTheme.status === 'awaiting-source' && (
+                  <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-6 text-slate-600">
+                    Story content for this theme has not been added yet. Send the source text when you are ready,
+                    and I will split it into subtopics plus a matching AI/Ollama version.
+                  </div>
+                )}
+
+                {selectedMode === 'ai' && selectedTheme.status === 'ready' && aiLoading && (
+                  <div className="rounded-3xl border border-slate-200 bg-white p-6 text-slate-600">
+                    Generating a new AI/Ollama story for this theme... this can take a moment on a local model.
+                  </div>
+                )}
+
+                {selectedMode === 'ai' && selectedTheme.status === 'ready' && !aiLoading && !selectedAiStory && !aiError && (
+                  <div className="rounded-3xl border border-slate-200 bg-white p-6 text-slate-600">
+                    No AI story has been generated yet. Click the button above when you want Ollama to generate one.
+                  </div>
+                )}
+              </main>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
