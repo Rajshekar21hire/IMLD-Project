@@ -6,6 +6,7 @@ import { HomePage } from './pages/HomePage';
 import { DashboardPage } from './pages/DashboardPage';
 import { AnalyticsPage } from './pages/AnalyticsPage';
 import { RealtimePollutionPage } from './pages/RealtimePollutionPage';
+import { LiveMapPage } from './pages/LiveMapPage';
 import './styles/App.css';
 
 function App() {
@@ -45,6 +46,12 @@ function App() {
                 >
                   Real-Time
                 </Link>
+                <Link
+                  to="/live-map"
+                  className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                >
+                  Live Map
+                </Link>
               </div>
             </div>
           </nav>
@@ -55,6 +62,7 @@ function App() {
             <Route path="/dashboard" element={<DashboardPage />} />
             <Route path="/analytics" element={<AnalyticsPage />} />
             <Route path="/realtime" element={<RealtimePollutionPage />} />
+            <Route path="/live-map" element={<LiveMapPage />} />
           </Routes>
 
           {/* Footer */}
@@ -74,6 +82,7 @@ function App() {
                     <li><Link to="/dashboard" className="hover:text-white transition-colors">Story Studio</Link></li>
                     <li><Link to="/analytics" className="hover:text-white transition-colors">Analytics</Link></li>
                     <li><Link to="/realtime" className="hover:text-white transition-colors">Real-Time</Link></li>
+                    <li><Link to="/live-map" className="hover:text-white transition-colors">Live Map</Link></li>
                   </ul>
                 </div>
                 <div>

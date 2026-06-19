@@ -18,11 +18,20 @@ const storyApiClient = axios.create({
   },
 });
 
+const analyticsSummaryApiClient = axios.create({
+  baseURL: API_BASE_URL,
+  timeout: 120000,
+  headers: {
+    'Content-Type': 'application/json',
+  },
+});
+
 export const dataAPI = {
   getCountries: () => apiClient.get('/data/countries'),
   getCities: (country?: string) => apiClient.get('/data/cities', { params: { country } }),
   getFilteredData: (params: any) => apiClient.get('/data/filter', { params }),
   getStatistics: (params: any) => apiClient.get('/data/statistics', { params }),
+  generateAnalyticsSummary: (payload: any) => analyticsSummaryApiClient.post('/data/summary', payload),
   getLiveReadings: (params: any) => apiClient.get('/data/live', { params }),
   addSampleData: () => apiClient.post('/data/sample-data'),
 };

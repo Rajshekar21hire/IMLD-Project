@@ -14,11 +14,16 @@ class DataStory(db.Model):
     country = db.Column(db.String(100), index=True)
     city = db.Column(db.String(100), index=True)
     pollution_type = db.Column(db.String(50), index=True)  # PM2.5, PM10, O3, NO2, etc.
-    
+
+    # Date range
+    date_range_start = db.Column(db.DateTime)  # User-selected start date
+    date_range_end = db.Column(db.DateTime)  # User-selected end date
+
     # Story metadata
     key_insights = db.Column(db.JSON)  # List of key findings
     recommendations = db.Column(db.JSON)  # Solutions and recommendations
     visualizations = db.Column(db.JSON)  # References to visualization configs
+    ai_model_used = db.Column(db.String(50), default='rule-based')  # 'claude' or 'rule-based'
     
     # Statistics
     data_points_analyzed = db.Column(db.Integer)
@@ -40,9 +45,12 @@ class DataStory(db.Model):
             'country': self.country,
             'city': self.city,
             'pollution_type': self.pollution_type,
+            'date_range_start': self.date_range_start.isoformat() if self.date_range_start else None,
+            'date_range_end': self.date_range_end.isoformat() if self.date_range_end else None,
             'key_insights': self.key_insights,
             'recommendations': self.recommendations,
             'visualizations': self.visualizations,
+            'ai_model_used': self.ai_model_used,
             'data_points_analyzed': self.data_points_analyzed,
             'time_period': self.time_period,
             'created_at': self.created_at.isoformat(),

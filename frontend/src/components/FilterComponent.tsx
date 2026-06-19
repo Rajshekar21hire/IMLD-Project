@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Filter } from 'lucide-react';
 
 interface FilterComponentProps {
@@ -7,11 +7,15 @@ interface FilterComponentProps {
   selectedCountry: string | null;
   selectedCity: string | null;
   selectedPollutionType: string;
-  selectedDays: number;
+  selectedDays: number | null;
+  selectedDateRangeStart: string | null;
+  selectedDateRangeEnd: string | null;
   onCountryChange: (country: string | null) => void;
   onCityChange: (city: string | null) => void;
   onPollutionTypeChange: (type: string) => void;
-  onDaysChange: (days: number) => void;
+  onDaysChange: (days: number | null) => void;
+  onDateRangeStartChange: (date: string | null) => void;
+  onDateRangeEndChange: (date: string | null) => void;
   onGenerateStory: () => void;
   loading: boolean;
 }
@@ -23,13 +27,19 @@ export const FilterComponent: React.FC<FilterComponentProps> = ({
   selectedCity,
   selectedPollutionType,
   selectedDays,
+  selectedDateRangeStart,
+  selectedDateRangeEnd,
   onCountryChange,
   onCityChange,
   onPollutionTypeChange,
   onDaysChange,
+  onDateRangeStartChange,
+  onDateRangeEndChange,
   onGenerateStory,
   loading,
 }) => {
+  const [filterMode, setFilterMode] = useState<'days' | 'daterange'>('days');
+
   const filteredCities = selectedCountry
     ? cities.filter(c => c.country === selectedCountry).map(c => c.city)
     : [];
@@ -103,21 +113,105 @@ export const FilterComponent: React.FC<FilterComponentProps> = ({
           </select>
         </div>
 
-        {/* Days Filter */}
+        {/* Time Period Mode Toggle */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-2">Time Period (Days)</label>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Time Period</label>
           <select
-            value={selectedDays}
-            onChange={(e) => onDaysChange(Number(e.target.value))}
+            value={filterMode}
+            onChange={(e) => {
+              setFilterMode(e.target.value as 'days' | 'daterange');
+              if (e.target.value === 'days') {
+                onDateRangeStartChange(null);
+                onDateRangeEndChange(null);
+              } else {
+                onDaysChange(null);
+              }
+            }}
             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
-            <option value={7}>Last 7 days</option>
-            <option value={14}>Last 14 days</option>
-            <option value={30}>Last 30 days</option>
-            <option value={60}>Last 60 days</option>
-            <option value={90}>Last 90 days</option>
+            <option value="days">Last X Days</option>
+            <option value="daterange">Date Range</option>
           </select>
         </div>
+      </div>
+
+      {/* Days or Date Range Selection */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        {filterMode === 'days' ? (
+          <div className="md:col-span-2 grid grid-cols-5 gap-2">
+            <button
+              onClick={() => onDaysChange(7)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedDays === 7
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              7 days
+            </button>
+            <button
+              onClick={() => onDaysChange(14)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedDays === 14
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              14 days
+            </button>
+            <button
+              onClick={() => onDaysChange(30)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedDays === 30
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              30 days
+            </button>
+            <button
+              onClick={() => onDaysChange(60)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedDays === 60
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              60 days
+            </button>
+            <button
+              onClick={() => onDaysChange(90)}
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                selectedDays === 90
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              90 days
+            </button>
+          </div>
+        ) : (
+          <>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Start Date</label>
+              <input
+                type="date"
+                value={selectedDateRangeStart || ''}
+                onChange={(e) => onDateRangeStartChange(e.target.value || null)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">End Date</label>
+              <input
+                type="date"
+                value={selectedDateRangeEnd || ''}
+                onChange={(e) => onDateRangeEndChange(e.target.value || null)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </>
+        )}
       </div>
 
       <button
