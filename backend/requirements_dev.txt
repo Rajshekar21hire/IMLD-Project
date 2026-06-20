@@ -1,0 +1,11 @@
+﻿Flask>=3.0
+Flask-CORS>=4.0
+Flask-SQLAlchemy>=3.1
+python-dotenv>=1.0
+requests>=2.31
+SQLAlchemy>=2.0
+Werkzeug>=3.0
+python-dateutil>=2.8
+anthropic>=0.34
+pytest>=8.0
+pytest-flask>=1.3

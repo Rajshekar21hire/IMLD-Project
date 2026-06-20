@@ -1,13 +1,20 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Wind } from 'lucide-react';
 import { FilterProvider } from './hooks/useFilters';
-import { HomePage } from './pages/HomePage';
-import { DashboardPage } from './pages/DashboardPage';
-import { AnalyticsPage } from './pages/AnalyticsPage';
-import { RealtimePollutionPage } from './pages/RealtimePollutionPage';
-import { LiveMapPage } from './pages/LiveMapPage';
 import './styles/App.css';
+
+const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })));
+const DashboardPage = lazy(() => import('./pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage').then(m => ({ default: m.AnalyticsPage })));
+const RealtimePollutionPage = lazy(() => import('./pages/RealtimePollutionPage').then(m => ({ default: m.RealtimePollutionPage })));
+const LiveMapPage = lazy(() => import('./pages/LiveMapPage').then(m => ({ default: m.LiveMapPage })));
+
+const PageLoader = () => (
+  <div className="flex items-center justify-center min-h-[60vh]">
+    <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-500 border-t-transparent" />
+  </div>
+);
 
 function App() {
   return (
@@ -57,13 +64,15 @@ function App() {
           </nav>
 
           {/* Routes */}
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/analytics" element={<AnalyticsPage />} />
-            <Route path="/realtime" element={<RealtimePollutionPage />} />
-            <Route path="/live-map" element={<LiveMapPage />} />
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
+              <Route path="/realtime" element={<RealtimePollutionPage />} />
+              <Route path="/live-map" element={<LiveMapPage />} />
+            </Routes>
+          </Suspense>
 
           {/* Footer */}
           <footer className="bg-gray-900 text-white py-12 mt-16">
