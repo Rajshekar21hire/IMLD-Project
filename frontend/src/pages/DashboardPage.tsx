@@ -16,9 +16,11 @@ import {
   YAxis,
   Line,
   LineChart,
+  Legend,
 } from 'recharts';
 import { storyAPI, dataAPI } from '../services/api';
 import { storyModes, storyThemes, StoryMode, StoryTheme, StorySection } from '../data/storyThemes';
+import { pollutantTrendData, pollutantColors, pollutantLabels } from '../data/pollutantTrendsData';
 
 interface CityRankingRecord {
   rank: number;
@@ -618,6 +620,85 @@ export const DashboardPage: React.FC = () => {
                       </div>
 
                       <p className="mt-4 text-slate-700 leading-relaxed">{section.body}</p>
+
+                      {section.chart && section.chart.dataSourceKey === 'pollutantTrends' && (
+                        <div className="mt-6 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 p-4 border border-slate-200">
+                          <h4 className="mb-4 text-sm font-semibold text-slate-700">Global Pollutant Trends (2015–2026)</h4>
+                          <ResponsiveContainer width="100%" height={350}>
+                            <LineChart data={pollutantTrendData}>
+                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
+                              <XAxis 
+                                dataKey="year" 
+                                stroke="rgba(0,0,0,0.4)"
+                                style={{ fontSize: '12px' }}
+                              />
+                              <YAxis 
+                                stroke="rgba(0,0,0,0.4)"
+                                style={{ fontSize: '12px' }}
+                              />
+                              <Tooltip 
+                                contentStyle={{ 
+                                  backgroundColor: 'white', 
+                                  border: '1px solid #e5e7eb',
+                                  borderRadius: '8px'
+                                }}
+                              />
+                              <Legend />
+                              <Line 
+                                type="monotone" 
+                                dataKey="pm25" 
+                                stroke={pollutantColors.pm25}
+                                name={pollutantLabels.pm25}
+                                strokeWidth={2}
+                                dot={{ r: 3 }}
+                              />
+                              <Line 
+                                type="monotone" 
+                                dataKey="pm10" 
+                                stroke={pollutantColors.pm10}
+                                name={pollutantLabels.pm10}
+                                strokeWidth={2}
+                                dot={{ r: 3 }}
+                              />
+                              <Line 
+                                type="monotone" 
+                                dataKey="no2" 
+                                stroke={pollutantColors.no2}
+                                name={pollutantLabels.no2}
+                                strokeWidth={2}
+                                dot={{ r: 3 }}
+                              />
+                              <Line 
+                                type="monotone" 
+                                dataKey="o3" 
+                                stroke={pollutantColors.o3}
+                                name={pollutantLabels.o3}
+                                strokeWidth={2}
+                                dot={{ r: 3 }}
+                              />
+                              <Line 
+                                type="monotone" 
+                                dataKey="so2" 
+                                stroke={pollutantColors.so2}
+                                name={pollutantLabels.so2}
+                                strokeWidth={2}
+                                dot={{ r: 3 }}
+                              />
+                              <Line 
+                                type="monotone" 
+                                dataKey="co" 
+                                stroke={pollutantColors.co}
+                                name={pollutantLabels.co}
+                                strokeWidth={2}
+                                dot={{ r: 3 }}
+                              />
+                            </LineChart>
+                          </ResponsiveContainer>
+                          <p className="mt-3 text-xs text-slate-600 text-center">
+                            Average concentration in µg/m³ globally (2015–2026)
+                          </p>
+                        </div>
+                      )}
 
                       {selectedTheme.id === 'pollution-and-health' && section.label === 'live-map' && (
                         <div className="mt-5">

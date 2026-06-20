@@ -5,6 +5,10 @@ export interface StorySection {
   body: string;
   bullets?: string[];
   label?: string;
+  chart?: {
+    type: 'line' | 'bar';
+    dataSourceKey: string;
+  };
 }
 
 export interface StoryTheme {
@@ -139,6 +143,10 @@ export const storyThemes: StoryTheme[] = [
       },
       {
         title: 'Trends Overtime - Which Regions Are Improving vs. Worsening Since 2015?',
+        chart: {
+          type: 'line',
+          dataSourceKey: 'pollutantTrends',
+        },
         body:
           'Since 2015, Air quality trends have changed sharply across regions — driven by policy, urbanization, energy transitions, and economic development. While some regions are making real progress, others are facing worsening air pollution, often due to rapid industrialization and weak regulation.',
       },
