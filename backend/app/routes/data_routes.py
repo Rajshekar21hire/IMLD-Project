@@ -1,9 +1,11 @@
 from flask import Blueprint, jsonify, request
 from app.services.data_service import DataService
+from app.services.worst_cities_service import WorstCitiesService
 from app.models import AirQualityData
 from app import db
 
 bp = Blueprint('data', __name__, url_prefix='/api/data')
+worst_cities_service = WorstCitiesService()
 
 @bp.route('/countries', methods=['GET'])
 def get_countries():
@@ -72,6 +74,55 @@ def get_statistics():
             'aqi_distribution': aqi_dist,
             'trends': trends
         })
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/worst-cities', methods=['GET'])
+def get_worst_cities():
+    """Rank the worst cities from the available air quality data."""
+    try:
+        country = request.args.get('country')
+        city = request.args.get('city')
+        days = request.args.get('days', default=30, type=int)
+        limit = request.args.get('limit', type=int)
+
+        analysis, error = worst_cities_service.get_top_worst_cities(
+            country=country,
+            city=city,
+            days=days,
+            limit=limit,
+        )
+
+        if error:
+            return jsonify({'success': False, 'error': error}), 404
+
+        return jsonify({'success': True, 'data': analysis})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+@bp.route('/worst-cities/analyze', methods=['POST'])
+def analyze_worst_cities():
+    """Interpret a user prompt and return prompt-driven ranked city analysis."""
+    try:
+        data = request.get_json() or {}
+        prompt = data.get('prompt', '')
+        country = data.get('country')
+        city = data.get('city')
+        days = data.get('days', 30)
+        limit = data.get('limit')
+
+        analysis, error = worst_cities_service.analyze_prompt(
+            prompt=prompt,
+            country=country,
+            city=city,
+            days=days,
+            limit=limit,
+        )
+
+        if error:
+            return jsonify({'success': False, 'error': error}), 404
+
+        return jsonify({'success': True, 'data': analysis}), 200
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 

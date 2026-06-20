@@ -25,8 +25,9 @@ class DataService:
             query = query.filter_by(city=city)
         
         # Time filter
-        cutoff_date = datetime.utcnow() - timedelta(days=days)
-        query = query.filter(AirQualityData.measurement_date >= cutoff_date)
+        if days is not None:
+            cutoff_date = datetime.utcnow() - timedelta(days=days)
+            query = query.filter(AirQualityData.measurement_date >= cutoff_date)
         
         return query.order_by(AirQualityData.measurement_date.desc()).all()
     

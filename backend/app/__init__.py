@@ -18,7 +18,16 @@ def create_app():
     
     # Initialize extensions
     db.init_app(app)
-    CORS(app, resources={r"/api/*": {"origins": os.getenv('CORS_ORIGINS', 'http://localhost:3000').split(',')}})
+    cors_origins = os.getenv('CORS_ORIGINS', 'http://localhost:3000,http://localhost:3001')
+    cors_origins = [origin.strip() for origin in cors_origins.split(',') if origin.strip()]
+    cors_origins.extend([
+        r'^https?://localhost(:\d+)?$',
+        r'^https?://127\.0\.0\.1(:\d+)?$',
+        r'^https?://10\.\d+\.\d+\.\d+(:\d+)?$',
+        r'^https?://172\.(1[6-9]|2\d|3[0-1])\.\d+\.\d+(:\d+)?$',
+        r'^https?://192\.168\.\d+\.\d+(:\d+)?$',
+    ])
+    CORS(app, resources={r"/api/*": {"origins": cors_origins}})
     
     # Register blueprints
     from app.routes import data_routes, story_routes, rating_routes
@@ -29,5 +38,15 @@ def create_app():
     # Create tables
     with app.app_context():
         db.create_all()
+
+        dataset_path = os.getenv(
+            'DATASET_CSV_PATH',
+            os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'waqi-airquality-master-dataset.csv'),
+        )
+
+        if os.path.exists(dataset_path):
+            from app.services.dataset_import_service import DatasetImportService
+
+            DatasetImportService.import_csv_if_empty(dataset_path)
     
     return app

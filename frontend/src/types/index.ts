@@ -58,3 +58,61 @@ export interface PollutionStatistics {
   avg: number;
   count: number;
 }
+
+export interface WorstCityDriver {
+  metric: string;
+  value: number;
+  normalized: number;
+  weight: number;
+  contribution: number;
+}
+
+export interface WorstCityAnalysis {
+  country: string;
+  city: string;
+  records: number;
+  latest_measurement: string | null;
+  averages: Record<string, number | null>;
+  dominant_aqi_category: string | null;
+  score: number;
+  drivers: WorstCityDriver[];
+}
+
+export interface WorstCitiesResponse {
+  title: string;
+  summary: string;
+  cities: WorstCityAnalysis[];
+  count: number;
+  filters?: {
+    country?: string | null;
+    city?: string | null;
+    days?: number;
+  };
+  records_analyzed?: number;
+}
+
+export interface WorstCitiesPromptResponse extends WorstCitiesResponse {
+  prompt?: string;
+  interpretation?: string;
+  insights?: string[];
+  visualization_notes?: string[];
+  query_hint?: string;
+  presentation?: {
+    recommended_view: 'summary' | 'charts' | 'ranking';
+    available_views: Array<'summary' | 'charts' | 'ranking'>;
+    prompt_keywords?: string[];
+    cards?: Array<{
+      label: string;
+      value: string;
+      detail: string;
+    }>;
+  };
+  chart_data?: Array<{
+    name: string;
+    score: number;
+    aqi: number;
+    pm25: number;
+    pm10: number;
+    no2: number;
+  }>;
+}

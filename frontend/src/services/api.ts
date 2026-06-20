@@ -23,6 +23,8 @@ export const dataAPI = {
   getCities: (country?: string) => apiClient.get('/data/cities', { params: { country } }),
   getFilteredData: (params: any) => apiClient.get('/data/filter', { params }),
   getStatistics: (params: any) => apiClient.get('/data/statistics', { params }),
+  getWorstCities: (params: any) => apiClient.get('/data/worst-cities', { params }),
+  analyzeWorstCities: (data: any) => apiClient.post('/data/worst-cities/analyze', data),
   getLiveReadings: (params: any) => apiClient.get('/data/live', { params }),
   addSampleData: () => apiClient.post('/data/sample-data'),
 };

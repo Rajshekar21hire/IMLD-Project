@@ -1,7 +1,9 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { BookOpen, Copy, Layers, Sparkles } from 'lucide-react';
-import { storyAPI } from '../services/api';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AlertTriangle, BookOpen, Copy, Layers, RefreshCw, Sparkles } from 'lucide-react';
+import { Chart } from '../components/Chart';
+import { dataAPI, storyAPI } from '../services/api';
 import { storyModes, storyThemes, StoryMode, StoryTheme, StorySection } from '../data/storyThemes';
+import { WorstCitiesPromptResponse, WorstCitiesResponse } from '../types';
 
 const buildPrompt = (theme: StoryTheme, mode: StoryMode) => {
   const sectionTitles = theme.humanSections.length
@@ -20,14 +22,56 @@ const buildPrompt = (theme: StoryTheme, mode: StoryMode) => {
   ].join('\n');
 };
 
+const wordToNumber: Record<string, number> = {
+  'zero': 0, 'one': 1, 'two': 2, 'three': 3, 'four': 4, 'five': 5,
+  'six': 6, 'seven': 7, 'eight': 8, 'nine': 9, 'ten': 10,
+  'eleven': 11, 'twelve': 12, 'thirteen': 13, 'fourteen': 14, 'fifteen': 15,
+  'sixteen': 16, 'seventeen': 17, 'eighteen': 18, 'nineteen': 19, 'twenty': 20,
+};
+
+const extractTopNFromPrompt = (prompt: string): number | null => {
+  const numberPattern = '(?:\\d+|zero|one|two|three|four|five|six|seven|eight|nine|ten|eleven|twelve|thirteen|fourteen|fifteen|sixteen|seventeen|eighteen|nineteen|twenty)';
+  const patterns = [
+    new RegExp(`(?:top|best|worst|cleanest)\\s+(${numberPattern})`, 'i'),
+    new RegExp(`(${numberPattern})\\s+(?:top|best|worst|cleanest|cities?|city)`, 'i'),
+  ];
+
+  for (const pattern of patterns) {
+    const match = prompt.match(pattern);
+    if (!match) {
+      continue;
+    }
+
+    const rawValue = match[1].toLowerCase();
+    const parsed = Number.parseInt(rawValue, 10);
+    if (!Number.isNaN(parsed)) {
+      return Math.min(50, Math.max(1, parsed));
+    }
+
+    const numberValue = wordToNumber[rawValue];
+    if (numberValue !== undefined && numberValue > 0) {
+      return Math.min(50, Math.max(1, numberValue));
+    }
+  }
+
+  return null;
+};
+
 export const DashboardPage: React.FC = () => {
   const [selectedThemeId, setSelectedThemeId] = useState(storyThemes[0].id);
   const [selectedMode, setSelectedMode] = useState<StoryMode>('human');
+  const [worstCitiesView, setWorstCitiesView] = useState<'summary' | 'charts' | 'ranking'>('summary');
   const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
   const [aiStories, setAiStories] = useState<Record<string, { title: string; summary: string; sections: StorySection[]; provider?: string }>>({});
   const [aiLoading, setAiLoading] = useState(false);
   const [aiRequested, setAiRequested] = useState<Record<string, boolean>>({});
   const [aiError, setAiError] = useState('');
+  const [worstCities, setWorstCities] = useState<WorstCitiesResponse | null>(null);
+  const [worstCitiesLoading, setWorstCitiesLoading] = useState(false);
+  const [worstCitiesError, setWorstCitiesError] = useState('');
+  const [worstCitiesPrompt, setWorstCitiesPrompt] = useState('');
+  const [worstCitiesAnalysis, setWorstCitiesAnalysis] = useState<WorstCitiesPromptResponse | null>(null);
+  const hasInitializedWorstCities = useRef(false);
 
   const selectedTheme = useMemo(
     () => storyThemes.find((theme) => theme.id === selectedThemeId) ?? storyThemes[0],
@@ -40,6 +84,71 @@ export const DashboardPage: React.FC = () => {
     [selectedTheme, selectedMode, selectedAiStory]
   );
   const promptText = buildPrompt(selectedTheme, selectedMode);
+  const promptLimit = useMemo(() => extractTopNFromPrompt(worstCitiesPrompt), [worstCitiesPrompt]);
+
+  const loadWorstCities = useCallback(async () => {
+    if (!promptLimit) {
+      setWorstCitiesError('Please include a city count in your prompt, for example: "top six worst cities" or "worst 6 cities".');
+      return;
+    }
+
+    setWorstCitiesLoading(true);
+    setWorstCitiesError('');
+
+    try {
+      const response = await dataAPI.getWorstCities({ days: 30, limit: promptLimit });
+
+      if (response.data?.success) {
+        setWorstCities(response.data.data as WorstCitiesResponse);
+      } else {
+        throw new Error(response.data?.error || 'Failed to load worst cities');
+      }
+    } catch (error: any) {
+      setWorstCitiesError(error.response?.data?.error || error.message || 'Failed to load worst cities');
+    } finally {
+      setWorstCitiesLoading(false);
+    }
+  }, [promptLimit]);
+
+  const analyzeWorstCities = useCallback(async () => {
+    if (!promptLimit) {
+      setWorstCitiesError('Please include a city count in your prompt, for example: "top six worst cities" or "best 6 cities".');
+      return;
+    }
+
+    setWorstCitiesLoading(true);
+    setWorstCitiesError('');
+
+    try {
+      const response = await dataAPI.analyzeWorstCities({
+        prompt: worstCitiesPrompt,
+        days: 30,
+        limit: promptLimit,
+      });
+
+      if (response.data?.success) {
+        const analysis = response.data.data as WorstCitiesPromptResponse;
+        setWorstCitiesAnalysis(analysis);
+        setWorstCities(analysis);
+        setWorstCitiesView(analysis.presentation?.recommended_view || 'summary');
+      } else {
+        throw new Error(response.data?.error || 'Failed to analyze worst cities');
+      }
+    } catch (error: any) {
+      setWorstCitiesError(error.response?.data?.error || error.message || 'Failed to analyze worst cities');
+    } finally {
+      setWorstCitiesLoading(false);
+    }
+  }, [worstCitiesPrompt, promptLimit]);
+
+  useEffect(() => {
+    if (hasInitializedWorstCities.current) {
+      return;
+    }
+
+    hasInitializedWorstCities.current = true;
+    setWorstCitiesError('Write a prompt with a city count, such as "top six best cities" or "worst 6 cities", and run analysis.');
+  }, [loadWorstCities, analyzeWorstCities]);
 
   const generateAiStory = useCallback(async () => {
     if (selectedTheme.status !== 'ready') {
@@ -181,7 +290,7 @@ export const DashboardPage: React.FC = () => {
                     AI prompt
                   </div>
                   <p className="mt-3 text-sm text-slate-300 leading-relaxed">
-                    This is the prompt you can send to your AI agent to generate a similar story for the same theme
+                    Enter a prompt such as "Show me the top five worst cities in the dataset" or "Show me the best ten cities in the world" and the agent will rank the cities from the dataset, then return text and visualizations.
                     and subtopic structure.
                   </p>
                   <button
@@ -293,6 +402,208 @@ export const DashboardPage: React.FC = () => {
                       )}
                     </article>
                   ))}
+                </div>
+
+                <div className="rounded-3xl bg-white border border-slate-200 shadow-sm p-6 md:p-8">
+                  <div className="flex items-center gap-2 text-slate-900 font-bold text-lg mb-4">
+                    <AlertTriangle className="w-5 h-5 text-rose-500" />
+                    Prompt-driven worst cities AI agent
+                  </div>
+
+                  <p className="text-sm text-slate-600 leading-relaxed mb-6">
+                    Enter a prompt such as "Show me the top five worst cities in the dataset" and the agent will rank the cities from the dataset, then return text and visualizations.
+                  </p>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div className="lg:col-span-1">
+                      <label className="block text-sm font-semibold text-slate-700 mb-2">AI prompt</label>
+                      <textarea
+                        value={worstCitiesPrompt}
+                        onChange={(event) => setWorstCitiesPrompt(event.target.value)}
+                        rows={6}
+                        className="w-full rounded-2xl border border-slate-300 bg-white px-4 py-3 text-sm text-slate-900 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-100"
+                      />
+
+                      <p className="mt-3 text-xs text-slate-500">
+                        Add a number or number word in the prompt like "top 6", "best ten cities", or "worst five cities" and the ranking, charts, and summary cards will update automatically.
+                      </p>
+
+                      <div className="mt-4 flex flex-wrap gap-3">
+                        <button
+                          type="button"
+                          onClick={analyzeWorstCities}
+                          disabled={worstCitiesLoading}
+                          className="inline-flex items-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+                        >
+                          <Sparkles className="w-4 h-4" />
+                          {worstCitiesLoading ? 'Analyzing...' : 'Run AI analysis'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={loadWorstCities}
+                          className="inline-flex items-center gap-2 rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                        >
+                          <RefreshCw className={`w-4 h-4 ${worstCitiesLoading ? 'animate-spin' : ''}`} />
+                          Load sample ranking
+                        </button>
+                      </div>
+
+                      {worstCitiesError && (
+                        <div className="mt-4 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+                          {worstCitiesError}
+                        </div>
+                      )}
+
+                      {worstCitiesLoading && (
+                        <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                          Loading city rankings...
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="lg:col-span-2">
+                      {!worstCitiesLoading && worstCitiesAnalysis && (
+                        <div className="space-y-4">
+                          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                            {(worstCitiesAnalysis.presentation?.cards || [
+                              {
+                                label: 'Cities ranked',
+                                value: String(worstCitiesAnalysis.count),
+                                detail: 'Worst-performing cities returned by the current prompt',
+                              },
+                            ]).map((card) => (
+                              <div key={card.label} className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 shadow-sm">
+                                <div className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">{card.label}</div>
+                                <div className="mt-2 text-lg font-bold text-slate-950">{card.value}</div>
+                                <div className="mt-1 text-xs text-slate-500">{card.detail}</div>
+                              </div>
+                            ))}
+                          </div>
+
+                          <div className="rounded-2xl bg-sky-50 border border-sky-200 px-4 py-3 text-sm text-slate-700">
+                            <div className="font-semibold text-slate-900">{worstCitiesAnalysis.title}</div>
+                            <div className="mt-1">{worstCitiesAnalysis.interpretation || worstCitiesAnalysis.summary}</div>
+                            {worstCitiesAnalysis.query_hint && (
+                              <div className="mt-2 text-xs uppercase tracking-[0.2em] text-slate-500">
+                                {worstCitiesAnalysis.query_hint}
+                              </div>
+                            )}
+                          </div>
+
+                          <div className="flex flex-wrap gap-2">
+                            {(['summary', 'charts', 'ranking'] as const).map((view) => (
+                              <button
+                                key={view}
+                                type="button"
+                                onClick={() => setWorstCitiesView(view)}
+                                className={`rounded-full px-4 py-2 text-sm font-semibold transition-colors ${
+                                  worstCitiesView === view
+                                    ? 'bg-slate-950 text-white'
+                                    : 'bg-white text-slate-700 border border-slate-200 hover:bg-slate-50'
+                                }`}
+                              >
+                                {view.charAt(0).toUpperCase() + view.slice(1)} view
+                              </button>
+                            ))}
+                          </div>
+
+                          {worstCitiesView === 'summary' && (
+                            <div className="space-y-3">
+                              {worstCitiesAnalysis.insights && worstCitiesAnalysis.insights.length > 0 && (
+                                <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                                  <div className="text-sm font-semibold text-slate-900">Key insights</div>
+                                  <ul className="mt-2 space-y-2 text-sm text-slate-700">
+                                    {worstCitiesAnalysis.insights.map((insight) => (
+                                      <li key={insight} className="flex gap-3">
+                                        <span className="mt-2 h-2 w-2 shrink-0 rounded-full bg-rose-500" />
+                                        <span>{insight}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+
+                              {worstCitiesAnalysis.visualization_notes && worstCitiesAnalysis.visualization_notes.length > 0 && (
+                                <div className="rounded-2xl border border-dashed border-slate-300 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+                                  <div className="font-semibold text-slate-900">Visualization notes</div>
+                                  <ul className="mt-2 space-y-1">
+                                    {worstCitiesAnalysis.visualization_notes.map((note) => (
+                                      <li key={note}>• {note}</li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
+                            </div>
+                          )}
+
+                          {worstCitiesView === 'charts' && worstCitiesAnalysis.chart_data && worstCitiesAnalysis.chart_data.length > 0 && (
+                            <div className="space-y-4">
+                              <Chart
+                                title="Composite score and AQI"
+                                data={worstCitiesAnalysis.chart_data}
+                                dataKeys={[
+                                  { key: 'score', name: 'Composite Score', color: '#ef4444' },
+                                  { key: 'aqi', name: 'AQI', color: '#0ea5e9' },
+                                ]}
+                                type="bar"
+                              />
+                              <Chart
+                                title="Top pollutant signals by city"
+                                data={worstCitiesAnalysis.chart_data}
+                                dataKeys={[
+                                  { key: 'pm25', name: 'PM2.5', color: '#f97316' },
+                                  { key: 'pm10', name: 'PM10', color: '#8b5cf6' },
+                                  { key: 'no2', name: 'NO2', color: '#14b8a6' },
+                                ]}
+                                type="bar"
+                              />
+                            </div>
+                          )}
+
+                          {worstCitiesView === 'ranking' && (
+                            <div className="rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-sm">
+                              <div className="text-sm font-semibold text-slate-900 mb-3">Ranked cities</div>
+                              <div className="space-y-3 max-h-[600px] overflow-y-auto">
+                                {worstCitiesAnalysis.cities.map((city, index) => (
+                                  <div key={`${city.city}-${city.country}`} className="rounded-2xl bg-slate-50 px-4 py-3 border border-slate-200">
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div>
+                                        <div className="text-xs font-semibold uppercase tracking-[0.2em] text-rose-600">
+                                          Rank {index + 1}
+                                        </div>
+                                        <div className="mt-1 font-bold text-slate-950">
+                                          {city.city}, {city.country}
+                                        </div>
+                                      </div>
+                                      <div className="rounded-full bg-rose-50 px-3 py-1 text-sm font-bold text-rose-700">
+                                        {city.score}
+                                      </div>
+                                    </div>
+                                    <div className="mt-2 text-sm text-slate-600">{city.records} records analyzed</div>
+                                    {city.drivers.length > 0 && (
+                                      <div className="mt-3 flex flex-wrap gap-2 text-xs">
+                                        {city.drivers.map((driver) => (
+                                          <span key={`${city.city}-${driver.metric}`} className="rounded-full border border-slate-200 bg-white px-3 py-1 font-medium text-slate-700">
+                                            {driver.metric.toUpperCase()} {driver.value}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {!worstCitiesLoading && !worstCitiesAnalysis && worstCities && (
+                        <div className="rounded-2xl bg-slate-50 border border-slate-200 px-4 py-3 text-sm text-slate-600">
+                          {worstCities.summary}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="rounded-3xl border border-slate-200 bg-gradient-to-r from-sky-50 to-indigo-50 p-6 md:p-8">
