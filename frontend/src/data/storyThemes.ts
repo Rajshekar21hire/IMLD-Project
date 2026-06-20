@@ -137,14 +137,41 @@ export const storyThemes: StoryTheme[] = [
     id: 'aqi-and-decisions',
     badge: 'Story 3',
     title: 'AQI and Daily Decisions',
-    shortDescription: 'Awaiting source story content.',
+    shortDescription: 'City-level ranking story with AI Agent 1 handoff and visual insights.',
     overview:
-      'This theme is reserved for the next story you send. After you provide the source text, it will be turned into a story with matching AI/Ollama generation.',
+      'This theme focuses on how AQI rankings translate into practical daily choices, using city-level best/worst comparisons and AI-generated interpretation.',
     promptFocus:
       'Create a story that explains AQI bands, health interpretations, activity guidance, and PM2.5 context in a way that feels practical and easy to act on.',
-    status: 'awaiting-source',
-    humanSections: [],
-    aiSections: [],
+    status: 'ready',
+    humanSections: [
+      {
+        title: 'Ranking cities turns AQI into action',
+        body:
+          'A city ranking translates abstract AQI values into a practical list people can understand quickly. Instead of one isolated measurement, rankings reveal which places are persistently cleaner or more polluted.',
+      },
+      {
+        title: 'Worst-city rankings highlight urgent health risk',
+        body:
+          'The highest average AQI cities often face sustained exposure burdens, especially for children, older adults, and people with respiratory conditions. These rankings help prioritize where interventions are most urgent.',
+      },
+      {
+        title: 'Best-city rankings provide realistic benchmarks',
+        body:
+          'Cities with lower average AQI show what better outcomes look like in similar regions. Comparing policy, transport, and emission patterns helps others adopt proven strategies.',
+      },
+      {
+        title: 'User-selected top N keeps analysis flexible',
+        body:
+          'Allowing users to choose top 3, 5, or 10 cities adapts the analysis for quick overviews or deeper reviews. This creates a reusable decision-support view for dashboards and reports.',
+      },
+    ],
+    aiSections: [
+      {
+        title: 'AQI ranking as a daily decision tool',
+        body:
+          'When city AQI trends are ranked, the data becomes immediately actionable for households, schools, and city planners. The ranking view tells people where caution is most needed and where cleaner conditions are more stable.',
+      },
+    ],
   },
   {
     id: 'measurement-and-governance',

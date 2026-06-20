@@ -1,7 +1,39 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { BookOpen, Copy, Layers, Sparkles } from 'lucide-react';
+import { BarChart3, BookOpen, Bot, Copy, Layers, Sparkles } from 'lucide-react';
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts';
 import { storyAPI } from '../services/api';
 import { storyModes, storyThemes, StoryMode, StoryTheme, StorySection } from '../data/storyThemes';
+
+interface CityRankingRecord {
+  rank: number;
+  city: string;
+  country: string;
+  avg_aqi: number;
+  sample_count: number;
+}
+
+interface CityRankingResult {
+  headline: string;
+  summary: string;
+  insights: string[];
+  recommendations: string[];
+  ranking_type: 'best' | 'worst' | 'both';
+  count: number;
+  provider: string;
+  worst_cities: CityRankingRecord[];
+  best_cities: CityRankingRecord[];
+}
 
 const buildPrompt = (theme: StoryTheme, mode: StoryMode) => {
   const sectionTitles = theme.humanSections.length
@@ -28,6 +60,11 @@ export const DashboardPage: React.FC = () => {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiRequested, setAiRequested] = useState<Record<string, boolean>>({});
   const [aiError, setAiError] = useState('');
+  const [rankingCount, setRankingCount] = useState(5);
+  const [rankingType, setRankingType] = useState<'best' | 'worst' | 'both'>('worst');
+  const [rankingLoading, setRankingLoading] = useState(false);
+  const [rankingError, setRankingError] = useState('');
+  const [rankingResult, setRankingResult] = useState<CityRankingResult | null>(null);
 
   const selectedTheme = useMemo(
     () => storyThemes.find((theme) => theme.id === selectedThemeId) ?? storyThemes[0],
@@ -40,6 +77,42 @@ export const DashboardPage: React.FC = () => {
     [selectedTheme, selectedMode, selectedAiStory]
   );
   const promptText = buildPrompt(selectedTheme, selectedMode);
+  const isStoryThreeAiView = selectedTheme.id === 'aqi-and-decisions' && selectedMode === 'ai';
+
+  const activeRankingRows = useMemo(() => {
+    if (!rankingResult) {
+      return [] as Array<CityRankingRecord & { label: string }>;
+    }
+
+    const sourceRows =
+      rankingType === 'best'
+        ? rankingResult.best_cities
+        : rankingType === 'worst'
+        ? rankingResult.worst_cities
+        : rankingResult.worst_cities;
+
+    return sourceRows.map((row) => ({
+      ...row,
+      label: `${row.city}, ${row.country}`,
+    }));
+  }, [rankingResult, rankingType]);
+
+  const rankingMixData = useMemo(() => {
+    if (!rankingResult) {
+      return [] as Array<{ name: string; value: number }>;
+    }
+
+    return [
+      {
+        name: 'Worst cities',
+        value: rankingResult.worst_cities.reduce((total, row) => total + row.sample_count, 0),
+      },
+      {
+        name: 'Best cities',
+        value: rankingResult.best_cities.reduce((total, row) => total + row.sample_count, 0),
+      },
+    ];
+  }, [rankingResult]);
 
   const generateAiStory = useCallback(async () => {
     if (selectedTheme.status !== 'ready') {
@@ -87,11 +160,38 @@ export const DashboardPage: React.FC = () => {
     }
   }, [selectedTheme]);
 
+  const generateCityRankings = useCallback(async () => {
+    setRankingLoading(true);
+    setRankingError('');
+
+    try {
+      const response = await storyAPI.generateCityRankings({
+        count: rankingCount,
+        ranking_type: rankingType,
+      });
+
+      if (response.data?.success) {
+        setRankingResult(response.data.data as CityRankingResult);
+      } else {
+        throw new Error(response.data?.error || 'Failed to generate city rankings');
+      }
+    } catch (error: any) {
+      setRankingError(error.response?.data?.error || error.message || 'Failed to generate city rankings');
+      setRankingResult(null);
+    } finally {
+      setRankingLoading(false);
+    }
+  }, [rankingCount, rankingType]);
+
   useEffect(() => {
     if (selectedMode === 'ai' && selectedTheme.status === 'ready' && aiRequested[selectedTheme.id] && !selectedAiStory && !aiLoading) {
       generateAiStory();
     }
   }, [selectedMode, selectedThemeId, selectedTheme.id, selectedTheme.status, selectedAiStory, aiLoading, generateAiStory, aiRequested]);
+
+  useEffect(() => {
+    setRankingError('');
+  }, [selectedThemeId, selectedMode]);
 
   const handleCopyPrompt = async () => {
     try {
@@ -312,6 +412,159 @@ export const DashboardPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
+
+                  {isStoryThreeAiView && (
+                    <div className="mt-6 rounded-2xl border border-sky-200 bg-white p-5">
+                      <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
+                        <div>
+                          <div className="inline-flex items-center gap-2 rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">
+                            <Bot className="h-3.5 w-3.5" />
+                            AI Agent 1
+                          </div>
+                          <h4 className="mt-3 text-xl font-bold text-slate-950">Best and worst cities by AQI</h4>
+                          <p className="mt-2 text-sm text-slate-600">
+                            Enter how many cities to rank, choose worst, best, or both, then generate AI-powered results.
+                          </p>
+                        </div>
+
+                        <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3 lg:w-auto">
+                          <label className="flex flex-col text-sm font-semibold text-slate-700">
+                            City count
+                            <input
+                              type="number"
+                              min={1}
+                              max={25}
+                              value={rankingCount}
+                              onChange={(event) => setRankingCount(Math.min(25, Math.max(1, Number(event.target.value) || 1)))}
+                              className="mt-1 rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                            />
+                          </label>
+
+                          <label className="flex flex-col text-sm font-semibold text-slate-700">
+                            Ranking mode
+                            <select
+                              value={rankingType}
+                              onChange={(event) => setRankingType(event.target.value as 'best' | 'worst' | 'both')}
+                              className="mt-1 rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                            >
+                              <option value="worst">Top worst cities</option>
+                              <option value="best">Top best cities</option>
+                              <option value="both">Worst and best cities</option>
+                            </select>
+                          </label>
+
+                          <button
+                            type="button"
+                            onClick={generateCityRankings}
+                            disabled={rankingLoading}
+                            className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+                          >
+                            <BarChart3 className="h-4 w-4" />
+                            {rankingLoading ? 'Generating...' : 'Run AI Agent 1'}
+                          </button>
+                        </div>
+                      </div>
+
+                      {rankingError && <p className="mt-4 text-sm text-red-600">{rankingError}</p>}
+
+                      {rankingResult && (
+                        <div className="mt-6 space-y-6">
+                          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                            <div className="flex flex-wrap items-center gap-3 text-sm">
+                              <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700 border border-emerald-200">
+                                Provider: {rankingResult.provider || 'Ollama'}
+                              </span>
+                              <span className="rounded-full bg-sky-50 px-3 py-1 font-semibold text-sky-700 border border-sky-200">
+                                Top {rankingResult.count} {rankingResult.ranking_type}
+                              </span>
+                            </div>
+                            <h5 className="mt-3 text-lg font-bold text-slate-950">{rankingResult.headline}</h5>
+                            <p className="mt-2 text-sm text-slate-700">{rankingResult.summary}</p>
+                          </div>
+
+                          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[2fr_1fr]">
+                            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                              <h6 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">
+                                AQI ranking chart
+                              </h6>
+                              <div className="mt-3 h-80 w-full">
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <BarChart data={activeRankingRows} margin={{ top: 8, right: 16, left: 16, bottom: 50 }}>
+                                    <CartesianGrid strokeDasharray="3 3" />
+                                    <XAxis dataKey="city" angle={-25} textAnchor="end" interval={0} height={70} />
+                                    <YAxis />
+                                    <Tooltip
+                                      formatter={(value: number) => [`${value.toFixed(2)} AQI`, 'Average AQI']}
+                                      labelFormatter={(label) => `City: ${label}`}
+                                    />
+                                    <Bar dataKey="avg_aqi" radius={[8, 8, 0, 0]}>
+                                      {activeRankingRows.map((row) => (
+                                        <Cell
+                                          key={row.label}
+                                          fill={rankingType === 'best' ? '#16a34a' : rankingType === 'both' ? '#f97316' : '#dc2626'}
+                                        />
+                                      ))}
+                                    </Bar>
+                                  </BarChart>
+                                </ResponsiveContainer>
+                              </div>
+                            </div>
+
+                            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                              <h6 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">
+                                Sample mix
+                              </h6>
+                              <div className="mt-3 h-72">
+                                <ResponsiveContainer width="100%" height="100%">
+                                  <PieChart>
+                                    <Pie
+                                      data={rankingMixData}
+                                      dataKey="value"
+                                      nameKey="name"
+                                      innerRadius={48}
+                                      outerRadius={82}
+                                      label
+                                    >
+                                      {rankingMixData.map((slice) => (
+                                        <Cell key={slice.name} fill={slice.name === 'Worst cities' ? '#ea580c' : '#0284c7'} />
+                                      ))}
+                                    </Pie>
+                                    <Tooltip />
+                                  </PieChart>
+                                </ResponsiveContainer>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                              <h6 className="text-base font-bold text-slate-900">AI insights</h6>
+                              <ul className="mt-3 space-y-2">
+                                {rankingResult.insights.map((insight) => (
+                                  <li key={insight} className="flex gap-2 text-sm text-slate-700">
+                                    <span className="mt-1 h-2 w-2 rounded-full bg-sky-500" />
+                                    <span>{insight}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+
+                            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                              <h6 className="text-base font-bold text-slate-900">Recommendations</h6>
+                              <ul className="mt-3 space-y-2">
+                                {rankingResult.recommendations.map((item) => (
+                                  <li key={item} className="flex gap-2 text-sm text-slate-700">
+                                    <span className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
+                                    <span>{item}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {selectedTheme.status === 'awaiting-source' && (

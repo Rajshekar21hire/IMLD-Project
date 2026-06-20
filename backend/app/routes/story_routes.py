@@ -3,8 +3,9 @@ import json
 import re
 
 from flask import Blueprint, jsonify, request
+from sqlalchemy import func
 
-from app.models import DataStory
+from app.models import DataStory, AirQualityData
 from app.services.chat_provider_service import ChatProviderService
 from app.services.story_service import StoryService
 
@@ -214,6 +215,137 @@ Source subtopics:
                 'story': parsed,
             }
         }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/city-rankings', methods=['POST'])
+def generate_city_rankings_story():
+    """Generate AI-assisted ranking insights for best/worst cities by AQI."""
+    try:
+        payload = request.get_json() or {}
+        count = payload.get('count', 5)
+        ranking_type = str(payload.get('ranking_type', 'worst')).strip().lower()
+
+        try:
+            count = int(count)
+        except (TypeError, ValueError):
+            return jsonify({'success': False, 'error': 'count must be an integer'}), 400
+
+        if count < 1 or count > 25:
+            return jsonify({'success': False, 'error': 'count must be between 1 and 25'}), 400
+
+        if ranking_type not in {'best', 'worst', 'both'}:
+            return jsonify({'success': False, 'error': "ranking_type must be one of: 'best', 'worst', 'both'"}), 400
+
+        # Aggregate city-level AQI to build a stable ranking baseline.
+        city_stats_query = (
+            AirQualityData.query.with_entities(
+                AirQualityData.country.label('country'),
+                AirQualityData.city.label('city'),
+                func.avg(AirQualityData.aqi).label('avg_aqi'),
+                func.count(AirQualityData.id).label('sample_count'),
+            )
+            .filter(AirQualityData.aqi.isnot(None))
+            .group_by(AirQualityData.country, AirQualityData.city)
+        )
+
+        worst_rows = city_stats_query.order_by(func.avg(AirQualityData.aqi).desc()).limit(count).all()
+        best_rows = city_stats_query.order_by(func.avg(AirQualityData.aqi).asc()).limit(count).all()
+
+        if not worst_rows and not best_rows:
+            return jsonify({'success': False, 'error': 'No AQI records found for ranking.'}), 404
+
+        worst_cities = [
+            {
+                'rank': index + 1,
+                'city': row.city,
+                'country': row.country,
+                'avg_aqi': round(float(row.avg_aqi), 2),
+                'sample_count': int(row.sample_count),
+            }
+            for index, row in enumerate(worst_rows)
+        ]
+        best_cities = [
+            {
+                'rank': index + 1,
+                'city': row.city,
+                'country': row.country,
+                'avg_aqi': round(float(row.avg_aqi), 2),
+                'sample_count': int(row.sample_count),
+            }
+            for index, row in enumerate(best_rows)
+        ]
+
+        ai_prompt = f"""
+You are AI Agent 1 for an air-quality storytelling dashboard.
+Create a short, clear narrative for non-technical users based on city AQI rankings.
+
+User request:
+- ranking_type: {ranking_type}
+- city_count: {count}
+
+Worst cities by average AQI:
+{json.dumps(worst_cities, indent=2)}
+
+Best cities by average AQI:
+{json.dumps(best_cities, indent=2)}
+
+Return valid JSON only with this exact shape:
+{{
+  "headline": "...",
+  "summary": "...",
+  "insights": ["...", "...", "..."],
+  "recommendations": ["...", "..."]
+}}
+
+Rules:
+- Mention at least two specific city names from the requested ranking focus.
+- Keep summary under 90 words.
+- Keep each insight to one sentence.
+- No markdown fences and no extra keys.
+"""
+
+        provider_used = 'fallback'
+        ai_payload = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                ai_prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=500,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            ai_payload = _safe_json_loads(response_text)
+        except Exception:
+            ai_payload = None
+
+        focus_label = 'worst' if ranking_type == 'worst' else 'best' if ranking_type == 'best' else 'worst and best'
+        fallback_headline = f"Top {count} {focus_label} cities by average AQI"
+        fallback_summary = (
+            f"AI Agent 1 analyzed city-level average AQI values and ranked the top {count} {focus_label} cities "
+            f"using available measurements in the dataset."
+        )
+
+        response_payload = {
+            'headline': (ai_payload or {}).get('headline') or fallback_headline,
+            'summary': (ai_payload or {}).get('summary') or fallback_summary,
+            'insights': (ai_payload or {}).get('insights') or [
+                'Higher average AQI indicates consistently worse air conditions over time.',
+                'Lower average AQI cities can be used as practical reference cases for policy and planning.',
+                'Sample count helps interpret confidence in each city ranking result.',
+            ],
+            'recommendations': (ai_payload or {}).get('recommendations') or [
+                'Prioritize interventions in the highest-ranked worst cities first.',
+                'Track ranking changes monthly to measure impact of mitigation strategies.',
+            ],
+            'ranking_type': ranking_type,
+            'count': count,
+            'provider': provider_used,
+            'worst_cities': worst_cities,
+            'best_cities': best_cities,
+        }
+
+        return jsonify({'success': True, 'data': response_payload}), 200
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
