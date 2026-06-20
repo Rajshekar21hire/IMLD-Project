@@ -1,12 +1,14 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { BarChart3, BookOpen, Bot, Copy, Layers, Sparkles } from 'lucide-react';
+import { AlertTriangle, BarChart3, BookOpen, Bot, Copy, Layers, ShieldCheck, Sparkles } from 'lucide-react';
 import {
   Bar,
   BarChart,
   CartesianGrid,
   Cell,
+  Legend,
   Pie,
   PieChart,
+  ReferenceLine,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -19,7 +21,7 @@ interface CityRankingRecord {
   rank: number;
   city: string;
   country: string;
-  avg_aqi: number;
+  avg_pm25: number;
   sample_count: number;
 }
 
@@ -34,6 +36,33 @@ interface CityRankingResult {
   worst_cities: CityRankingRecord[];
   best_cities: CityRankingRecord[];
 }
+
+interface CityDetailsResult {
+  city: string;
+  country: string;
+  sample_count: number;
+  aqi_avg: number | null;
+  geo: {
+    latitude: number | null;
+    longitude: number | null;
+  };
+  pollutant_breakdown?: Array<{
+    key: string;
+    name: string;
+    value: number;
+  }>;
+  top_pollutants: Array<{
+    key: string;
+    name: string;
+    value: number;
+  }>;
+  reasons: string[];
+  problems: string[];
+  precautions: string[];
+  provider: string;
+}
+
+const formatRankingRowLabel = (row: CityRankingRecord) => `${row.city}, ${row.country}`;
 
 const buildPrompt = (theme: StoryTheme, mode: StoryMode) => {
   const sectionTitles = theme.humanSections.length
@@ -53,6 +82,7 @@ const buildPrompt = (theme: StoryTheme, mode: StoryMode) => {
 };
 
 export const DashboardPage: React.FC = () => {
+  const standardPm25Value = 5;
   const [selectedThemeId, setSelectedThemeId] = useState(storyThemes[0].id);
   const [selectedMode, setSelectedMode] = useState<StoryMode>('human');
   const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
@@ -65,6 +95,11 @@ export const DashboardPage: React.FC = () => {
   const [rankingLoading, setRankingLoading] = useState(false);
   const [rankingError, setRankingError] = useState('');
   const [rankingResult, setRankingResult] = useState<CityRankingResult | null>(null);
+  const [selectedCityLabel, setSelectedCityLabel] = useState('');
+  const [selectedCityBucket, setSelectedCityBucket] = useState<'best' | 'worst' | null>(null);
+  const [cityDetails, setCityDetails] = useState<CityDetailsResult | null>(null);
+  const [cityDetailsLoading, setCityDetailsLoading] = useState(false);
+  const [cityDetailsError, setCityDetailsError] = useState('');
 
   const selectedTheme = useMemo(
     () => storyThemes.find((theme) => theme.id === selectedThemeId) ?? storyThemes[0],
@@ -93,9 +128,34 @@ export const DashboardPage: React.FC = () => {
 
     return sourceRows.map((row) => ({
       ...row,
-      label: `${row.city}, ${row.country}`,
+      label: formatRankingRowLabel(row),
+      standard_pm25: standardPm25Value,
     }));
-  }, [rankingResult, rankingType]);
+  }, [rankingResult, rankingType, standardPm25Value]);
+
+  const worstRankingRows = useMemo(() => {
+    if (!rankingResult) {
+      return [] as Array<CityRankingRecord & { label: string; standard_pm25: number }>;
+    }
+
+    return rankingResult.worst_cities.map((row) => ({
+      ...row,
+      label: formatRankingRowLabel(row),
+      standard_pm25: standardPm25Value,
+    }));
+  }, [rankingResult, standardPm25Value]);
+
+  const bestRankingRows = useMemo(() => {
+    if (!rankingResult) {
+      return [] as Array<CityRankingRecord & { label: string; standard_pm25: number }>;
+    }
+
+    return rankingResult.best_cities.map((row) => ({
+      ...row,
+      label: formatRankingRowLabel(row),
+      standard_pm25: standardPm25Value,
+    }));
+  }, [rankingResult, standardPm25Value]);
 
   const rankingMixData = useMemo(() => {
     if (!rankingResult) {
@@ -163,6 +223,10 @@ export const DashboardPage: React.FC = () => {
   const generateCityRankings = useCallback(async () => {
     setRankingLoading(true);
     setRankingError('');
+    setSelectedCityLabel('');
+    setSelectedCityBucket(null);
+    setCityDetails(null);
+    setCityDetailsError('');
 
     try {
       const response = await storyAPI.generateCityRankings({
@@ -183,6 +247,31 @@ export const DashboardPage: React.FC = () => {
     }
   }, [rankingCount, rankingType]);
 
+  const loadCityDetails = useCallback(async (row: CityRankingRecord, bucket: 'best' | 'worst') => {
+    setSelectedCityLabel(formatRankingRowLabel(row));
+    setSelectedCityBucket(bucket);
+    setCityDetailsLoading(true);
+    setCityDetailsError('');
+
+    try {
+      const response = await storyAPI.getCityDetails({
+        city: row.city,
+        country: row.country,
+      });
+
+      if (response.data?.success) {
+        setCityDetails(response.data.data as CityDetailsResult);
+      } else {
+        throw new Error(response.data?.error || 'Failed to load city details');
+      }
+    } catch (error: any) {
+      setCityDetails(null);
+      setCityDetailsError(error.response?.data?.error || error.message || 'Failed to load city details');
+    } finally {
+      setCityDetailsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     if (selectedMode === 'ai' && selectedTheme.status === 'ready' && aiRequested[selectedTheme.id] && !selectedAiStory && !aiLoading) {
       generateAiStory();
@@ -191,6 +280,10 @@ export const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     setRankingError('');
+    setSelectedCityLabel('');
+    setSelectedCityBucket(null);
+    setCityDetails(null);
+    setCityDetailsError('');
   }, [selectedThemeId, selectedMode]);
 
   const handleCopyPrompt = async () => {
@@ -421,7 +514,7 @@ export const DashboardPage: React.FC = () => {
                             <Bot className="h-3.5 w-3.5" />
                             AI Agent 1
                           </div>
-                          <h4 className="mt-3 text-xl font-bold text-slate-950">Best and worst cities by AQI</h4>
+                          <h4 className="mt-3 text-xl font-bold text-slate-950">Best and worst cities by PM2.5</h4>
                           <p className="mt-2 text-sm text-slate-600">
                             Enter how many cities to rank, choose worst, best, or both, then generate AI-powered results.
                           </p>
@@ -485,29 +578,109 @@ export const DashboardPage: React.FC = () => {
                           <div className="grid grid-cols-1 gap-4 xl:grid-cols-[2fr_1fr]">
                             <div className="rounded-2xl border border-slate-200 bg-white p-4">
                               <h6 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">
-                                AQI ranking chart
+                                PM2.5 vs standard comparison
                               </h6>
-                              <div className="mt-3 h-80 w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                  <BarChart data={activeRankingRows} margin={{ top: 8, right: 16, left: 16, bottom: 50 }}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="city" angle={-25} textAnchor="end" interval={0} height={70} />
-                                    <YAxis />
-                                    <Tooltip
-                                      formatter={(value: number) => [`${value.toFixed(2)} AQI`, 'Average AQI']}
-                                      labelFormatter={(label) => `City: ${label}`}
-                                    />
-                                    <Bar dataKey="avg_aqi" radius={[8, 8, 0, 0]}>
-                                      {activeRankingRows.map((row) => (
-                                        <Cell
-                                          key={row.label}
-                                          fill={rankingType === 'best' ? '#16a34a' : rankingType === 'both' ? '#f97316' : '#dc2626'}
+                              {rankingType !== 'both' ? (
+                                <div className="mt-3 h-80 w-full">
+                                  <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={activeRankingRows} margin={{ top: 8, right: 16, left: 16, bottom: 50 }}>
+                                      <CartesianGrid strokeDasharray="3 3" />
+                                      <XAxis dataKey="city" angle={-25} textAnchor="end" interval={0} height={70} />
+                                      <YAxis />
+                                      <ReferenceLine
+                                        y={standardPm25Value}
+                                        stroke="#0f172a"
+                                        strokeDasharray="4 4"
+                                        label={{ value: `Standard PM2.5 ${standardPm25Value}`, position: 'insideTopRight', fill: '#0f172a' }}
+                                      />
+                                      <Tooltip
+                                        formatter={(value: number, name: string) => {
+                                          if (name === 'standard_pm25') {
+                                            return [`${value.toFixed(2)} ug/m3`, 'Standard PM2.5'];
+                                          }
+                                          return [`${value.toFixed(2)} ug/m3`, 'City average PM2.5'];
+                                        }}
+                                        labelFormatter={(label) => `City: ${label}`}
+                                      />
+                                      <Legend
+                                        formatter={(value) => (value === 'avg_pm25' ? 'City average PM2.5' : 'Standard PM2.5')}
+                                      />
+                                      <Bar dataKey="avg_pm25" radius={[8, 8, 0, 0]}>
+                                        {activeRankingRows.map((row) => (
+                                          <Cell
+                                            key={row.label}
+                                            fill={rankingType === 'best' ? '#16a34a' : '#dc2626'}
+                                          />
+                                        ))}
+                                      </Bar>
+                                      <Bar dataKey="standard_pm25" fill="#2563eb" radius={[8, 8, 0, 0]} />
+                                    </BarChart>
+                                  </ResponsiveContainer>
+                                </div>
+                              ) : (
+                                <div className="mt-3 space-y-3">
+                                  <div className="flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+                                    <div className="inline-flex items-center gap-2">
+                                      <span className="h-2.5 w-2.5 rounded-full bg-[#2563eb]" />
+                                      Standard PM2.5
+                                    </div>
+                                    <div className="inline-flex items-center gap-2">
+                                      <span className="h-2.5 w-2.5 rounded-full bg-[#dc2626]" />
+                                      Worst city PM2.5
+                                    </div>
+                                    <div className="inline-flex items-center gap-2">
+                                      <span className="h-2.5 w-2.5 rounded-full bg-[#16a34a]" />
+                                      Best city PM2.5
+                                    </div>
+                                  </div>
+
+                                  <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
+                                  <div className="h-80 w-full rounded-xl border border-red-100 p-2">
+                                    <div className="px-2 text-xs font-semibold uppercase tracking-[0.18em] text-red-700">Worst cities</div>
+                                    <ResponsiveContainer width="100%" height="92%">
+                                      <BarChart data={worstRankingRows} margin={{ top: 8, right: 16, left: 12, bottom: 50 }}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="city" angle={-25} textAnchor="end" interval={0} height={70} />
+                                        <YAxis />
+                                        <ReferenceLine y={standardPm25Value} stroke="#0f172a" strokeDasharray="4 4" />
+                                        <Tooltip
+                                          formatter={(value: number, name: string) => {
+                                            if (name === 'standard_pm25') {
+                                              return [`${value.toFixed(2)} ug/m3`, 'Standard PM2.5'];
+                                            }
+                                            return [`${value.toFixed(2)} ug/m3`, 'Worst city PM2.5'];
+                                          }}
                                         />
-                                      ))}
-                                    </Bar>
-                                  </BarChart>
-                                </ResponsiveContainer>
-                              </div>
+                                        <Bar dataKey="avg_pm25" fill="#dc2626" radius={[8, 8, 0, 0]} />
+                                        <Bar dataKey="standard_pm25" fill="#2563eb" radius={[8, 8, 0, 0]} />
+                                      </BarChart>
+                                    </ResponsiveContainer>
+                                  </div>
+
+                                  <div className="h-80 w-full rounded-xl border border-emerald-100 p-2">
+                                    <div className="px-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Best cities</div>
+                                    <ResponsiveContainer width="100%" height="92%">
+                                      <BarChart data={bestRankingRows} margin={{ top: 8, right: 16, left: 12, bottom: 50 }}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis dataKey="city" angle={-25} textAnchor="end" interval={0} height={70} />
+                                        <YAxis />
+                                        <ReferenceLine y={standardPm25Value} stroke="#0f172a" strokeDasharray="4 4" />
+                                        <Tooltip
+                                          formatter={(value: number, name: string) => {
+                                            if (name === 'standard_pm25') {
+                                              return [`${value.toFixed(2)} ug/m3`, 'Standard PM2.5'];
+                                            }
+                                            return [`${value.toFixed(2)} ug/m3`, 'Best city PM2.5'];
+                                          }}
+                                        />
+                                        <Bar dataKey="avg_pm25" fill="#16a34a" radius={[8, 8, 0, 0]} />
+                                        <Bar dataKey="standard_pm25" fill="#2563eb" radius={[8, 8, 0, 0]} />
+                                      </BarChart>
+                                    </ResponsiveContainer>
+                                  </div>
+                                </div>
+                                </div>
+                              )}
                             </div>
 
                             <div className="rounded-2xl border border-slate-200 bg-white p-4">
@@ -561,6 +734,204 @@ export const DashboardPage: React.FC = () => {
                               </ul>
                             </div>
                           </div>
+
+                          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                            {(rankingType === 'worst' || rankingType === 'both') && (
+                              <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                                <h6 className="text-base font-bold text-slate-900">Worst city ranking details</h6>
+                                <p className="mt-1 text-xs text-slate-500">Click a city row to view detailed city profile.</p>
+                                <div className="mt-3 overflow-x-auto">
+                                  <table className="min-w-full text-sm">
+                                    <thead>
+                                      <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-[0.18em] text-slate-500">
+                                        <th className="px-2 py-2">Rank</th>
+                                        <th className="px-2 py-2">City</th>
+                                        <th className="px-2 py-2">Avg PM2.5</th>
+                                        <th className="px-2 py-2">Samples</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {rankingResult.worst_cities.map((row) => (
+                                        <tr
+                                          key={`worst-${row.rank}-${formatRankingRowLabel(row)}`}
+                                          onClick={() => loadCityDetails(row, 'worst')}
+                                          className={`cursor-pointer border-b border-slate-100 text-slate-700 transition-colors hover:bg-sky-50 ${
+                                            selectedCityLabel === formatRankingRowLabel(row) ? 'bg-sky-50' : ''
+                                          }`}
+                                        >
+                                          <td className="px-2 py-2 font-semibold">#{row.rank}</td>
+                                          <td className="px-2 py-2">{formatRankingRowLabel(row)}</td>
+                                          <td className="px-2 py-2 font-medium text-red-700">{row.avg_pm25.toFixed(2)}</td>
+                                          <td className="px-2 py-2">{row.sample_count}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            )}
+
+                            {(rankingType === 'best' || rankingType === 'both') && (
+                              <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                                <h6 className="text-base font-bold text-slate-900">Best city ranking details</h6>
+                                <p className="mt-1 text-xs text-slate-500">Click a city row to view detailed city profile.</p>
+                                <div className="mt-3 overflow-x-auto">
+                                  <table className="min-w-full text-sm">
+                                    <thead>
+                                      <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-[0.18em] text-slate-500">
+                                        <th className="px-2 py-2">Rank</th>
+                                        <th className="px-2 py-2">City</th>
+                                        <th className="px-2 py-2">Avg PM2.5</th>
+                                        <th className="px-2 py-2">Samples</th>
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {rankingResult.best_cities.map((row) => (
+                                        <tr
+                                          key={`best-${row.rank}-${formatRankingRowLabel(row)}`}
+                                          onClick={() => loadCityDetails(row, 'best')}
+                                          className={`cursor-pointer border-b border-slate-100 text-slate-700 transition-colors hover:bg-sky-50 ${
+                                            selectedCityLabel === formatRankingRowLabel(row) ? 'bg-sky-50' : ''
+                                          }`}
+                                        >
+                                          <td className="px-2 py-2 font-semibold">#{row.rank}</td>
+                                          <td className="px-2 py-2">{formatRankingRowLabel(row)}</td>
+                                          <td className="px-2 py-2 font-medium text-emerald-700">{row.avg_pm25.toFixed(2)}</td>
+                                          <td className="px-2 py-2">{row.sample_count}</td>
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          {(selectedCityLabel || cityDetailsLoading || cityDetails || cityDetailsError) && (
+                            <div className="rounded-2xl border border-slate-200 bg-white p-5">
+                              <div className="flex flex-wrap items-center justify-between gap-3">
+                                <h6 className="text-lg font-bold text-slate-900">
+                                  City details {selectedCityLabel ? `- ${selectedCityLabel}` : ''}
+                                </h6>
+                                {cityDetails?.provider && (
+                                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
+                                    Guidance provider: {cityDetails.provider}
+                                  </span>
+                                )}
+                              </div>
+
+                              {cityDetailsLoading && (
+                                <p className="mt-4 text-sm text-slate-600">Loading city profile...</p>
+                              )}
+
+                              {cityDetailsError && (
+                                <p className="mt-4 text-sm text-red-600">{cityDetailsError}</p>
+                              )}
+
+                              {cityDetails && (
+                                <div className="mt-4 space-y-5">
+                                  {/** Use all pollutants for chart display and keep top list for reasoning logic. */}
+                                  {(() => {
+                                    const chartPollutants = cityDetails.pollutant_breakdown && cityDetails.pollutant_breakdown.length > 0
+                                      ? cityDetails.pollutant_breakdown
+                                      : cityDetails.top_pollutants;
+
+                                    return (
+                                      <>
+                                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                      <div className="text-xs uppercase tracking-[0.16em] text-slate-500">Average AQI</div>
+                                      <div className="mt-1 text-2xl font-bold text-slate-900">
+                                        {cityDetails.aqi_avg !== null ? cityDetails.aqi_avg.toFixed(2) : 'N/A'}
+                                      </div>
+                                    </div>
+                                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                      <div className="text-xs uppercase tracking-[0.16em] text-slate-500">Data samples</div>
+                                      <div className="mt-1 text-2xl font-bold text-slate-900">{cityDetails.sample_count}</div>
+                                    </div>
+                                  </div>
+
+                                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                                    <h6 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">
+                                      All pollutants (top 3 highlighted)
+                                    </h6>
+                                    <div className="mt-3 h-72">
+                                      <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart data={chartPollutants} margin={{ top: 8, right: 20, left: 10, bottom: 24 }}>
+                                          <CartesianGrid strokeDasharray="3 3" />
+                                          <XAxis dataKey="name" />
+                                          <YAxis />
+                                          <Tooltip formatter={(value: number) => [value.toFixed(2), 'Average concentration']} />
+                                          <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                                            {chartPollutants.map((pollutant, index) => (
+                                              <Cell
+                                                key={`${pollutant.key}-${pollutant.value}`}
+                                                fill={index < 3 ? '#0284c7' : '#94a3b8'}
+                                              />
+                                            ))}
+                                          </Bar>
+                                        </BarChart>
+                                      </ResponsiveContainer>
+                                    </div>
+                                  </div>
+
+                                  {selectedCityBucket !== 'best' && (
+                                    <div className="space-y-4">
+                                      <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+                                        <div className="flex items-center gap-2 text-base font-bold text-rose-800">
+                                          <AlertTriangle className="h-4 w-4" />
+                                          Reasons this city is highly polluted
+                                        </div>
+                                        <ul className="mt-3 space-y-2">
+                                          {cityDetails.reasons.map((reason) => (
+                                            <li key={reason} className="flex gap-2 text-sm text-rose-900">
+                                              <span className="mt-1 h-2 w-2 rounded-full bg-rose-500" />
+                                              <span>{reason}</span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+
+                                      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                                      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                                        <div className="flex items-center gap-2 text-base font-bold text-amber-800">
+                                          <AlertTriangle className="h-4 w-4" />
+                                          Possible problems
+                                        </div>
+                                        <ul className="mt-3 space-y-2">
+                                          {cityDetails.problems.map((problem) => (
+                                            <li key={problem} className="flex gap-2 text-sm text-amber-900">
+                                              <span className="mt-1 h-2 w-2 rounded-full bg-amber-500" />
+                                              <span>{problem}</span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+
+                                      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                                        <div className="flex items-center gap-2 text-base font-bold text-emerald-800">
+                                          <ShieldCheck className="h-4 w-4" />
+                                          Precautions
+                                        </div>
+                                        <ul className="mt-3 space-y-2">
+                                          {cityDetails.precautions.map((item) => (
+                                            <li key={item} className="flex gap-2 text-sm text-emerald-900">
+                                              <span className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
+                                              <span>{item}</span>
+                                            </li>
+                                          ))}
+                                        </ul>
+                                      </div>
+                                      </div>
+                                    </div>
+                                  )}
+                                      </>
+                                    );
+                                  })()}
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       )}
                     </div>
