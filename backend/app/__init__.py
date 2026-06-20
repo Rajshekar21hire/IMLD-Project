@@ -150,9 +150,8 @@ def _load_csv_data(app):
 
                     try:
                         last_day = monthrange(year, month)[1]
-                        # Convert old dates to recent dates (use 2026 instead of 2014)
-                        measurement_date = datetime(2026, month, last_day)
-                    except:
+                        measurement_date = datetime(year, month, last_day)
+                    except Exception:
                         measurement_date = datetime.utcnow()
 
                     pm25 = float(row.get('pm25')) if row.get('pm25') and row.get('pm25').strip() else None

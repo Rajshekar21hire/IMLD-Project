@@ -481,6 +481,33 @@ def get_world_aqi():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@bp.route('/yearly-trends', methods=['GET'])
+def get_yearly_trends():
+    """Return yearly pollutant trends (2015-2026 by default)."""
+    try:
+        start_year = int(request.args.get('start_year', 2015))
+        end_year = int(request.args.get('end_year', 2026))
+        country = request.args.get('country')
+
+        data = DataService.get_yearly_pollutant_trends(start_year=start_year, end_year=end_year, country=country)
+        return jsonify({'success': True, 'data': data})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/pm25-gini', methods=['GET'])
+def get_pm25_gini():
+    """Return PM2.5 Gini and intra-country statistics per year."""
+    try:
+        start_year = int(request.args.get('start_year', 2015))
+        end_year = int(request.args.get('end_year', 2026))
+
+        data = DataService.get_pm25_gini_stats(start_year=start_year, end_year=end_year)
+        return jsonify({'success': True, 'data': data})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @bp.route('/sample-data', methods=['POST'])
 def add_sample_data():
     """Load air quality data from CSV file"""
@@ -551,9 +578,9 @@ def add_sample_data():
                         else:
                             month = month_names.index(month_str) + 1 if month_str in month_names else 1
                     try:
-                        last_day = monthrange(2026, month)[1]
-                        measurement_date = datetime(2026, month, last_day)
-                    except:
+                        last_day = monthrange(year, month)[1]
+                        measurement_date = datetime(year, month, last_day)
+                    except Exception:
                         measurement_date = datetime.utcnow()
 
                     # Parse pollution values

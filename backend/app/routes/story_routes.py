@@ -163,9 +163,9 @@ def generate_theme_story():
                     section_brief.append(f"- {section_title}")
 
         prompt = f"""
-You are writing a free-form but structured air-quality storytelling dashboard entry.
-Generate a distinct AI/Olamala story for the same theme and keep the same subtopic structure.
-Do not reuse any sentence from the source text verbatim. Rewrite the story in a fresh voice with different examples, transitions, and phrasing.
+You are writing a creative AI companion story for an air-quality dashboard.
+Each section should include a short paragraph plus a clear data-driven angle that supports an interactive visualization.
+For the pollution-and-health theme, make the output feel engaging and exploratory while remaining accurate.
 
 Return valid JSON only with this exact shape:
 {{
@@ -181,12 +181,12 @@ Return valid JSON only with this exact shape:
 }}
 
 Rules:
-- Keep the story grounded in the provided theme.
-- Use a different voice from the human story.
-- Keep the number of sections aligned with the source subtopics.
-- Make each section readable on the dashboard.
-- Make the content clearly different from the source while preserving the meaning.
-- Keep each section to 2-3 short sentences.
+- Keep the story aligned with the same subtopic structure.
+- Use a creative data narrating style, not a dry report.
+- Include interactive data cues in the paragraph (for example, mention trend lines, toggle lenses, regional comparisons, or inequality breakdowns).
+- Keep the paragraph and body text short, clear, and suitable for dashboard display.
+- Preserve factual accuracy and use concrete evidence where possible.
+- Do not copy the human story wording; use a fresh AI voice.
 - No markdown fences. No extra keys.
 
 Theme title: {title}
@@ -207,6 +207,88 @@ Source subtopics:
 
         if not parsed:
             parsed = _parse_story_from_text(response_text, title, sections)
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'provider': provider_used,
+                'story': parsed,
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/humanize-story', methods=['POST'])
+def humanize_story():
+    """Transform a data-driven AI story into a more narrative, humanized version."""
+    try:
+        data = request.get_json() or {}
+        story = data.get('story') or {}
+        theme = data.get('theme') or {}
+
+        if not story or not theme:
+            return jsonify({'success': False, 'error': 'story and theme are required'}), 400
+
+        title = theme.get('title', 'Untitled')
+        story_title = story.get('title', title)
+        story_summary = story.get('summary', '')
+        sections = story.get('sections') or []
+
+        sections_text = '\n'.join(
+            f"- {s.get('title', '')}: {s.get('body', '')}"
+            for s in sections
+            if isinstance(s, dict)
+        )
+
+        humanize_prompt = f"""
+You are transforming a data-focused analytical story into a more narrative, human-centered version.
+Take the factual content below and rewrite it with:
+- Natural, conversational language
+- Human-centered perspective and context
+- Narrative flow and transitions between ideas
+- Relatable examples and implications
+- Maintained accuracy but enhanced readability
+
+Return valid JSON only with this exact shape:
+{{
+  "title": "...",
+  "summary": "...",
+  "sections": [
+    {{
+      "title": "...",
+      "body": "...",
+      "bullets": ["...", "..."]
+    }}
+  ]
+}}
+
+Rules:
+- Keep all factual content and metrics intact.
+- Use engaging, accessible language.
+- Add context that helps readers understand the "why" behind the data.
+- Maintain the same section structure.
+- Make it feel relevant to human experience and daily life.
+- No markdown fences. No extra keys.
+
+Original data-focused content:
+Title: {story_title}
+Summary: {story_summary}
+
+Sections:
+{sections_text}
+"""
+
+        response_text, provider_used = chat_provider_service.generate_local_answer(
+            humanize_prompt,
+            model=chat_provider_service.story_ollama_model,
+            num_predict=700,
+            timeout_seconds=chat_provider_service.story_timeout_seconds,
+        )
+        parsed = _safe_json_loads(response_text)
+
+        if not parsed:
+            parsed = _parse_story_from_text(response_text, story_title, sections)
 
         return jsonify({
             'success': True,
