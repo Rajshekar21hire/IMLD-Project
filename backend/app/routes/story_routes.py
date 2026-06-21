@@ -150,6 +150,7 @@ def generate_theme_story():
         theme = data.get('theme') or {}
 
         title = theme.get('title', 'Untitled theme')
+        theme_id = str(theme.get('id', '')).strip()
         overview = theme.get('overview', '')
         prompt_focus = theme.get('promptFocus', '')
         sections = theme.get('sections') or []
@@ -160,12 +161,76 @@ def generate_theme_story():
                 section_title = str(section.get('title', '')).strip()
                 section_body = str(section.get('body', '')).strip()
                 if section_title:
-                    section_brief.append(f"- {section_title}")
+                    section_lines = [f"- {section_title}"]
+                    if section_body:
+                        section_lines.append(f"  Body: {section_body}")
+
+                    bullets = section.get('bullets') or []
+                    if bullets:
+                        section_lines.append('  Bullets:')
+                        for bullet in bullets:
+                            section_lines.append(f"    - {str(bullet).strip()}")
+
+                    category_blocks = section.get('categoryBlocks') or []
+                    if category_blocks:
+                        section_lines.append('  Categories:')
+                        for block in category_blocks:
+                            if not isinstance(block, dict):
+                                continue
+                            block_label = str(block.get('label', '')).strip()
+                            if block_label:
+                                section_lines.append(f"    - {block_label}")
+                            cards = block.get('cards') or []
+                            for card in cards:
+                                if not isinstance(card, dict):
+                                    continue
+                                card_title = str(card.get('title', '')).strip()
+                                card_body = str(card.get('body', '')).strip()
+                                card_footer = str(card.get('footer', '')).strip()
+                                if card_title:
+                                    section_lines.append(f"      * {card_title}")
+                                if card_body:
+                                    section_lines.append(f"        Body: {card_body}")
+                                if card_footer:
+                                    section_lines.append(f"        Footer: {card_footer}")
+
+                    section_brief.append('\n'.join(section_lines))
+
+        expected_sections = len(sections)
+
+        story_four_subtopic_two_prompt = ""
+        story_four_subtopic_three_prompt = ""
+        if theme_id == 'measurement-and-governance':
+            story_four_subtopic_two_prompt = """
+
+    Additional direction for Subtopic 2 (Human Element: Voices Behind the Data):
+    - Build this section around three featured voices: Rosamund (Ella Roberta Foundation), Nitisha Agrawal (Smokeless Cookstove Foundation), and Nomundari Urantulga (Climate Activist).
+    - Write as an interactive card-style narrative: highlighted quote, short story preview, then expanded narrative.
+    - For each voice, explicitly include: issue, outcome, affected population, pollutant involved, health consequence, and action taken.
+    - Include a mini timeline in prose for each voice: Exposure -> Health Impact -> Personal Response -> Community Action -> Wider Change.
+    - Add a short "Why this story matters" link-back to measurable air-quality outcomes and public-health evidence.
+    - Close the section with this reflection in your own words: air pollution is measured in particles and gases, but experienced through people.
+    - Keep tone modern, emotionally grounded, and data storytelling focused.
+    """
+
+            story_four_subtopic_three_prompt = """
+
+Additional direction for Subtopic 3 (Future Outcomes and Pathways to Progress):
+- Replace simple bullet listing with an outcome-focused policy narrative using measurable results and implementation pathways.
+- Include evidence-backed examples inspired by WHO, UNEP, EEA, World Bank, OECD, and peer-reviewed air-quality studies.
+- Cover policy types such as: low-emission zones, congestion pricing, electrified public transport, industrial controls, coal phase-out, renewable expansion, clean cooking, agricultural alternatives, smart AQ monitoring, AI forecasting, carbon pricing, and urban greening.
+- Present headline outcomes in card-like language with: metric, short explanation, real-world example, and implementation timeline.
+- Include additional impacts where possible: reduced childhood asthma, increased life expectancy, lower healthcare costs, reduced cardiovascular disease, improved productivity, cleaner transport, reduced heat stress, and fewer pollution emergency days.
+- Write so the section can support interactive filtering by Health, Economy, Environment, and Technology.
+- Add concise expandable case-study style content for: China PM2.5 program, London ULEZ, Shenzhen electric buses, Copenhagen cycling, California regulations, and Singapore emissions management.
+- End with a future-facing vision in prose for "What clean air looks like in 2035" touching public health, urban air quality, life expectancy, healthcare savings, and environmental sustainability.
+"""
 
         prompt = f"""
 You are writing a creative AI companion story for an air-quality dashboard.
+Transform the structured source material into a natural-language story with clear narrative flow, data storytelling, and interactive cues.
 Each section should include a short paragraph plus a clear data-driven angle that supports an interactive visualization.
-For the pollution-and-health theme, make the output feel engaging and exploratory while remaining accurate.
+If the source data includes tables, category blocks, or quotes, translate them into readable story sections while keeping the meaning intact.
 
 Return valid JSON only with this exact shape:
 {{
@@ -182,16 +247,20 @@ Return valid JSON only with this exact shape:
 
 Rules:
 - Keep the story aligned with the same subtopic structure.
+- Return exactly {expected_sections} sections.
 - Use a creative data narrating style, not a dry report.
 - Include interactive data cues in the paragraph (for example, mention trend lines, toggle lenses, regional comparisons, or inequality breakdowns).
 - Keep the paragraph and body text short, clear, and suitable for dashboard display.
 - Preserve factual accuracy and use concrete evidence where possible.
 - Do not copy the human story wording; use a fresh AI voice.
+- Prefer a data storytelling structure that feels visually interactive when rendered in cards or tables.
 - No markdown fences. No extra keys.
 
 Theme title: {title}
 Theme overview: {overview}
 Prompt focus: {prompt_focus}
+{story_four_subtopic_two_prompt}
+{story_four_subtopic_three_prompt}
 
 Source subtopics:
 {chr(10).join(section_brief)}
