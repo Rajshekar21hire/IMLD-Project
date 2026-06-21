@@ -34,11 +34,13 @@ export const dataAPI = {
   generateAnalyticsSummary: (payload: any) => analyticsSummaryApiClient.post('/data/summary', payload),
   getLiveReadings: (params: any) => apiClient.get('/data/live', { params }),
   addSampleData: () => apiClient.post('/data/sample-data'),
+  getYearlyTrends: (params?: any) => apiClient.get('/data/yearly-trends', { params }),
 };
 
 export const storyAPI = {
   generateStory: (data: any) => apiClient.post('/stories/generate', data),
   generateThemeStory: (data: any) => storyApiClient.post('/stories/theme-story', data),
+  humanizeStory: (data: any) => storyApiClient.post('/stories/humanize-story', data),
   generateCityRankings: (data: any) => storyApiClient.post('/stories/city-rankings', data),
   getCityDetails: (data: any) => storyApiClient.post('/stories/city-details', data),
   getStory: (storyId: number) => apiClient.get(`/stories/${storyId}`),

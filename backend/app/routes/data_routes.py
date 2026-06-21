@@ -481,6 +481,83 @@ def get_world_aqi():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@bp.route('/cities-aqi', methods=['GET'])
+def get_cities_aqi():
+    """Get average AQI per city with latitude/longitude for map markers."""
+    try:
+        from sqlalchemy import func
+
+        def _aqi_category(aqi):
+            if aqi is None: return 'Unknown'
+            if aqi <= 50: return 'Good'
+            if aqi <= 100: return 'Moderate'
+            if aqi <= 150: return 'Unhealthy for Sensitive Groups'
+            if aqi <= 200: return 'Unhealthy'
+            if aqi <= 300: return 'Very Unhealthy'
+            return 'Hazardous'
+
+        results = (
+            db.session.query(
+                AirQualityData.city,
+                AirQualityData.country,
+                AirQualityData.latitude,
+                AirQualityData.longitude,
+                func.avg(AirQualityData.aqi).label('avg_aqi'),
+                func.count(AirQualityData.id).label('record_count'),
+            )
+            .filter(AirQualityData.aqi.isnot(None))
+            .filter(AirQualityData.latitude.isnot(None))
+            .filter(AirQualityData.longitude.isnot(None))
+            .group_by(AirQualityData.city, AirQualityData.country, AirQualityData.latitude, AirQualityData.longitude)
+            .all()
+        )
+
+        data = [
+            {
+                'city': row.city,
+                'country': row.country,
+                'latitude': row.latitude,
+                'longitude': row.longitude,
+                'avg_aqi': round(row.avg_aqi, 1),
+                'record_count': row.record_count,
+                'aqi_category': _aqi_category(row.avg_aqi),
+            }
+            for row in results
+            if row.city and row.country
+        ]
+
+        return jsonify({'success': True, 'data': data, 'count': len(data)})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/yearly-trends', methods=['GET'])
+def get_yearly_trends():
+    """Return yearly pollutant trends (2015-2026 by default)."""
+    try:
+        start_year = int(request.args.get('start_year', 2015))
+        end_year = int(request.args.get('end_year', 2026))
+        country = request.args.get('country')
+
+        data = DataService.get_yearly_pollutant_trends(start_year=start_year, end_year=end_year, country=country)
+        return jsonify({'success': True, 'data': data})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/pm25-gini', methods=['GET'])
+def get_pm25_gini():
+    """Return PM2.5 Gini and intra-country statistics per year."""
+    try:
+        start_year = int(request.args.get('start_year', 2015))
+        end_year = int(request.args.get('end_year', 2026))
+
+        data = DataService.get_pm25_gini_stats(start_year=start_year, end_year=end_year)
+        return jsonify({'success': True, 'data': data})
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 @bp.route('/sample-data', methods=['POST'])
 def add_sample_data():
     """Load air quality data from CSV file"""
@@ -551,9 +628,9 @@ def add_sample_data():
                         else:
                             month = month_names.index(month_str) + 1 if month_str in month_names else 1
                     try:
-                        last_day = monthrange(2026, month)[1]
-                        measurement_date = datetime(2026, month, last_day)
-                    except:
+                        last_day = monthrange(year, month)[1]
+                        measurement_date = datetime(year, month, last_day)
+                    except Exception:
                         measurement_date = datetime.utcnow()
 
                     # Parse pollution values

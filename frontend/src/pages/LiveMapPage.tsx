@@ -77,6 +77,16 @@ interface CountryAQI {
   aqi_category: string;
 }
 
+interface CityAQI {
+  city: string;
+  country: string;
+  latitude: number;
+  longitude: number;
+  avg_aqi: number;
+  record_count: number;
+  aqi_category: string;
+}
+
 interface Position {
   coordinates: [number, number];
   zoom: number;
@@ -128,23 +138,31 @@ const DEFAULT_POSITION: Position = { coordinates: [10, 20], zoom: 1 };
 
 export function LiveMapPage() {
   const [countryMap, setCountryMap] = useState<Map<string, CountryAQI>>(new Map());
+  const [citiesData, setCitiesData] = useState<CityAQI[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [position, setPosition] = useState<Position>(DEFAULT_POSITION);
+  const [showCityMarkers, setShowCityMarkers] = useState(false);
   const [tooltip, setTooltip] = useState<TooltipState>({
     visible: false, x: 0, y: 0, country: '', aqi: null, category: '', records: 0,
   });
 
   useEffect(() => {
-    apiClient.get('/data/world-aqi')
-      .then(res => {
-        if (res.data.success) {
-          setCountryMap(buildLookup(res.data.data));
+    Promise.all([
+      apiClient.get('/data/world-aqi'),
+      apiClient.get('/data/cities-aqi'),
+    ])
+      .then(([countryRes, citiesRes]) => {
+        if (countryRes.data.success) {
+          setCountryMap(buildLookup(countryRes.data.data));
         } else {
           setError('No AQI data returned from server');
         }
+        if (citiesRes.data.success) {
+          setCitiesData(citiesRes.data.data);
+        }
       })
-      .catch(() => setError('Could not load world AQI data — is the backend running?'))
+      .catch(() => setError('Could not load AQI data — is the backend running?'))
       .finally(() => setLoading(false));
   }, []);
 
@@ -222,6 +240,13 @@ export function LiveMapPage() {
               onClick={() => setPosition(DEFAULT_POSITION)}
               title="Reset view"
             />
+            <button
+              onClick={() => setShowCityMarkers(!showCityMarkers)}
+              className={showCityMarkers ? 'p-2 rounded-lg transition bg-blue-600 hover:bg-blue-500 text-white shadow-lg' : 'p-2 rounded-lg transition bg-slate-700 hover:bg-slate-600 text-white shadow-lg'}
+              title={showCityMarkers ? 'Hide city markers' : 'Show city markers'}
+            >
+              <span className="text-xs font-bold">Cities</span>
+            </button>
           </div>
 
           <ComposableMap
@@ -249,37 +274,59 @@ export function LiveMapPage() {
                           geography={geo}
                           fill={fill}
                           stroke={BORDER_COLOR}
-                          strokeWidth={0.4}
+                          strokeWidth={0.75}
                           style={{
-                            default: { outline: 'none' },
-                            hover: {
-                              fill,
-                              filter: 'brightness(1.5)',
-                              outline: 'none',
-                              cursor: 'pointer',
-                            },
-                            pressed: { outline: 'none' },
+                            default: { fill, stroke: BORDER_COLOR, strokeWidth: 0.75, outline: 'none', cursor: 'pointer' },
+                            hover: { fill: aqiColor(match?.avg_aqi ?? null), stroke: BORDER_COLOR, strokeWidth: 0.75, outline: 'none', cursor: 'pointer', filter: 'brightness(1.3)' },
+                            pressed: { fill, stroke: BORDER_COLOR, strokeWidth: 0.75, outline: 'none' },
                           }}
-                          onMouseEnter={evt => {
-                            setTooltip({
-                              visible: true,
-                              x: evt.clientX,
-                              y: evt.clientY,
-                              country: geo.properties.name,
-                              aqi: match?.avg_aqi ?? null,
-                              category: match?.aqi_category ?? 'No data',
-                              records: match?.record_count ?? 0,
-                            });
+                          onMouseEnter={e => {
+                            if (match) {
+                              const { clientX, clientY } = e;
+                              setTooltip({
+                                visible: true,
+                                x: clientX,
+                                y: clientY,
+                                country: match.country,
+                                aqi: match.avg_aqi,
+                                category: match.aqi_category,
+                                records: match.record_count,
+                              });
+                            }
                           }}
-                          onMouseMove={evt => {
-                            setTooltip(prev => ({ ...prev, x: evt.clientX, y: evt.clientY }));
-                          }}
-                          onMouseLeave={() => setTooltip(prev => ({ ...prev, visible: false }))}
+                          onMouseLeave={() => setTooltip({ ...tooltip, visible: false })}
                         />
                       );
                     })
                 }
               </Geographies>
+
+              {showCityMarkers && citiesData.map(city => (
+                <circle
+                  key={`${city.city}-${city.country}`}
+                  cx={city.longitude}
+                  cy={city.latitude}
+                  r={3}
+                  fill={aqiColor(city.avg_aqi)}
+                  stroke="white"
+                  strokeWidth={0.5}
+                  opacity={0.8}
+                  style={{ cursor: 'pointer' }}
+                  onMouseEnter={e => {
+                    const { clientX, clientY } = e;
+                    setTooltip({
+                      visible: true,
+                      x: clientX,
+                      y: clientY,
+                      country: `${city.city}, ${city.country}`,
+                      aqi: city.avg_aqi,
+                      category: city.aqi_category,
+                      records: city.record_count,
+                    });
+                  }}
+                  onMouseLeave={() => setTooltip({ ...tooltip, visible: false })}
+               />
+             ))}
             </ZoomableGroup>
           </ComposableMap>
         </div>

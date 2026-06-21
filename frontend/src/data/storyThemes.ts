@@ -5,6 +5,10 @@ export interface StorySection {
   body: string;
   bullets?: string[];
   label?: string;
+  chart?: {
+    type: 'line' | 'bar';
+    dataSourceKey: string;
+  };
 }
 
 export interface StoryTheme {
@@ -123,15 +127,52 @@ export const storyThemes: StoryTheme[] = [
   {
     id: 'pollution-and-health',
     badge: 'Story 2',
-    title: 'What We Breathe: Pollutants, Exposure, and Health',
-    shortDescription: 'Awaiting source story content.',
+    title: 'The Unequal Burden of Air Pollution - Who Breathes the Cleanest Air?',
+    shortDescription: 'Explores geographic inequality in exposure and trends over time.',
     overview:
-      'This theme is reserved for the next story you send. Once you provide the source text, it will be split into subtopics and matched with an AI/Ollama version.',
+      'This story examines global disparities in air pollution exposure, trends since 2015, and the drivers of inequality.',
     promptFocus:
-      'Write a human-readable story about air pollutants, their sources, exposure pathways, health effects, and why vulnerable groups need extra protection.',
-    status: 'awaiting-source',
-    humanSections: [],
-    aiSections: [],
+      'Describe how pollution exposure varies geographically, how trends changed since 2015, and how geography and exposure-level lenses reveal global air quality inequality.',
+    status: 'ready',
+    humanSections: [
+      {
+        title: 'Global Snapshot: Air Quality',
+        label: 'live-map',
+        body:
+          'Air quality is not just a scientific metrics, it’s a story of justice, inequality, and resilience. While some regions are improving, others face worsening pollution, often impacting the most vulnerable populations. The interactable map displays the current PM2.5 and other pollutant values all over the world.',
+      },
+      {
+        title: 'Trends Overtime - Which Regions Are Improving vs. Worsening Since 2015?',
+        chart: {
+          type: 'line',
+          dataSourceKey: 'pollutantTrends',
+        },
+        body:
+          'Since 2015, Air quality trends have changed sharply across regions — driven by policy, urbanization, energy transitions, and economic development. While some regions are making real progress, others are facing worsening air pollution, often due to rapid industrialization and weak regulation.',
+      },
+      {
+        title: 'Inequality lens - geography vs exposure levels',
+        body:
+          'Between 2015 and 2026, global air quality inequality was shaped by both geography and local exposure. The biggest gaps came from between-country differences, while income and neighborhood siting within countries drove the worst local exposures. High-exposure zones are concentrated in Central & South Asia and Sub-Saharan Africa, while lower-exposure zones include Iceland, Australia, Estonia, and New Zealand. Within countries, the highest exposure is found in low-income and minority neighborhoods near roads and industry, versus high-income majority-suburban or rural areas.',
+      },
+    ],
+    aiSections: [
+      {
+        title: 'Global Snapshot: Air Quality (AI)',
+        body:
+          'From a systems perspective, the map makes visible how pollution ties into economic patterns, policy choices, and population vulnerability. The interactive map highlights PM2.5 hotspots alongside other pollutant layers to help identify where exposure and risk align.',
+      },
+      {
+        title: 'Trends Overtime (AI)',
+        body:
+          'AI analysis highlights which regions show consistent improvement and which show persistent or worsening trends since 2015. Use the yearly pollutant trends to compare regions and verify the narrative.',
+      },
+      {
+        title: 'Inequality lens (AI)',
+        body:
+          'Looking through two lenses—geography and exposure level—shows that most of the global gap in air quality comes from differences between countries, while within-country exposure remains highest for low-income and minority communities near pollution sources. Both perspectives are needed to understand and address unequal clean-air access.',
+      },
+    ],
   },
   {
     id: 'aqi-and-decisions',
