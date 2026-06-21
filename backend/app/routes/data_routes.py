@@ -491,7 +491,7 @@ def add_sample_data():
         from calendar import monthrange
 
         # Path to CSV file
-        csv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'data', 'waqi-airquality-master-dataset.csv')
+        csv_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'data', 'waqi-airquality-master-dataset.csv')
 
         if not os.path.exists(csv_path):
             return jsonify({'success': False, 'error': 'CSV file not found'}), 404
