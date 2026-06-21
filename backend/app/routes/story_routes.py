@@ -221,7 +221,7 @@ Source subtopics:
 
 @bp.route('/city-rankings', methods=['POST'])
 def generate_city_rankings_story():
-    """Generate AI-assisted ranking insights for best/worst cities by AQI."""
+    """Generate AI-assisted ranking insights for best/worst cities by PM2.5."""
     try:
         payload = request.get_json() or {}
         count = payload.get('count', 5)
@@ -238,30 +238,30 @@ def generate_city_rankings_story():
         if ranking_type not in {'best', 'worst', 'both'}:
             return jsonify({'success': False, 'error': "ranking_type must be one of: 'best', 'worst', 'both'"}), 400
 
-        # Aggregate city-level AQI to build a stable ranking baseline.
+        # Aggregate city-level PM2.5 to build ranking baseline.
         city_stats_query = (
             AirQualityData.query.with_entities(
                 AirQualityData.country.label('country'),
                 AirQualityData.city.label('city'),
-                func.avg(AirQualityData.aqi).label('avg_aqi'),
+                func.avg(AirQualityData.pm25).label('avg_pm25'),
                 func.count(AirQualityData.id).label('sample_count'),
             )
-            .filter(AirQualityData.aqi.isnot(None))
+            .filter(AirQualityData.pm25.isnot(None))
             .group_by(AirQualityData.country, AirQualityData.city)
         )
 
-        worst_rows = city_stats_query.order_by(func.avg(AirQualityData.aqi).desc()).limit(count).all()
-        best_rows = city_stats_query.order_by(func.avg(AirQualityData.aqi).asc()).limit(count).all()
+        worst_rows = city_stats_query.order_by(func.avg(AirQualityData.pm25).desc()).limit(count).all()
+        best_rows = city_stats_query.order_by(func.avg(AirQualityData.pm25).asc()).limit(count).all()
 
         if not worst_rows and not best_rows:
-            return jsonify({'success': False, 'error': 'No AQI records found for ranking.'}), 404
+            return jsonify({'success': False, 'error': 'No PM2.5 records found for ranking.'}), 404
 
         worst_cities = [
             {
                 'rank': index + 1,
                 'city': row.city,
                 'country': row.country,
-                'avg_aqi': round(float(row.avg_aqi), 2),
+                'avg_pm25': round(float(row.avg_pm25), 2),
                 'sample_count': int(row.sample_count),
             }
             for index, row in enumerate(worst_rows)
@@ -271,7 +271,7 @@ def generate_city_rankings_story():
                 'rank': index + 1,
                 'city': row.city,
                 'country': row.country,
-                'avg_aqi': round(float(row.avg_aqi), 2),
+                'avg_pm25': round(float(row.avg_pm25), 2),
                 'sample_count': int(row.sample_count),
             }
             for index, row in enumerate(best_rows)
@@ -279,16 +279,16 @@ def generate_city_rankings_story():
 
         ai_prompt = f"""
 You are AI Agent 1 for an air-quality storytelling dashboard.
-Create a short, clear narrative for non-technical users based on city AQI rankings.
+Create a short, clear narrative for non-technical users based on city PM2.5 rankings.
 
 User request:
 - ranking_type: {ranking_type}
 - city_count: {count}
 
-Worst cities by average AQI:
+Worst cities by average PM2.5:
 {json.dumps(worst_cities, indent=2)}
 
-Best cities by average AQI:
+Best cities by average PM2.5:
 {json.dumps(best_cities, indent=2)}
 
 Return valid JSON only with this exact shape:
@@ -320,9 +320,9 @@ Rules:
             ai_payload = None
 
         focus_label = 'worst' if ranking_type == 'worst' else 'best' if ranking_type == 'best' else 'worst and best'
-        fallback_headline = f"Top {count} {focus_label} cities by average AQI"
+        fallback_headline = f"Top {count} {focus_label} cities by average PM2.5"
         fallback_summary = (
-            f"AI Agent 1 analyzed city-level average AQI values and ranked the top {count} {focus_label} cities "
+            f"AI Agent 1 analyzed city-level average PM2.5 values and ranked the top {count} {focus_label} cities "
             f"using available measurements in the dataset."
         )
 
@@ -330,8 +330,8 @@ Rules:
             'headline': (ai_payload or {}).get('headline') or fallback_headline,
             'summary': (ai_payload or {}).get('summary') or fallback_summary,
             'insights': (ai_payload or {}).get('insights') or [
-                'Higher average AQI indicates consistently worse air conditions over time.',
-                'Lower average AQI cities can be used as practical reference cases for policy and planning.',
+                'Higher average PM2.5 indicates persistently elevated fine particulate exposure.',
+                'Lower average PM2.5 cities can be used as practical reference cases for policy and planning.',
                 'Sample count helps interpret confidence in each city ranking result.',
             ],
             'recommendations': (ai_payload or {}).get('recommendations') or [
@@ -348,6 +348,170 @@ Rules:
         return jsonify({'success': True, 'data': response_payload}), 200
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/city-details', methods=['POST'])
+def get_city_details():
+    """Return detailed information for a selected city in the ranking list."""
+    try:
+        payload = request.get_json() or {}
+        city = str(payload.get('city', '')).strip()
+        country = str(payload.get('country', '')).strip()
+
+        if not city:
+            return jsonify({'success': False, 'error': 'city is required'}), 400
+
+        city_query = AirQualityData.query.filter(AirQualityData.city == city)
+        if country:
+            city_query = city_query.filter(AirQualityData.country == country)
+
+        records = city_query.all()
+        if not records:
+            return jsonify({'success': False, 'error': 'No records found for selected city'}), 404
+
+        avg_stats = city_query.with_entities(
+            func.avg(AirQualityData.aqi).label('aqi_avg'),
+            func.avg(AirQualityData.latitude).label('latitude'),
+            func.avg(AirQualityData.longitude).label('longitude'),
+            func.avg(AirQualityData.pm25).label('pm25'),
+            func.avg(AirQualityData.pm10).label('pm10'),
+            func.avg(AirQualityData.o3).label('o3'),
+            func.avg(AirQualityData.no2).label('no2'),
+            func.avg(AirQualityData.so2).label('so2'),
+            func.avg(AirQualityData.co).label('co'),
+        ).first()
+
+        pollutant_labels = {
+            'pm25': 'PM2.5',
+            'pm10': 'PM10',
+            'o3': 'O3',
+            'no2': 'NO2',
+            'so2': 'SO2',
+            'co': 'CO',
+        }
+
+        pollutant_values = {
+            'pm25': float(avg_stats.pm25) if avg_stats.pm25 is not None else None,
+            'pm10': float(avg_stats.pm10) if avg_stats.pm10 is not None else None,
+            'o3': float(avg_stats.o3) if avg_stats.o3 is not None else None,
+            'no2': float(avg_stats.no2) if avg_stats.no2 is not None else None,
+            'so2': float(avg_stats.so2) if avg_stats.so2 is not None else None,
+            'co': float(avg_stats.co) if avg_stats.co is not None else None,
+        }
+
+        pollutant_breakdown = [
+            {
+                'key': key,
+                'name': pollutant_labels[key],
+                'value': round(value, 2),
+            }
+            for key, value in pollutant_values.items()
+            if value is not None
+        ]
+        pollutant_breakdown.sort(key=lambda item: item['value'], reverse=True)
+        top_pollutants = pollutant_breakdown[:3]
+
+        ai_prompt = f"""
+You are AI Agent 1 for an air-quality dashboard.
+Given the city pollutant profile, return likely problems and practical precautions.
+
+City: {city}
+Country: {country or 'Unknown'}
+Average AQI: {round(float(avg_stats.aqi_avg), 2) if avg_stats.aqi_avg is not None else 'Unknown'}
+Top pollutants: {json.dumps(top_pollutants, indent=2)}
+
+Return valid JSON only:
+{{
+    "reasons": ["...", "...", "..."],
+  "problems": ["...", "...", "..."],
+  "precautions": ["...", "...", "..."]
+}}
+
+Rules:
+- Keep each item short and action-oriented.
+- No markdown fences.
+- No extra keys.
+"""
+
+        provider_used = 'fallback'
+        ai_payload = None
+        city_details_timeout_seconds = min(chat_provider_service.story_timeout_seconds, 20)
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                ai_prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=400,
+                timeout_seconds=city_details_timeout_seconds,
+            )
+            ai_payload = _safe_json_loads(response_text)
+        except Exception:
+            ai_payload = None
+
+        fallback_problems, fallback_precautions = _fallback_city_guidance(top_pollutants)
+        fallback_reasons = _fallback_city_reasons(city, top_pollutants)
+
+        response_payload = {
+            'city': city,
+            'country': country or records[0].country,
+            'sample_count': len(records),
+            'aqi_avg': round(float(avg_stats.aqi_avg), 2) if avg_stats.aqi_avg is not None else None,
+            'geo': {
+                'latitude': round(float(avg_stats.latitude), 4) if avg_stats.latitude is not None else None,
+                'longitude': round(float(avg_stats.longitude), 4) if avg_stats.longitude is not None else None,
+            },
+            'pollutant_breakdown': pollutant_breakdown,
+            'top_pollutants': top_pollutants,
+            'reasons': (ai_payload or {}).get('reasons') or fallback_reasons,
+            'problems': (ai_payload or {}).get('problems') or fallback_problems,
+            'precautions': (ai_payload or {}).get('precautions') or fallback_precautions,
+            'provider': provider_used,
+        }
+
+        return jsonify({'success': True, 'data': response_payload}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+def _fallback_city_guidance(top_pollutants):
+    """Fallback problems and precautions when model output is unavailable."""
+    if not top_pollutants:
+        return (
+            [
+                'Limited pollutant measurements reduce confidence in risk profiling.',
+                'Episodes of poor air quality may still occur without detailed pollutant attribution.',
+                'Sensitive groups can still face respiratory discomfort during AQI spikes.',
+            ],
+            [
+                'Monitor local AQI daily and reduce exposure during higher-value periods.',
+                'Use indoor ventilation and filtration strategies during poor air episodes.',
+                'Protect sensitive groups with reduced outdoor exertion on high-pollution days.',
+            ],
+        )
+
+    dominant = [item['name'] for item in top_pollutants]
+    problems = [
+        f"Elevated {dominant[0]} may increase respiratory stress and irritation.",
+        'Sustained pollutant exposure can worsen outcomes for children, older adults, and asthma patients.',
+        'Higher pollution periods can reduce outdoor activity safety and quality of life.',
+    ]
+    precautions = [
+        'Plan outdoor activities for lower AQI periods and avoid heavy exertion during peaks.',
+        'Use masks and indoor air filtration when pollution levels rise.',
+        'Support local traffic and emission reduction actions to lower long-term exposure.',
+    ]
+    return problems, precautions
+
+
+def _fallback_city_reasons(city_name, top_pollutants):
+    """Fallback city-specific reasons for elevated pollution when AI output is unavailable."""
+    city_tag = city_name or 'this city'
+    dominant_pollutant = top_pollutants[0]['name'] if top_pollutants else 'PM2.5'
+
+    return [
+        f"{city_tag} shows persistent {dominant_pollutant} concentration, suggesting continuous local emission pressure.",
+        f"Traffic density and fuel combustion likely contribute to day-to-day pollution accumulation in {city_tag}.",
+        f"Weather and seasonal conditions can trap pollutants over {city_tag}, increasing multi-day exposure levels.",
+    ]
 
 
 def _parse_story_from_text(response_text, fallback_title, source_sections):
