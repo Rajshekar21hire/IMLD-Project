@@ -26,8 +26,10 @@ The app supports three AI backends. **Ollama is the default** — it runs locall
 ## Prerequisites
 
 - Python 3.8+
-- Node.js 16+ and npm
+- Node.js 18 or 20 LTS and npm
 - [Ollama](https://ollama.com/) (for the default local AI — no API key needed)
+
+> Note: `react-scripts` 5 in this project is not stable on Node 22/24. Use Node 18/20 LTS for frontend development.
 
 ## Quick Start
 
@@ -189,6 +191,16 @@ taskkill /PID <pid> /F
 ```bash
 npm cache clean --force
 npm install
+```
+
+**Frontend crashes with out-of-memory or `RpcIpcMessagePortClosedError`**
+```bash
+# 1) Use Node 18 or 20 LTS (recommended)
+node -v
+
+# 2) Start frontend with project defaults
+cd frontend
+npm start
 ```
 
 ## Tech Stack

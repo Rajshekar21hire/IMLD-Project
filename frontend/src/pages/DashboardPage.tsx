@@ -7,8 +7,6 @@ import {
   CartesianGrid,
   Cell,
   Legend,
-  Pie,
-  PieChart,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -231,23 +229,6 @@ export const DashboardPage: React.FC = () => {
       standard_pm25: standardPm25Value,
     }));
   }, [rankingResult, standardPm25Value]);
-
-  const rankingMixData = useMemo(() => {
-    if (!rankingResult) {
-      return [] as Array<{ name: string; value: number }>;
-    }
-
-    return [
-      {
-        name: 'Worst cities',
-        value: rankingResult.worst_cities.reduce((total, row) => total + row.sample_count, 0),
-      },
-      {
-        name: 'Best cities',
-        value: rankingResult.best_cities.reduce((total, row) => total + row.sample_count, 0),
-      },
-    ];
-  }, [rankingResult]);
 
   const generateAiStory = useCallback(async () => {
     if (selectedTheme.status !== 'ready') {
@@ -983,23 +964,29 @@ export const DashboardPage: React.FC = () => {
                             <p className="mt-2 text-sm text-slate-700">{rankingResult.summary}</p>
                           </div>
 
-                          <div className="grid grid-cols-1 gap-4 xl:grid-cols-[2fr_1fr]">
-                            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                          <div className="rounded-2xl border border-slate-200 bg-white p-4">
                               <h6 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">
                                 PM2.5 vs standard comparison
                               </h6>
                               {rankingType !== 'both' ? (
-                                <div className="mt-3 h-80 w-full">
+                                <div className="mt-3 h-96 w-full">
                                   <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={activeRankingRows} margin={{ top: 8, right: 16, left: 16, bottom: 50 }}>
+                                    <BarChart data={activeRankingRows} margin={{ top: 8, right: 16, left: 16, bottom: 78 }}>
                                       <CartesianGrid strokeDasharray="3 3" />
-                                      <XAxis dataKey="city" angle={-25} textAnchor="end" interval={0} height={70} />
+                                      <XAxis
+                                        dataKey="city"
+                                        angle={-35}
+                                        textAnchor="end"
+                                        interval={0}
+                                        height={92}
+                                        tick={{ fontSize: 11 }}
+                                        tickFormatter={(value: string) => (value.length > 14 ? `${value.slice(0, 14)}...` : value)}
+                                      />
                                       <YAxis />
                                       <ReferenceLine
                                         y={standardPm25Value}
                                         stroke="#0f172a"
                                         strokeDasharray="4 4"
-                                        label={{ value: `Standard PM2.5 ${standardPm25Value}`, position: 'insideTopRight', fill: '#0f172a' }}
                                       />
                                       <Tooltip
                                         formatter={(value: number, name: string) => {
@@ -1013,7 +1000,7 @@ export const DashboardPage: React.FC = () => {
                                       <Legend
                                         formatter={(value) => (value === 'avg_pm25' ? 'City average PM2.5' : 'Standard PM2.5')}
                                       />
-                                      <Bar dataKey="avg_pm25" radius={[8, 8, 0, 0]}>
+                                      <Bar dataKey="avg_pm25" fill="#dc2626" radius={[8, 8, 0, 0]}>
                                         {activeRankingRows.map((row) => (
                                           <Cell
                                             key={row.label}
@@ -1043,12 +1030,20 @@ export const DashboardPage: React.FC = () => {
                                   </div>
 
                                   <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-                                  <div className="h-80 w-full rounded-xl border border-red-100 p-2">
+                                  <div className="h-96 w-full rounded-xl border border-red-100 p-2">
                                     <div className="px-2 text-xs font-semibold uppercase tracking-[0.18em] text-red-700">Worst cities</div>
                                     <ResponsiveContainer width="100%" height="92%">
-                                      <BarChart data={worstRankingRows} margin={{ top: 8, right: 16, left: 12, bottom: 50 }}>
+                                      <BarChart data={worstRankingRows} margin={{ top: 8, right: 16, left: 12, bottom: 78 }}>
                                         <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="city" angle={-25} textAnchor="end" interval={0} height={70} />
+                                        <XAxis
+                                          dataKey="city"
+                                          angle={-35}
+                                          textAnchor="end"
+                                          interval={0}
+                                          height={92}
+                                          tick={{ fontSize: 11 }}
+                                          tickFormatter={(value: string) => (value.length > 14 ? `${value.slice(0, 14)}...` : value)}
+                                        />
                                         <YAxis />
                                         <ReferenceLine y={standardPm25Value} stroke="#0f172a" strokeDasharray="4 4" />
                                         <Tooltip
@@ -1065,12 +1060,20 @@ export const DashboardPage: React.FC = () => {
                                     </ResponsiveContainer>
                                   </div>
 
-                                  <div className="h-80 w-full rounded-xl border border-emerald-100 p-2">
+                                  <div className="h-96 w-full rounded-xl border border-emerald-100 p-2">
                                     <div className="px-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Best cities</div>
                                     <ResponsiveContainer width="100%" height="92%">
-                                      <BarChart data={bestRankingRows} margin={{ top: 8, right: 16, left: 12, bottom: 50 }}>
+                                      <BarChart data={bestRankingRows} margin={{ top: 8, right: 16, left: 12, bottom: 78 }}>
                                         <CartesianGrid strokeDasharray="3 3" />
-                                        <XAxis dataKey="city" angle={-25} textAnchor="end" interval={0} height={70} />
+                                        <XAxis
+                                          dataKey="city"
+                                          angle={-35}
+                                          textAnchor="end"
+                                          interval={0}
+                                          height={92}
+                                          tick={{ fontSize: 11 }}
+                                          tickFormatter={(value: string) => (value.length > 14 ? `${value.slice(0, 14)}...` : value)}
+                                        />
                                         <YAxis />
                                         <ReferenceLine y={standardPm25Value} stroke="#0f172a" strokeDasharray="4 4" />
                                         <Tooltip
@@ -1081,7 +1084,7 @@ export const DashboardPage: React.FC = () => {
                                             return [`${value.toFixed(2)} ug/m3`, 'Best city PM2.5'];
                                           }}
                                         />
-                                        <Bar dataKey="avg_pm25" fill="#16a34a" radius={[8, 8, 0, 0]} />
+                                        <Bar dataKey="avg_pm25" fill="#dc2626" radius={[8, 8, 0, 0]} />
                                         <Bar dataKey="standard_pm25" fill="#2563eb" radius={[8, 8, 0, 0]} />
                                       </BarChart>
                                     </ResponsiveContainer>
@@ -1089,32 +1092,6 @@ export const DashboardPage: React.FC = () => {
                                 </div>
                                 </div>
                               )}
-                            </div>
-
-                            <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                              <h6 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">
-                                Sample mix
-                              </h6>
-                              <div className="mt-3 h-72">
-                                <ResponsiveContainer width="100%" height="100%">
-                                  <PieChart>
-                                    <Pie
-                                      data={rankingMixData}
-                                      dataKey="value"
-                                      nameKey="name"
-                                      innerRadius={48}
-                                      outerRadius={82}
-                                      label
-                                    >
-                                      {rankingMixData.map((slice) => (
-                                        <Cell key={slice.name} fill={slice.name === 'Worst cities' ? '#ea580c' : '#0284c7'} />
-                                      ))}
-                                    </Pie>
-                                    <Tooltip />
-                                  </PieChart>
-                                </ResponsiveContainer>
-                              </div>
-                            </div>
                           </div>
 
                           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
@@ -1342,6 +1319,57 @@ export const DashboardPage: React.FC = () => {
                           )}
                         </div>
                       )}
+
+                      <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-5">
+                        <h5 className="text-lg font-bold text-slate-950">Human Stories from the Air We Breathe</h5>
+                        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                          <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                            <p className="text-sm text-slate-700">
+                              "My son keeps a rescue inhaler in his school bag now; winter smog turned a simple cough into repeated clinic visits."
+                            </p>
+                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Parent, Delhi (Gulf News report)</p>
+                          </article>
+
+                          <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                            <p className="text-sm text-slate-700">
+                              "I plan errands around the air index and skip evening walks when the haze is thick, even with daily asthma medication."
+                            </p>
+                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Asthma patient, UAE resident (Gulf News)</p>
+                          </article>
+
+                          <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                            <p className="text-sm text-slate-700">
+                              "We close windows all day and run a purifier at night, but my daughter still wakes up wheezing after high-pollution days."
+                            </p>
+                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Mother, Lahore (regional coverage)</p>
+                          </article>
+
+                          <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                            <p className="text-sm text-slate-700">
+                              "I retired early with emphysema; now oxygen support and bad-air alerts decide whether I can step outside."
+                            </p>
+                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Older adult, U.S. COPD support community (lung.org)</p>
+                          </article>
+
+                          <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                            <p className="text-sm text-slate-700">
+                              "I cannot afford to move, so we mask up indoors and outdoors when smoke and traffic pollution settle over the neighborhood."
+                            </p>
+                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Resident, California wildfire zone (state testimony)</p>
+                          </article>
+
+                          <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                            <p className="text-sm text-slate-700">
+                              "Our grandson stopped outdoor football in peak smog months; he says breathing feels like running with a cloth over his face."
+                            </p>
+                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Grandparent, North India (local interview)</p>
+                          </article>
+                        </div>
+                        <p className="mt-4 text-sm text-slate-600">
+                          Across locations and age groups, the pattern is the same: chronic exposure turns ordinary routines into daily risk management.
+                          For many families, there is no easy escape from polluted air, only long-term adaptation.
+                        </p>
+                      </div>
                     </div>
                   )}
                 </div>
