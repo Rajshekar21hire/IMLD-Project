@@ -772,6 +772,14 @@ export const DashboardPage: React.FC = () => {
                           >
                             {aiLoading ? 'Generating...' : hasGeneratedAiStory ? 'Generated AI' : 'Generate AI'}
                           </button>
+                          {selectedMode === 'agentic' && hasGeneratedAiStory && (
+                            <button
+                              type="button"
+                              className="rounded-full border border-slate-300 bg-white px-3 py-1 font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
+                            >
+                              Humanize AI
+                            </button>
+                          )}
                         </div>
                       )}
                       {aiError && isAiLikeMode && (
