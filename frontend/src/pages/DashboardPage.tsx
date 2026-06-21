@@ -16,7 +16,6 @@ import {
   YAxis,
   Line,
   LineChart,
-  Legend,
 } from 'recharts';
 import { storyAPI, dataAPI } from '../services/api';
 import { storyModes, storyThemes, StoryMode, StoryTheme, StorySection } from '../data/storyThemes';
