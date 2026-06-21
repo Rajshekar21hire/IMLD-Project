@@ -1,4 +1,4 @@
-export type StoryMode = 'human' | 'ai';
+export type StoryMode = 'human' | 'ai' | 'agentic';
 
 export interface StorySection {
   title: string;
@@ -449,6 +449,11 @@ export const storyModes: { id: StoryMode; label: string; description: string }[]
     id: 'ai',
     label: 'AI / Olamala Generated',
     description: 'An AI-style version using the same theme and subtopic structure.',
+  },
+  {
+    id: 'agentic',
+    label: 'Agentic AI Generated',
+    description: 'Agentic AI narrative using the same theme and subtopic structure.',
   },
 ];
 

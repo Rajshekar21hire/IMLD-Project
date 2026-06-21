@@ -104,7 +104,7 @@ const buildPrompt = (theme: StoryTheme, mode: StoryMode, sections: StorySection[
   return [
     `You are an AI storytelling agent.`,
     `Theme: ${theme.title}`,
-    `Mode: ${mode === 'human' ? 'Human-curated source story' : 'AI/Ollama-generated story'}`,
+    `Mode: ${mode === 'human' ? 'Human-curated source story' : mode === 'agentic' ? 'Agentic AI-generated story' : 'AI/Ollama-generated story'}`,
     `Prompt focus: ${theme.promptFocus}`,
     `Subtopics to cover: ${sections.length ? sections.map((section) => section.title).join(', ') : 'No source sections provided yet'}`,
     `Source details:\n${sourceSections}`,
@@ -167,12 +167,13 @@ export const DashboardPage: React.FC = () => {
   const promptText = buildPrompt(
     selectedTheme,
     selectedMode,
-    selectedMode === 'ai' ? aiGenerationSections : selectedTheme.humanSections
+    selectedMode !== 'human' ? aiGenerationSections : selectedTheme.humanSections
   );
-  const isStoryThreeAiView = selectedTheme.id === 'aqi-and-decisions' && selectedMode === 'ai';
-  const isPollutionHealthAiView = selectedTheme.id === 'pollution-and-health' && selectedMode === 'ai';
+  const isAiLikeMode = selectedMode !== 'human';
+  const isStoryThreeAiView = selectedTheme.id === 'aqi-and-decisions' && isAiLikeMode;
+  const isPollutionHealthAiView = selectedTheme.id === 'pollution-and-health' && isAiLikeMode;
   const isStoryFourHumanView = selectedTheme.id === 'measurement-and-governance' && selectedMode === 'human';
-  const isStoryFourAiView = selectedTheme.id === 'measurement-and-governance' && selectedMode === 'ai';
+  const isStoryFourAiView = selectedTheme.id === 'measurement-and-governance' && isAiLikeMode;
   const storyFourCategoryStyles: Record<string, { labelClass: string; headerClass: string; cardClass: string; footerClass: string }> = {
     Personal: {
       labelClass: 'text-blue-700',
@@ -609,10 +610,10 @@ export const DashboardPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedMode === 'ai' && selectedTheme.status === 'ready' && aiRequested[selectedTheme.id] && !selectedAiStory && !aiLoading) {
+    if (isAiLikeMode && selectedTheme.status === 'ready' && aiRequested[selectedTheme.id] && !selectedAiStory && !aiLoading) {
       generateAiStory();
     }
-  }, [selectedMode, selectedThemeId, selectedTheme.id, selectedTheme.status, selectedAiStory, aiLoading, generateAiStory, aiRequested]);
+  }, [isAiLikeMode, selectedMode, selectedThemeId, selectedTheme.id, selectedTheme.status, selectedAiStory, aiLoading, generateAiStory, aiRequested]);
 
   useEffect(() => {
     setRankingError('');
@@ -756,7 +757,7 @@ export const DashboardPage: React.FC = () => {
                           ? selectedAiStory?.summary || selectedTheme.overview
                           : 'Click Generate AI story to reveal the Ollama-generated version for this theme.'}
                       </p>
-                      {selectedMode === 'ai' && selectedTheme.status === 'ready' && (
+                      {isAiLikeMode && selectedTheme.status === 'ready' && (
                         <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
                           {hasGeneratedAiStory && (
                             <span className="rounded-full px-3 py-1 font-semibold border bg-emerald-50 text-emerald-700 border-emerald-200">
@@ -773,7 +774,7 @@ export const DashboardPage: React.FC = () => {
                           </button>
                         </div>
                       )}
-                      {aiError && selectedMode === 'ai' && (
+                      {aiError && isAiLikeMode && (
                         <div className="mt-3 space-y-2">
                           {aiError && <p className="text-sm text-red-600">{aiError}</p>}
                         </div>
@@ -781,7 +782,7 @@ export const DashboardPage: React.FC = () => {
                     </div>
 
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2 shadow-inner">
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-3 gap-2">
                         {storyModes.map((mode) => {
                           const active = mode.id === selectedMode;
 
@@ -1987,13 +1988,13 @@ export const DashboardPage: React.FC = () => {
                   </div>
                 )}
 
-                {selectedMode === 'ai' && selectedTheme.status === 'ready' && aiLoading && (
+                {isAiLikeMode && selectedTheme.status === 'ready' && aiLoading && (
                   <div className="rounded-3xl border border-slate-200 bg-white p-6 text-slate-600">
                     Generating a new AI/Ollama story for this theme... this can take a moment on a local model.
                   </div>
                 )}
 
-                {selectedMode === 'ai' && selectedTheme.status === 'ready' && !aiLoading && !hasGeneratedAiStory && !aiError && (
+                {isAiLikeMode && selectedTheme.status === 'ready' && !aiLoading && !hasGeneratedAiStory && !aiError && (
                   <div className="rounded-3xl border border-slate-200 bg-white p-6 text-slate-600">
                     No AI story has been generated yet. Click the button above when you want Ollama to generate one.
                   </div>
