@@ -573,7 +573,7 @@ export const storyModes: { id: StoryMode; label: string; description: string }[]
   },
   {
     id: 'ai',
-    label: 'AI / Olamala Generated',
+    label: 'AI / Ollama Generated',
     description: 'An AI-style version using the same theme and subtopic structure.',
   },
   {

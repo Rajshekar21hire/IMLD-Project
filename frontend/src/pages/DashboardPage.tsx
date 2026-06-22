@@ -17,8 +17,6 @@ import {
   YAxis,
   Line,
   LineChart,
-  PieChart,
-  Pie,
 } from 'recharts';
 import { storyAPI, dataAPI } from '../services/api';
 import { storyModes, storyThemes, StoryMode, StoryTheme, StorySection, StoryCategoryBlock } from '../data/storyThemes';
@@ -678,7 +676,7 @@ export const DashboardPage: React.FC = () => {
                   Story studio for human and AI-generated air narratives
                 </h1>
                 <p className="mt-4 text-base md:text-lg text-slate-300 leading-relaxed">
-                  Choose one of the four story themes, switch between the human version and the AI/Olamala version,
+                  Choose one of the four story themes, switch between the human version and the AI/Ollama version,
                   and drill into subtopics that keep the same subject structure across both modes.
                 </p>
               </div>
