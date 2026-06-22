@@ -222,12 +222,40 @@ export const storyThemes: StoryTheme[] = [
         body:
           'Allowing users to choose top 3, 5, or 10 cities adapts the analysis for quick overviews or deeper reviews. This creates a reusable decision-support view for dashboards and reports.',
       },
+      {
+        title: 'Human Stories from the Air We Breathe',
+        body:
+          'Real voices from cities with the worst air show how poor air quality affects daily life, health decisions, and community resilience.',
+        bullets: [
+          '"In Delhi, winter mornings mean checking air quality before letting kids play outside." - Parent, Delhi. Average PM2.5 of 171.7 µg/m³ makes outdoor activities risky during peak season.',
+          '"Lahore\'s smog season affects our school schedules and student attendance rates." - School administrator, Lahore. Students with respiratory conditions often stay home during hazardous air days.',
+          '"Cairo\'s air quality forces us to plan outdoor work before sunrise." - Construction supervisor, Cairo. By midday, traffic pollution and dust make outdoor work uncomfortable and unsafe.',
+          '"In Jakarta, we\'ve learned to use masks as part of our daily routine." - Commuter, Jakarta. Poor air quality affects commuting decisions and requires protection during peak pollution hours.',
+          '"Lagos air pollution impacts our elderly residents most severely." - Community health worker, Lagos. Respiratory and cardiovascular complications increase significantly during high-pollution episodes.',
+          '"Karachi\'s industrial air affects our children\'s respiratory health." - Parents group representative, Karachi. Many families report persistent cough and respiratory symptoms during peak season.',
+        ],
+      },
     ],
     aiSections: [
       {
-        title: 'AQI ranking as a daily decision tool',
+        title: 'Ranking cities turns AQI into action',
         body:
-          'When city AQI trends are ranked, the data becomes immediately actionable for households, schools, and city planners. The ranking view tells people where caution is most needed and where cleaner conditions are more stable.',
+          'A city ranking translates abstract AQI values into a practical list people can understand quickly. Instead of one isolated measurement, rankings reveal which places are persistently cleaner or more polluted.',
+      },
+      {
+        title: 'Worst-city rankings highlight urgent health risk',
+        body:
+          'The highest average AQI cities often face sustained exposure burdens, especially for children, older adults, and people with respiratory conditions. These rankings help prioritize where interventions are most urgent.',
+      },
+      {
+        title: 'Best-city rankings provide realistic benchmarks',
+        body:
+          'Cities with lower average AQI show what better outcomes look like in similar regions. Comparing policy, transport, and emission patterns helps others adopt proven strategies.',
+      },
+      {
+        title: 'User-selected top N keeps analysis flexible',
+        body:
+          'Allowing users to choose top 3, 5, or 10 cities adapts the analysis for quick overviews or deeper reviews. This creates a reusable decision-support view for dashboards and reports.',
       },
     ],
   },

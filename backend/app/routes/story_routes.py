@@ -431,6 +431,8 @@ def generate_city_rankings_story():
         ai_prompt = f"""
 You are AI Agent 1 for an air-quality storytelling dashboard.
 Create a short, clear narrative for non-technical users based on city PM2.5 rankings.
+    Use only the ranking rows provided below. Do not use outside knowledge, external databases, or facts not present in the data.
+    Keep the output structure aligned with the human version: headline, summary, insights, and recommendations.
 
 User request:
 - ranking_type: {ranking_type}
@@ -606,6 +608,7 @@ def get_city_details():
         ai_prompt = f"""
 You are AI Agent 1 for an air-quality dashboard.
 Given the city pollutant profile, return city-specific reasons, problems, and practical precautions.
+    Use only the data and derived signals provided below. Do not use outside knowledge, external databases, or unsupported assumptions.
 
 City: {city}
 Country: {country or 'Unknown'}
@@ -684,6 +687,129 @@ Rules:
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@bp.route('/city-testimonials', methods=['POST'])
+def generate_city_testimonials():
+    """Generate city-linked testimonial cards for Story 3 from ranking cities."""
+    try:
+        payload = request.get_json() or {}
+        cities = payload.get('cities') or []
+
+        if not isinstance(cities, list) or not cities:
+            return jsonify({'success': False, 'error': 'cities is required and must be a non-empty list'}), 400
+
+        normalized_cities = []
+        for city in cities[:6]:
+            if not isinstance(city, dict):
+                continue
+            city_name = str(city.get('city', '')).strip()
+            country = str(city.get('country', '')).strip()
+            avg_pm25 = city.get('avg_pm25')
+            sample_count = city.get('sample_count')
+            if not city_name:
+                continue
+            try:
+                avg_pm25_value = float(avg_pm25) if avg_pm25 is not None else None
+            except (TypeError, ValueError):
+                avg_pm25_value = None
+            try:
+                sample_count_value = int(sample_count) if sample_count is not None else None
+            except (TypeError, ValueError):
+                sample_count_value = None
+
+            normalized_cities.append(
+                {
+                    'city': city_name,
+                    'country': country,
+                    'avg_pm25': round(avg_pm25_value, 2) if avg_pm25_value is not None else None,
+                    'sample_count': sample_count_value,
+                }
+            )
+
+        if not normalized_cities:
+            return jsonify({'success': False, 'error': 'No valid city rows were provided'}), 400
+
+        ai_prompt = f"""
+You are AI Agent 1 for an air-quality storytelling dashboard.
+Generate short testimonial-style cards inspired by the listed high-pollution cities.
+    Use only the city rows provided below. Do not use outside knowledge, external databases, or world facts.
+    Keep the output in the same quote + author + details structure used by the human testimonial cards.
+
+City data:
+{json.dumps(normalized_cities, indent=2)}
+
+Return valid JSON only with this exact shape:
+{{
+  "testimonials": [
+    {{
+      "quote": "...",
+      "author": "...",
+      "details": "..."
+    }}
+  ]
+}}
+
+Rules:
+- Create one testimonial per city row (same order).
+- Each testimonial must mention the city name and include one concrete metric from the city row.
+- Keep quote and details realistic and concise for dashboard cards.
+- Keep content safe and non-defamatory; represent voices as anonymized community-style perspectives.
+- No markdown fences and no extra keys.
+"""
+
+        provider_used = 'fallback'
+        ai_payload = None
+        testimonials_timeout_seconds = min(chat_provider_service.story_timeout_seconds, 25)
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                ai_prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=700,
+                timeout_seconds=testimonials_timeout_seconds,
+            )
+            ai_payload = _safe_json_loads(response_text)
+        except Exception:
+            ai_payload = None
+
+        fallback_testimonials = _fallback_city_testimonials(normalized_cities)
+        ai_testimonials = (ai_payload or {}).get('testimonials') if isinstance(ai_payload, dict) else None
+
+        testimonials = []
+        if isinstance(ai_testimonials, list) and ai_testimonials:
+            for index, item in enumerate(ai_testimonials[:len(normalized_cities)]):
+                if not isinstance(item, dict):
+                    continue
+                source_city = normalized_cities[index]
+                quote = str(item.get('quote', '')).strip()
+                author = str(item.get('author', '')).strip()
+                details = str(item.get('details', '')).strip()
+
+                if source_city['city'].lower() not in f"{quote} {details}".lower():
+                    details = f"{source_city['city']}: {details}" if details else f"{source_city['city']} faces recurring exposure pressure."
+
+                if not quote:
+                    quote = fallback_testimonials[index]['quote']
+                if not author:
+                    author = fallback_testimonials[index]['author']
+                if not details:
+                    details = fallback_testimonials[index]['details']
+
+                testimonials.append(
+                    {
+                        'quote': quote,
+                        'author': author,
+                        'details': details,
+                    }
+                )
+
+        if len(testimonials) < len(normalized_cities):
+            testimonials = fallback_testimonials
+            provider_used = 'fallback'
+
+        return jsonify({'success': True, 'data': {'provider': provider_used, 'testimonials': testimonials}}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 def _fallback_city_guidance(city_name, city_aqi_avg, top_pollutants, global_pollutant_values):
     """Fallback problems and precautions with city-specific pollutant metrics."""
     city_tag = city_name or 'This city'
@@ -725,6 +851,30 @@ def _fallback_city_guidance(city_name, city_aqi_avg, top_pollutants, global_poll
         f"For {city_tag}, prioritize local actions that reduce {dominant_name} sources (traffic management, cleaner fuels, and industrial controls).",
     ]
     return problems, precautions
+
+
+def _fallback_city_testimonials(cities):
+    """Create deterministic testimonial cards when AI generation is unavailable."""
+    cards = []
+    for city in cities:
+        city_name = city.get('city', 'This city')
+        country = city.get('country') or 'Unknown'
+        avg_pm25 = city.get('avg_pm25')
+        sample_count = city.get('sample_count')
+        pm25_text = f"{avg_pm25:.2f}" if isinstance(avg_pm25, (int, float)) else 'unknown'
+        sample_text = str(sample_count) if isinstance(sample_count, int) else 'n/a'
+
+        cards.append(
+            {
+                'quote': f"In {city_name}, bad-air days shape our daily routine more than the weather forecast.",
+                'author': f"Resident voice, {city_name}, {country}",
+                'details': (
+                    f"Average PM2.5 is around {pm25_text} based on {sample_text} records; families describe adjusting school, commute, "
+                    f"and outdoor time around pollution peaks."
+                ),
+            }
+        )
+    return cards
 
 
 def _prefer_city_specific_items(ai_items, fallback_items, city_name):

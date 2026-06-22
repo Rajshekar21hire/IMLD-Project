@@ -42,6 +42,7 @@ export const storyAPI = {
   generateThemeStory: (data: any) => storyApiClient.post('/stories/theme-story', data),
   generateCityRankings: (data: any) => storyApiClient.post('/stories/city-rankings', data),
   getCityDetails: (data: any) => storyApiClient.post('/stories/city-details', data),
+  generateCityTestimonials: (data: any) => storyApiClient.post('/stories/city-testimonials', data),
   getStory: (storyId: number) => apiClient.get(`/stories/${storyId}`),
   listStories: (params: any) => apiClient.get('/stories', { params }),
   getVisualizations: (storyId: number) => apiClient.get(`/stories/${storyId}/visualizations`),
