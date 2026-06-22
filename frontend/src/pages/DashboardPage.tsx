@@ -15,6 +15,8 @@ import {
   YAxis,
   Line,
   LineChart,
+  PieChart,
+  Pie,
 } from 'recharts';
 import { storyAPI, dataAPI } from '../services/api';
 import { storyModes, storyThemes, StoryMode, StoryTheme, StorySection, StoryCategoryBlock } from '../data/storyThemes';
@@ -169,6 +171,14 @@ export const DashboardPage: React.FC = () => {
   );
   const isAiLikeMode = selectedMode !== 'human';
   const isStoryThreeAiView = selectedTheme.id === 'aqi-and-decisions' && isAiLikeMode;
+  const isStoryThreeHumanView = selectedTheme.id === 'aqi-and-decisions' && selectedMode === 'human';
+  const storyThreeTestimonialIntroIndex = selectedTheme.humanSections.findIndex(
+    (section) => section.title === 'Human stories: Real lives shaped by air quality'
+  );
+  const storyThreeTestimonials =
+    isStoryThreeHumanView && storyThreeTestimonialIntroIndex >= 0
+      ? selectedTheme.humanSections.slice(storyThreeTestimonialIntroIndex + 1)
+      : [];
   const isPollutionHealthAiView = selectedTheme.id === 'pollution-and-health' && isAiLikeMode;
   const isStoryFourHumanView = selectedTheme.id === 'measurement-and-governance' && selectedMode === 'human';
   const isStoryFourAiView = selectedTheme.id === 'measurement-and-governance' && isAiLikeMode;
@@ -631,7 +641,7 @@ export const DashboardPage: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.18),_transparent_30%),linear-gradient(180deg,_#0f172a_0%,_#111827_45%,_#f8fafc_45%,_#f8fafc_100%)]">
-      <div className="max-w-7xl mx-auto px-4 py-10 lg:py-14">
+      <div className="max-w-[1600px] mx-auto px-4 py-10 lg:py-14">
         <div className="rounded-3xl bg-slate-950/90 text-white border border-white/10 shadow-2xl overflow-hidden">
           <div className="p-6 md:p-10 border-b border-white/10 bg-gradient-to-r from-sky-950 via-slate-950 to-indigo-950">
             <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
@@ -798,8 +808,13 @@ export const DashboardPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className={`grid grid-cols-1 gap-5 ${isPollutionHealthAiView || isStoryFourHumanView || isStoryFourAiView ? 'md:grid-cols-1' : 'md:grid-cols-2'}`}>
-                  {activeSections.map((section, index) => (
+                <div className={`grid grid-cols-1 gap-5 ${isPollutionHealthAiView || isStoryFourHumanView || isStoryFourAiView || isStoryThreeHumanView ? 'md:grid-cols-1' : 'md:grid-cols-2'}`}>
+                  {activeSections
+                    .filter((section, sectionIndex) =>
+                      !isStoryThreeHumanView ||
+                      (sectionIndex !== storyThreeTestimonialIntroIndex && !storyThreeTestimonials.includes(section))
+                    )
+                    .map((section, index) => (
                     <article
                       key={`${selectedTheme.id}-${selectedMode}-${section.title}`}
                       className={`rounded-3xl bg-white border border-slate-200 shadow-sm p-6 hover:shadow-md transition-shadow ${
@@ -818,7 +833,47 @@ export const DashboardPage: React.FC = () => {
                         </div>
                       </div>
 
-                      <p className="mt-4 text-slate-700 leading-relaxed">{section.body}</p>
+                      {section.body.split('\n\n').map((paragraph, paragraphIndex) => (
+                        <p key={paragraphIndex} className="mt-4 text-slate-700 leading-relaxed">
+                          {paragraph}
+                        </p>
+                      ))}
+
+                      {section.table && (
+                        <div className="mt-5 overflow-x-auto rounded-2xl border border-slate-200">
+                          <table className="w-full min-w-[900px] text-sm">
+                            <thead>
+                              <tr className="bg-slate-50">
+                                <th className="sticky left-0 z-10 bg-slate-50 px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
+                                  Root cause
+                                </th>
+                                {section.table.columns.map((column) => (
+                                  <th
+                                    key={column}
+                                    className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.12em] text-slate-500"
+                                  >
+                                    {column}
+                                  </th>
+                                ))}
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-200">
+                              {section.table.rows.map((row) => (
+                                <tr key={row.label}>
+                                  <td className="sticky left-0 z-10 bg-white px-4 py-3 align-top text-sm font-bold text-slate-900">
+                                    {row.label}
+                                  </td>
+                                  {row.values.map((value, valueIndex) => (
+                                    <td key={valueIndex} className="px-4 py-3 align-top text-sm text-slate-700">
+                                      {value}
+                                    </td>
+                                  ))}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
 
                       {section.chart && section.chart.dataSourceKey === 'pollutantTrends' && (
                         <div className="mt-6 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 p-4 border border-slate-200">
@@ -1520,6 +1575,26 @@ export const DashboardPage: React.FC = () => {
                   ))}
                 </div>
 
+                {isStoryThreeHumanView && storyThreeTestimonials.length > 0 && (
+                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 md:p-8">
+                    <h3 className="text-2xl font-black text-slate-950">Human stories: Real lives shaped by air quality</h3>
+                    <p className="mt-3 text-slate-700 leading-relaxed">
+                      {selectedTheme.humanSections[storyThreeTestimonialIntroIndex].body}
+                    </p>
+                    <div className="mt-5 flex flex-col gap-4">
+                      {storyThreeTestimonials.map((testimonial) => (
+                        <article
+                          key={testimonial.title}
+                          className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                        >
+                          <h4 className="text-sm font-bold text-slate-950">{testimonial.title}</h4>
+                          <p className="mt-2 text-sm leading-relaxed text-slate-700">{testimonial.body}</p>
+                        </article>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="rounded-3xl border border-slate-200 bg-gradient-to-r from-sky-50 to-indigo-50 p-6 md:p-8">
                   <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
                     <div className="max-w-3xl">
@@ -1965,52 +2040,30 @@ export const DashboardPage: React.FC = () => {
 
                       <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-5">
                         <h5 className="text-lg font-bold text-slate-950">Human Stories from the Air We Breathe</h5>
-                        <div className="mt-3 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-                          <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-                            <p className="text-sm text-slate-700">
-                              "My son keeps a rescue inhaler in his school bag now; winter smog turned a simple cough into repeated clinic visits."
-                            </p>
-                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Parent, Delhi (Gulf News report)</p>
-                          </article>
+                        <div className="mt-3 flex flex-col gap-3">
+                          {(() => {
+                            const introIndex = selectedTheme.humanSections.findIndex(
+                              (section) => section.title === 'Human stories: Real lives shaped by air quality'
+                            );
+                            const testimonials =
+                              introIndex >= 0 ? selectedTheme.humanSections.slice(introIndex + 1) : [];
 
-                          <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-                            <p className="text-sm text-slate-700">
-                              "I plan errands around the air index and skip evening walks when the haze is thick, even with daily asthma medication."
-                            </p>
-                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Asthma patient, UAE resident (Gulf News)</p>
-                          </article>
-
-                          <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-                            <p className="text-sm text-slate-700">
-                              "We close windows all day and run a purifier at night, but my daughter still wakes up wheezing after high-pollution days."
-                            </p>
-                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Mother, Lahore (regional coverage)</p>
-                          </article>
-
-                          <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-                            <p className="text-sm text-slate-700">
-                              "I retired early with emphysema; now oxygen support and bad-air alerts decide whether I can step outside."
-                            </p>
-                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Older adult, U.S. COPD support community (lung.org)</p>
-                          </article>
-
-                          <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-                            <p className="text-sm text-slate-700">
-                              "I cannot afford to move, so we mask up indoors and outdoors when smoke and traffic pollution settle over the neighborhood."
-                            </p>
-                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Resident, California wildfire zone (state testimony)</p>
-                          </article>
-
-                          <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-                            <p className="text-sm text-slate-700">
-                              "Our grandson stopped outdoor football in peak smog months; he says breathing feels like running with a cloth over his face."
-                            </p>
-                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Grandparent, North India (local interview)</p>
-                          </article>
+                            return testimonials.map((testimonial) => (
+                              <article
+                                key={testimonial.title}
+                                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                              >
+                                <p className="text-sm text-slate-700">{testimonial.body}</p>
+                                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
+                                  {testimonial.title}
+                                </p>
+                              </article>
+                            ));
+                          })()}
                         </div>
                         <p className="mt-4 text-sm text-slate-600">
-                          Across locations and age groups, the pattern is the same: chronic exposure turns ordinary routines into daily risk management.
-                          For many families, there is no easy escape from polluted air, only long-term adaptation.
+                          Sourced from Gulf News and lung.org (2020–2025). Across locations and age groups, the pattern is the same:
+                          chronic exposure turns ordinary routines into daily risk management, with no real exit.
                         </p>
                       </div>
                     </div>

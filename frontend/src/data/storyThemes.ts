@@ -10,6 +10,10 @@ export interface StorySection {
     type: 'line' | 'bar';
     dataSourceKey: string;
   };
+  table?: {
+    columns: string[];
+    rows: { label: string; values: string[] }[];
+  };
 }
 
 export interface StoryCategoryCard {
@@ -203,24 +207,130 @@ export const storyThemes: StoryTheme[] = [
     status: 'ready',
     humanSections: [
       {
-        title: 'Ranking cities turns AQI into action',
+        title: 'Deep dives: the worst-affected places',
         body:
-          'A city ranking translates abstract AQI values into a practical list people can understand quickly. Instead of one isolated measurement, rankings reveal which places are persistently cleaner or more polluted.',
+          'In order to deep dive, we need to know what are the best and worst cities according to the air quality index.\n\nThere are certain factors that contribute to the root cause of the cities having a bad air quality. The five cities we see share a structural cluster of causes such as fossil-fuel transport, coal-fired kilns and industrial emissions. These are then amplified by flat basin geography that traps pollutants in winter inversions, and undermined by weak cross-boundary governance.',
+        table: {
+          columns: [
+            'Lahore (~102–195 µg/m³)',
+            'Delhi (~170 µg/m³)',
+            'New Delhi (~165 µg/m³)',
+            'Dhaka (~66–195 µg/m³)',
+            'Ghaziabad (~158 µg/m³)',
+          ],
+          rows: [
+            {
+              label: 'Transport & vehicles',
+              values: [
+                '35% of PM2.5; 6.3M registered vehicles, mostly old diesel; low-grade Euro II fuel',
+                'Largest single source (17–39%); 2- and 3-wheelers dominate (50% of transport share)',
+                'Same NCR transport network as Delhi; shared airshed compounds exposure',
+                'Up to 15% of PM2.5; 6.17 lakh unfit vehicles with expired fitness certificates',
+                'Dense truck and heavy vehicle corridor on NH-9; industrial transport hub',
+              ],
+            },
+            {
+              label: 'Brick kilns',
+              values: [
+                '17% of PM2.5; thousands of coal-burning kilns across Punjab; often illegal/unregulated',
+                'Significant contributor; kilns in NCR periphery burn coal and agricultural waste',
+                'Shared NCR kiln belt; kilns in UP and Haryana directly affect New Delhi airshed',
+                '2,000+ kilns surrounding city; historically the #1 source, now 13–29% of PM2.5',
+                'Major kiln clusters in Ghaziabad district itself; part of Delhi NCR kiln belt',
+              ],
+            },
+            {
+              label: 'Industry & power',
+              values: [
+                '28% of PM2.5; steel, foundry, textile factories burn coal/furnace oil; unregulated',
+                "Regional power & industry 14% of daily PM2.5; coal plants in NCR; Badarpur plant (now closed) responsible for 80–90% of power-sector particulates",
+                'Industrial estates in NCR; shared regional industry emissions',
+                'Factories discharge without filtration; household fuel combustion 28% of PM2.5',
+                "Heavy industrial base - plastics, metals, chemicals; one of UP's most industrialised districts",
+              ],
+            },
+            {
+              label: 'Crop burning',
+              values: [
+                'Seasonal spikes from Punjab (Pakistan & India border) stubble burning; worsens Oct–Nov',
+                '~30–40% of winter PM2.5 spikes; paddy stubble burning in Haryana & Punjab',
+                'Same seasonal biomass spike as Delhi; transboundary contribution from UP fields',
+                '10% from transboundary sources; regional agricultural burning drifts in',
+                'Surrounded by agricultural land in western UP; crop fire smoke a major seasonal driver',
+              ],
+            },
+            {
+              label: 'Geography & meteorology',
+              values: [
+                'Flat Punjab plain; winter temperature inversions trap pollutants; no dispersion',
+                'Landlocked; surrounded by states; winter fog + low wind = PM2.5 accumulation',
+                'Same bowl geography as Delhi; no natural ventilation corridor',
+                'River delta city; dense fog and low wind in winter trap particulates',
+                'Downwind of Delhi; elevated from Yamuna floodplain; receives pollution from west',
+              ],
+            },
+            {
+              label: 'Urban sprawl & construction',
+              values: [
+                'Unregulated construction over green/agricultural land; loss of tree cover',
+                'Rapid unplanned urbanisation; construction dust among top sources',
+                'Construction boom in NCR; road dust 35–66% of PM10',
+                '30% of pollution from construction and road works; fastest-growing urban area',
+                'Rapid high-rise construction; road dust and debris uncontrolled',
+              ],
+            },
+            {
+              label: 'Governance gap',
+              values: [
+                'Poor enforcement; companies, farmers, vehicle owners undeterred; policy not implemented',
+                'Multiple overlapping jurisdictions (Delhi, UP, Haryana); no single authority',
+                'Same multi-state governance gap as Delhi',
+                '75% of closed kilns resume operations; only 10% of eco-brick target met by 2025',
+                'UP state enforcement weaker than Delhi; proximity to capital creates regulatory grey zone',
+              ],
+            },
+          ],
+        },
       },
       {
-        title: 'Worst-city rankings highlight urgent health risk',
+        title: 'Human stories: Real lives shaped by air quality',
         body:
-          'The highest average AQI cities often face sustained exposure burdens, especially for children, older adults, and people with respiratory conditions. These rankings help prioritize where interventions are most urgent.',
+          'Beyond rankings and metrics, air quality is a daily reality for families across the world. These voices from Gulf News and lung.org (2020–2025) share how poor air quality has profoundly changed their lives, their health, and their choices. Each story reveals not just suffering, but a pattern: pollution is not something that happened once, but something people wake up to every single day, with often no real way out.',
       },
       {
-        title: 'Best-city rankings provide realistic benchmarks',
+        title: 'Syed Hasnain: A child\'s pneumonia and the invisible threat',
         body:
-          'Cities with lower average AQI show what better outcomes look like in similar regions. Comparing policy, transport, and emission patterns helps others adopt proven strategies.',
+          'Syed Hasnain watched his 4-year-old develop a persistent cough and struggle to breathe, with a high temperature following. Thinking it might be coronavirus, he rushed his son to the hospital. But the doctors delivered an unexpected diagnosis: pneumonia caused by smog. The air itself had become the infection vector. For a parent, that realisation transforms how you see every breath your child takes—the very air that should sustain them had instead become the weapon that harmed them.',
       },
       {
-        title: 'User-selected top N keeps analysis flexible',
+        title: 'Cheri M.: A coastal dream interrupted by worsening asthma',
         body:
-          'Allowing users to choose top 3, 5, or 10 cities adapts the analysis for quick overviews or deeper reviews. This creates a reusable decision-support view for dashboards and reports.',
+          'Cheri M. lives in what should be a clean area—coastal Encinitas, California. But her worsening asthma has drastically altered her life. Doctors told her she now has the lungs of a 90-year-old smoker, despite being in her late 50s. Living near a busy road, she keeps air purifiers in every room and doesn\'t dare walk without a mask because of diesel trucks and flying dust. She has had to carefully monitor the people she\'s around and the places she goes to avoid even catching a common cold, which could have dire consequences for her respiratory health. Clean air, for her, is no longer a backdrop to life—it\'s become a daily condition she must negotiate.',
+      },
+      {
+        title: 'Khushboo Bharti: Watching her infant\'s struggle',
+        body:
+          'Khushboo Bharti remembers the moment her 1-year-old daughter Samaira woke with a violent cough that made her vomit several times. On the way to the hospital, Samaira didn\'t react to anyone or anything—very unlike her usually bubbly nature. She wouldn\'t even lift her head. It was the worst moment of Khushboo\'s life. Even now, if her daughter coughs just a few times, Khushboo panics. Doctors told her Samaira might need to be on inhalers for some time. Khushboo asks the question that haunts many parents in polluted cities: "What is the point of living in a city where my daughter can\'t even breathe safely?" Her husband\'s business is in Delhi, so they can\'t simply leave. But the moment they have a chance, they\'ll move.',
+      },
+      {
+        title: 'Jeanne W.: From pollen allergies to daily asthma management',
+        body:
+          'Jeanne W. was always susceptible to lung irritation from pollens, dust, and mold. As a child, she dealt with seasonal allergies from grasses and sweet clover. But since moving to Utah ten years ago, she has been diagnosed with asthma. Managing asthma has become a daily part of her life. She takes long-term asthma control medications, allergy-induced asthma treatments, and quick-relief medications. When these don\'t work, she uses a nebulizer that turns liquid medicine into a mist just so she can breathe. What started as seasonal susceptibility has become a chronic condition managed by multiple medications and devices every single day.',
+      },
+      {
+        title: 'kathleen f.: Watching her father\'s final stages',
+        body:
+          'kathleen f. is fighting for air quality because her father is in the final stages of emphysema. He is on oxygen 24/7 and on every medication available for emphysema treatment. It hurts to hear him tell her that it\'s getting harder to breathe, that he has good days and bad days—but mostly bad. He is 76 years old, but kathleen still thinks that\'s too young to lose someone when there\'s nothing fundamentally wrong with him except his damaged lungs. She loves her dad very much, and watching him struggle has become the deepest motivation for her to hope and pray he\'ll be with them for at least a few more years. His suffering is her reason to care about air quality.',
+      },
+      {
+        title: 'Mark E.: Transport choices and air quality memories',
+        body:
+          'Mark E. would be elated to return to a 55 mph speed limit. Right now, he drives at that speed himself and stays 5 mph slower in town. He shuts off his engine when sitting in a line at a food place or doing banking. He lived in San Diego, California in the 1960s and early 1970s, when his family moved to the high desert to escape pollution and the allergies it triggered. It helped a lot. Later, when he came to Sioux Falls, South Dakota, he discovered the real villain wasn\'t pollen—it was smog. He believes that if we could improve air quality, we could eliminate some of the lung problems and allergies that plague so many people. His choices around transport and his memory of moving to escape pollution drive his conviction that cleaner air is possible.',
+      },
+      {
+        title: 'Sue B.: A respiratory therapist\'s daily witness',
+        body:
+          'Sue B. is a respiratory therapist at Cincinnati Children\'s Hospital. Every single day, she sees children struggling to breathe. None of us can exist without air and water—these are the fundamental stuff of life for each of us. But for the children she treats, even breathing has become a medical challenge. Her frontline perspective means she sees the consequences of air pollution not as statistics or trends, but as families in crisis, and children fighting for every breath. Her calling is to care for them, but her deeper wish is that fewer children would need her help at all.',
       },
     ],
     aiSections: [
