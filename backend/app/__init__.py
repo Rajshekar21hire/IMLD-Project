@@ -19,7 +19,17 @@ def create_app():
     
     # Initialize extensions
     db.init_app(app)
-    CORS(app, resources={r"/api/*": {"origins": os.getenv('CORS_ORIGINS', 'http://localhost:3000').split(',')}})
+    CORS(
+        app,
+        resources={
+            r"/api/*": {
+                "origins": os.getenv(
+                    'CORS_ORIGINS',
+                    'http://localhost:3000,http://localhost:3001,http://127.0.0.1:3000,http://127.0.0.1:3001'
+                ).split(',')
+            }
+        }
+    )
     
     # Register blueprints
     from app.routes import data_routes, story_routes, rating_routes, chat_routes

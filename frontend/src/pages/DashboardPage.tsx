@@ -8,6 +8,8 @@ import {
   CartesianGrid,
   Cell,
   Legend,
+  Pie,
+  PieChart,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -538,7 +540,8 @@ export const DashboardPage: React.FC = () => {
     }
   }, [selectedTheme, aiGenerationSections]);
 
-  const generateCityRankings = useCallback(async () => {
+  const generateCityRankings = useCallback(async (overrideRankingType?: 'best' | 'worst' | 'both') => {
+    const effectiveRankingType = overrideRankingType ?? rankingType;
     setRankingLoading(true);
     setRankingError('');
     setSelectedCityLabel('');
@@ -549,7 +552,7 @@ export const DashboardPage: React.FC = () => {
     try {
       const response = await storyAPI.generateCityRankings({
         count: rankingCount,
-        ranking_type: rankingType,
+        ranking_type: effectiveRankingType,
       });
 
       if (response.data?.success) {
@@ -1544,15 +1547,15 @@ export const DashboardPage: React.FC = () => {
                         <div>
                           <div className="inline-flex items-center gap-2 rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">
                             <Bot className="h-3.5 w-3.5" />
-                            AI Agent 1
+                            Story 3
                           </div>
-                          <h4 className="mt-3 text-xl font-bold text-slate-950">Best and worst cities by PM2.5</h4>
+                          <h4 className="mt-3 text-xl font-bold text-slate-950">Best and worst cities by AQI</h4>
                           <p className="mt-2 text-sm text-slate-600">
                             Enter how many cities to rank, choose worst, best, or both, then generate AI-powered results.
                           </p>
                         </div>
 
-                        <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3 lg:w-auto">
+                        <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:w-auto">
                           <label className="flex flex-col text-sm font-semibold text-slate-700">
                             City count
                             <input
@@ -1569,8 +1572,14 @@ export const DashboardPage: React.FC = () => {
                             Ranking mode
                             <select
                               value={rankingType}
-                              onChange={(event) => setRankingType(event.target.value as 'best' | 'worst' | 'both')}
-                              className="mt-1 rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                              onChange={(event) => {
+                                const nextRankingType = event.target.value as 'best' | 'worst' | 'both';
+                                setRankingType(nextRankingType);
+                                if (rankingResult) {
+                                  void generateCityRankings(nextRankingType);
+                                }
+                              }}
+                              className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
                             >
                               <option value="worst">Top worst cities</option>
                               <option value="best">Top best cities</option>
@@ -1580,12 +1589,14 @@ export const DashboardPage: React.FC = () => {
 
                           <button
                             type="button"
-                            onClick={generateCityRankings}
+                            onClick={() => {
+                              void generateCityRankings();
+                            }}
                             disabled={rankingLoading}
                             className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
                           >
                             <BarChart3 className="h-4 w-4" />
-                            {rankingLoading ? 'Generating...' : 'Run AI Agent 1'}
+                            {rankingLoading ? 'Generating...' : 'Run Story 3'}
                           </button>
                         </div>
                       </div>
@@ -1643,7 +1654,7 @@ export const DashboardPage: React.FC = () => {
                                       <Legend
                                         formatter={(value) => (value === 'avg_pm25' ? 'City average PM2.5' : 'Standard PM2.5')}
                                       />
-                                      <Bar dataKey="avg_pm25" fill="#dc2626" radius={[8, 8, 0, 0]}>
+                                      <Bar dataKey="avg_pm25" fill={rankingType === 'best' ? '#16a34a' : '#dc2626'} radius={[8, 8, 0, 0]}>
                                         {activeRankingRows.map((row) => (
                                           <Cell
                                             key={row.label}
@@ -1727,7 +1738,7 @@ export const DashboardPage: React.FC = () => {
                                             return [`${value.toFixed(2)} ug/m3`, 'Best city PM2.5'];
                                           }}
                                         />
-                                        <Bar dataKey="avg_pm25" fill="#dc2626" radius={[8, 8, 0, 0]} />
+                                        <Bar dataKey="avg_pm25" fill="#16a34a" radius={[8, 8, 0, 0]} />
                                         <Bar dataKey="standard_pm25" fill="#2563eb" radius={[8, 8, 0, 0]} />
                                       </BarChart>
                                     </ResponsiveContainer>
