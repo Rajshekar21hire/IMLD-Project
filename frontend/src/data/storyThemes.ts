@@ -88,23 +88,36 @@ export const storyThemes: StoryTheme[] = [
         body:
           'Air quality is determined by six key pollutants tracked by the WHO and national agencies. Each has different sources, different behavior in the atmosphere, and different health effects. Select any to explore.',
         bullets: [
-          'PM2.5: fine particulate matter under 2.5 micrometres in diameter, the single most lethal air pollutant tracked globally.',
-          'PM10: coarse particles between 2.5 and 10 micrometres that are trapped in the nose and upper airways.',
-          'NO2: nitrogen dioxide, a reddish-brown gas formed when fuel burns at high temperatures.',
-          'O3: ground-level ozone formed when NO2 and volatile organic compounds react in sunlight.',
-          'SO2: sulphur dioxide released primarily by burning high-sulphur coal and heavy oil.',
-          'CO: carbon monoxide, a colourless, odourless gas produced by incomplete combustion.',
+          'PM2.5 (WHO guideline 5 µg/m³ annual mean, 2021): Fine particulate matter under 2.5 micrometres in diameter, the single most lethal air pollutant tracked globally. Sources: vehicle exhaust, coal combustion, wildfires, agricultural burning, industrial processes. Health effects: penetrates deep into lung tissue and enters the bloodstream, driving cardiovascular disease, stroke, lung cancer, diabetes, and cognitive decline — no safe level has been identified. Hazard level: very high.',
+          'PM10 (WHO guideline 15 µg/m³ annual mean, 2021): Coarse particles between 2.5 and 10 micrometres, trapped in the nose and upper airways. Sources: road dust, construction, pollen, sea salt, agricultural operations. Health effects: nasal and throat irritation, bronchitis, and aggravated asthma — largely filtered before reaching the lungs, unlike PM2.5. Hazard level: moderate.',
+          'NO2 (WHO guideline 10 µg/m³ annual mean, 2021): Nitrogen dioxide, a reddish-brown gas formed when fuel burns at high temperatures — a major marker of traffic pollution. Sources: vehicle engines, power plants, industrial boilers, gas appliances. Health effects: inflames the lining of the airways, reducing lung function and worsening asthma; long-term exposure is linked to development of asthma in children. Hazard level: high near roads.',
+          'O3 (WHO guideline 100 µg/m³ peak season daily max, 2021): Ground-level ozone, formed when NO2 and volatile organic compounds react in sunlight — not emitted directly, peaks on hot, sunny, stagnant days. Sources: vehicle exhaust + industrial VOCs + sunlight. Health effects: irritates the respiratory system, triggers asthma attacks, reduces lung capacity, and damages crops and ecosystems as well as human health. Hazard level: high in summer heat.',
+          'SO2 (WHO guideline 40 µg/m³ 24-hour mean, 2021): Sulphur dioxide, a sharp-smelling gas released primarily by burning high-sulphur coal and heavy oil — a major cause of acid rain. Sources: coal-fired power plants, oil refineries, metal smelters, volcanoes. Health effects: constricts airways immediately on inhalation, is a major driver of COPD near industrial zones, and combines with water vapour to form sulphuric acid in the lungs. Hazard level: high near industry.',
+          'CO (WHO guideline 4 mg/m³ 24-hour mean, 2021): Carbon monoxide, a colourless, odourless gas produced by incomplete combustion, binding to haemoglobin 200x more readily than oxygen. Sources: vehicle exhaust, gas appliances, open fires, industrial combustion. Health effects: at high concentrations causes headache, confusion, and death by oxygen deprivation; chronic low-level exposure impairs neurological function. Hazard level: high indoors/traffic.',
         ],
       },
       {
         title: 'From chemistry to a single number',
         body:
-          'Air quality is reported using the Air Quality Index. The AQI converts raw pollutant concentrations into a 0–500 score, helping people understand what the air means for health and daily activity.',
+          'Air quality is reported using the Air Quality Index (AQI). The AQI converts raw pollutant concentrations into a 0–500 score, helping people understand what the air means for health and daily activity.',
+        bullets: [
+          'AQI 0–50: Safe for all outdoor activities. No restrictions needed for sensitive groups. Exercise freely outdoors. PM2.5 < 12 µg/m³ — within WHO guideline.',
+          'AQI 51–100: Acceptable for most people. Unusually sensitive individuals should reduce prolonged outdoor activity. Light outdoor activity is fine for most. PM2.5 12–35 µg/m³ — above WHO guideline.',
+          'AQI 101–150: General public unlikely to be affected. Children, elderly, and those with respiratory/heart conditions should limit outdoor exertion. Active children and adults should reduce prolonged outdoor activity. PM2.5 35–55 µg/m³ — significantly above WHO guideline.',
+          'AQI 151–200: Everyone may begin to feel health effects. Children and sensitive groups should avoid outdoor activity. Everyone should reduce prolonged outdoor exertion. PM2.5 55–150 µg/m³ — 10–30x WHO guideline.',
+          'AQI 201–300: Health alert — significant aggravation for everyone. Sensitive groups should stay indoors. Avoid outdoor activity and use an air purifier indoors. PM2.5 150–250 µg/m³ — Delhi reaches this regularly in winter.',
+          'AQI 301–500: Emergency conditions — everyone affected. Stay indoors with air purification and seal windows. No outdoor activity; wear an N95 mask if you must go out. PM2.5 250+ µg/m³ — Ulaanbaatar’s worst winter nights reach 700+ µg/m³.',
+        ],
       },
       {
         title: 'How we measure air quality?',
         body:
           'No single technology gives us the full story. Ground stations are accurate but sparse. Satellites cover the globe but miss surface detail. Low-cost sensors fill gaps but need calibration. Together they create the best picture we have.',
+        bullets: [
+          'Ground stations — Strengths: highest accuracy and the regulatory standard, hourly real-time data streams, used for official AQI reporting. Limitations: very sparse in low-income countries, $50,000–$200,000 per unit, Africa has <100 stations for 1.4bn people.',
+          'Satellite sensors — Strengths: full global coverage every 1–2 days, detects pollution events in unmonitored regions, AI can extract surface-level estimates from column data. Limitations: measures column average not surface level, blocked by thick clouds and aerosol layers, spatial resolution ~3.5km² minimum.',
+          'Low-cost sensors — Strengths: dense urban networks for block-level detail, community-owned and operated, AirQo deploying across African cities. Limitations: lower accuracy and needs calibration against reference, humidity and temperature affect readings, data quality varies widely by device and location.',
+        ],
       },
       {
         title: 'The WHO 2021 revision',
