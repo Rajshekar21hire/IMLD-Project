@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ComposableMap, Geographies, Geography, ZoomableGroup } from 'react-simple-maps';
+import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
 import { Globe, ZoomIn, ZoomOut, RotateCcw, AlertCircle } from 'lucide-react';
 import apiClient from '../services/api';
 
@@ -8,60 +8,100 @@ const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json'
 // ISO-2 code → possible Natural Earth geo property names (multiple variants for robustness)
 const ISO_TO_GEO_NAMES: Record<string, string[]> = {
   AE: ['United Arab Emirates'],
+  AF: ['Afghanistan'],
   AR: ['Argentina'],
   AT: ['Austria'],
   AU: ['Australia'],
   BA: ['Bosnia and Herz.', 'Bosnia and Herzegovina'],
+  BD: ['Bangladesh'],
   BE: ['Belgium'],
   BG: ['Bulgaria'],
+  BH: ['Bahrain'],
+  BO: ['Bolivia'],
   BR: ['Brazil'],
   CA: ['Canada'],
   CH: ['Switzerland'],
+  CI: ["Côte d'Ivoire", "Cote d'Ivoire", 'Ivory Coast'],
   CL: ['Chile'],
   CN: ['China'],
   CO: ['Colombia'],
+  CR: ['Costa Rica'],
+  CW: ['Curaçao', 'Curacao'],
   CY: ['Cyprus'],
   CZ: ['Czech Rep.', 'Czechia', 'Czech Republic'],
   DE: ['Germany'],
   DK: ['Denmark'],
+  DZ: ['Algeria'],
   EC: ['Ecuador'],
+  EE: ['Estonia'],
   ES: ['Spain'],
+  ET: ['Ethiopia'],
   FI: ['Finland'],
   FR: ['France'],
   GB: ['United Kingdom'],
+  GE: ['Georgia'],
+  GH: ['Ghana'],
+  GN: ['Guinea'],
+  GR: ['Greece'],
+  GT: ['Guatemala'],
   HK: ['Hong Kong', 'Hong Kong S.A.R.'],
   HR: ['Croatia'],
   HU: ['Hungary'],
+  ID: ['Indonesia'],
+  IE: ['Ireland'],
   IL: ['Israel'],
   IN: ['India'],
+  IQ: ['Iraq'],
   IR: ['Iran', 'Iran (Islamic Republic of)'],
   IS: ['Iceland'],
   IT: ['Italy'],
+  JO: ['Jordan'],
   JP: ['Japan'],
+  KG: ['Kyrgyzstan'],
   KR: ['South Korea', 'Korea, Republic of'],
+  KW: ['Kuwait'],
+  KZ: ['Kazakhstan'],
+  LA: ['Laos', "Lao PDR"],
+  LK: ['Sri Lanka'],
   LT: ['Lithuania'],
   MK: ['North Macedonia', 'N. Macedonia', 'Macedonia'],
+  ML: ['Mali'],
+  MM: ['Myanmar'],
   MN: ['Mongolia'],
   MO: ['Macao', 'Macao S.A.R.', 'Macau'],
   MX: ['Mexico'],
+  MY: ['Malaysia'],
   NL: ['Netherlands'],
   NO: ['Norway'],
+  NP: ['Nepal'],
   NZ: ['New Zealand'],
   PE: ['Peru'],
+  PH: ['Philippines'],
+  PK: ['Pakistan'],
   PL: ['Poland'],
+  PR: ['Puerto Rico'],
   PT: ['Portugal'],
   RE: ['Réunion', 'Reunion'],
   RO: ['Romania'],
   RS: ['Serbia'],
   RU: ['Russia', 'Russian Federation'],
+  SA: ['Saudi Arabia'],
   SE: ['Sweden'],
   SG: ['Singapore'],
   SK: ['Slovakia'],
+  SV: ['El Salvador'],
   TH: ['Thailand'],
+  TJ: ['Tajikistan'],
+  TM: ['Turkmenistan'],
   TR: ['Turkey', 'Türkiye'],
   TW: ['Taiwan', 'Taiwan (Province of China)'],
+  UA: ['Ukraine'],
+  UG: ['Uganda'],
   US: ['United States of America', 'United States'],
+  UZ: ['Uzbekistan'],
   VN: ['Vietnam', 'Viet Nam'],
+  XK: ['Kosovo'],
+  ZA: ['South Africa'],
 };
 
 // Reverse map: geo name (lowercase) → ISO-2 code (lowercase)
@@ -302,31 +342,33 @@ export function LiveMapPage() {
               </Geographies>
 
               {showCityMarkers && citiesData.map(city => (
-                <circle
+                <Marker
                   key={`${city.city}-${city.country}`}
-                  cx={city.longitude}
-                  cy={city.latitude}
-                  r={3}
-                  fill={aqiColor(city.avg_aqi)}
-                  stroke="white"
-                  strokeWidth={0.5}
-                  opacity={0.8}
-                  style={{ cursor: 'pointer' }}
-                  onMouseEnter={e => {
-                    const { clientX, clientY } = e;
-                    setTooltip({
-                      visible: true,
-                      x: clientX,
-                      y: clientY,
-                      country: `${city.city}, ${city.country}`,
-                      aqi: city.avg_aqi,
-                      category: city.aqi_category,
-                      records: city.record_count,
-                    });
-                  }}
-                  onMouseLeave={() => setTooltip({ ...tooltip, visible: false })}
-               />
-             ))}
+                  coordinates={[city.longitude, city.latitude]}
+                >
+                  <circle
+                    r={3}
+                    fill={aqiColor(city.avg_aqi)}
+                    stroke="white"
+                    strokeWidth={0.5}
+                    opacity={0.8}
+                    style={{ cursor: 'pointer' }}
+                    onMouseEnter={e => {
+                      const { clientX, clientY } = e;
+                      setTooltip({
+                        visible: true,
+                        x: clientX,
+                        y: clientY,
+                        country: `${city.city}, ${city.country}`,
+                        aqi: city.avg_aqi,
+                        category: city.aqi_category,
+                        records: city.record_count,
+                      });
+                    }}
+                    onMouseLeave={() => setTooltip({ ...tooltip, visible: false })}
+                  />
+                </Marker>
+              ))}
             </ZoomableGroup>
           </ComposableMap>
         </div>

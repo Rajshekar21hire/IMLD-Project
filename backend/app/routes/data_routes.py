@@ -481,6 +481,55 @@ def get_world_aqi():
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+# City name aliases not present (or present under a different spelling) in geonamescache.
+_CITY_NAME_ALIASES = {
+    ('gifu-shi', 'jp'): 'gifu',
+    ('mecca', 'sa'): 'makkah',
+    ('mysore', 'in'): 'mysuru',
+    ('nur-sultan', 'kz'): 'astana',
+    ('odessa', 'ua'): 'odesa',
+    ('taitung city', 'tw'): 'taitung',
+    ('washington d.c.', 'us'): 'washington',
+    ('zanjān', 'ir'): 'zanjan',
+    ('zaporizhia', 'ua'): 'zaporizhzhya',
+    ('kryvyi rih', 'ua'): 'kryvyy rih',
+}
+
+# Manual coordinates for cities absent from geonamescache entirely.
+_CITY_COORD_OVERRIDES = {
+    ('kamianske', 'ua'): (48.5111, 34.6017),
+    ('petaẖ tiqwa', 'il'): (32.0917, 34.8872),
+}
+
+
+def _build_city_coord_lookup():
+    """Build a (lowercase city name, lowercase ISO-2 country) -> (lat, lon) lookup."""
+    import geonamescache
+    gc = geonamescache.GeonamesCache()
+    lookup = {}
+    for c in gc.get_cities().values():
+        key = (c['name'].lower(), c['countrycode'].lower())
+        lookup[key] = (c['latitude'], c['longitude'])
+    return lookup
+
+
+_CITY_COORD_LOOKUP = None
+
+
+def _city_coordinates(city, country):
+    global _CITY_COORD_LOOKUP
+    if _CITY_COORD_LOOKUP is None:
+        _CITY_COORD_LOOKUP = _build_city_coord_lookup()
+
+    city_key = city.strip().lower()
+    country_key = (country or '').strip().lower()
+    city_key = _CITY_NAME_ALIASES.get((city_key, country_key), city_key)
+
+    if (city_key, country_key) in _CITY_COORD_OVERRIDES:
+        return _CITY_COORD_OVERRIDES[(city_key, country_key)]
+    return _CITY_COORD_LOOKUP.get((city_key, country_key))
+
+
 @bp.route('/cities-aqi', methods=['GET'])
 def get_cities_aqi():
     """Get average AQI per city with latitude/longitude for map markers."""
@@ -500,31 +549,31 @@ def get_cities_aqi():
             db.session.query(
                 AirQualityData.city,
                 AirQualityData.country,
-                AirQualityData.latitude,
-                AirQualityData.longitude,
                 func.avg(AirQualityData.aqi).label('avg_aqi'),
                 func.count(AirQualityData.id).label('record_count'),
             )
             .filter(AirQualityData.aqi.isnot(None))
-            .filter(AirQualityData.latitude.isnot(None))
-            .filter(AirQualityData.longitude.isnot(None))
-            .group_by(AirQualityData.city, AirQualityData.country, AirQualityData.latitude, AirQualityData.longitude)
+            .filter(AirQualityData.city.isnot(None))
+            .filter(AirQualityData.country.isnot(None))
+            .group_by(AirQualityData.city, AirQualityData.country)
             .all()
         )
 
-        data = [
-            {
+        data = []
+        for row in results:
+            coords = _city_coordinates(row.city, row.country)
+            if not coords:
+                continue
+            lat, lon = coords
+            data.append({
                 'city': row.city,
                 'country': row.country,
-                'latitude': row.latitude,
-                'longitude': row.longitude,
+                'latitude': lat,
+                'longitude': lon,
                 'avg_aqi': round(row.avg_aqi, 1),
                 'record_count': row.record_count,
                 'aqi_category': _aqi_category(row.avg_aqi),
-            }
-            for row in results
-            if row.city and row.country
-        ]
+            })
 
         return jsonify({'success': True, 'data': data, 'count': len(data)})
     except Exception as e:

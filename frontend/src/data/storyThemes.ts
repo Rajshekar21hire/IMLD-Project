@@ -10,6 +10,10 @@ export interface StorySection {
     type: 'line' | 'bar';
     dataSourceKey: string;
   };
+  table?: {
+    columns: string[];
+    rows: { label: string; values: string[] }[];
+  };
 }
 
 export interface StoryCategoryCard {
@@ -84,23 +88,36 @@ export const storyThemes: StoryTheme[] = [
         body:
           'Air quality is determined by six key pollutants tracked by the WHO and national agencies. Each has different sources, different behavior in the atmosphere, and different health effects. Select any to explore.',
         bullets: [
-          'PM2.5: fine particulate matter under 2.5 micrometres in diameter, the single most lethal air pollutant tracked globally.',
-          'PM10: coarse particles between 2.5 and 10 micrometres that are trapped in the nose and upper airways.',
-          'NO2: nitrogen dioxide, a reddish-brown gas formed when fuel burns at high temperatures.',
-          'O3: ground-level ozone formed when NO2 and volatile organic compounds react in sunlight.',
-          'SO2: sulphur dioxide released primarily by burning high-sulphur coal and heavy oil.',
-          'CO: carbon monoxide, a colourless, odourless gas produced by incomplete combustion.',
+          'PM2.5 (WHO guideline 5 µg/m³ annual mean, 2021): Fine particulate matter under 2.5 micrometres in diameter, the single most lethal air pollutant tracked globally. Sources: vehicle exhaust, coal combustion, wildfires, agricultural burning, industrial processes. Health effects: penetrates deep into lung tissue and enters the bloodstream, driving cardiovascular disease, stroke, lung cancer, diabetes, and cognitive decline — no safe level has been identified. Hazard level: very high.',
+          'PM10 (WHO guideline 15 µg/m³ annual mean, 2021): Coarse particles between 2.5 and 10 micrometres, trapped in the nose and upper airways. Sources: road dust, construction, pollen, sea salt, agricultural operations. Health effects: nasal and throat irritation, bronchitis, and aggravated asthma — largely filtered before reaching the lungs, unlike PM2.5. Hazard level: moderate.',
+          'NO2 (WHO guideline 10 µg/m³ annual mean, 2021): Nitrogen dioxide, a reddish-brown gas formed when fuel burns at high temperatures — a major marker of traffic pollution. Sources: vehicle engines, power plants, industrial boilers, gas appliances. Health effects: inflames the lining of the airways, reducing lung function and worsening asthma; long-term exposure is linked to development of asthma in children. Hazard level: high near roads.',
+          'O3 (WHO guideline 100 µg/m³ peak season daily max, 2021): Ground-level ozone, formed when NO2 and volatile organic compounds react in sunlight — not emitted directly, peaks on hot, sunny, stagnant days. Sources: vehicle exhaust + industrial VOCs + sunlight. Health effects: irritates the respiratory system, triggers asthma attacks, reduces lung capacity, and damages crops and ecosystems as well as human health. Hazard level: high in summer heat.',
+          'SO2 (WHO guideline 40 µg/m³ 24-hour mean, 2021): Sulphur dioxide, a sharp-smelling gas released primarily by burning high-sulphur coal and heavy oil — a major cause of acid rain. Sources: coal-fired power plants, oil refineries, metal smelters, volcanoes. Health effects: constricts airways immediately on inhalation, is a major driver of COPD near industrial zones, and combines with water vapour to form sulphuric acid in the lungs. Hazard level: high near industry.',
+          'CO (WHO guideline 4 mg/m³ 24-hour mean, 2021): Carbon monoxide, a colourless, odourless gas produced by incomplete combustion, binding to haemoglobin 200x more readily than oxygen. Sources: vehicle exhaust, gas appliances, open fires, industrial combustion. Health effects: at high concentrations causes headache, confusion, and death by oxygen deprivation; chronic low-level exposure impairs neurological function. Hazard level: high indoors/traffic.',
         ],
       },
       {
         title: 'From chemistry to a single number',
         body:
-          'Air quality is reported using the Air Quality Index. The AQI converts raw pollutant concentrations into a 0–500 score, helping people understand what the air means for health and daily activity.',
+          'Air quality is reported using the Air Quality Index (AQI). The AQI converts raw pollutant concentrations into a 0–500 score, helping people understand what the air means for health and daily activity.',
+        bullets: [
+          'AQI 0–50: Safe for all outdoor activities. No restrictions needed for sensitive groups. Exercise freely outdoors. PM2.5 < 12 µg/m³ — within WHO guideline.',
+          'AQI 51–100: Acceptable for most people. Unusually sensitive individuals should reduce prolonged outdoor activity. Light outdoor activity is fine for most. PM2.5 12–35 µg/m³ — above WHO guideline.',
+          'AQI 101–150: General public unlikely to be affected. Children, elderly, and those with respiratory/heart conditions should limit outdoor exertion. Active children and adults should reduce prolonged outdoor activity. PM2.5 35–55 µg/m³ — significantly above WHO guideline.',
+          'AQI 151–200: Everyone may begin to feel health effects. Children and sensitive groups should avoid outdoor activity. Everyone should reduce prolonged outdoor exertion. PM2.5 55–150 µg/m³ — 10–30x WHO guideline.',
+          'AQI 201–300: Health alert — significant aggravation for everyone. Sensitive groups should stay indoors. Avoid outdoor activity and use an air purifier indoors. PM2.5 150–250 µg/m³ — Delhi reaches this regularly in winter.',
+          'AQI 301–500: Emergency conditions — everyone affected. Stay indoors with air purification and seal windows. No outdoor activity; wear an N95 mask if you must go out. PM2.5 250+ µg/m³ — Ulaanbaatar’s worst winter nights reach 700+ µg/m³.',
+        ],
       },
       {
         title: 'How we measure air quality?',
         body:
           'No single technology gives us the full story. Ground stations are accurate but sparse. Satellites cover the globe but miss surface detail. Low-cost sensors fill gaps but need calibration. Together they create the best picture we have.',
+        bullets: [
+          'Ground stations — Strengths: highest accuracy and the regulatory standard, hourly real-time data streams, used for official AQI reporting. Limitations: very sparse in low-income countries, $50,000–$200,000 per unit, Africa has <100 stations for 1.4bn people.',
+          'Satellite sensors — Strengths: full global coverage every 1–2 days, detects pollution events in unmonitored regions, AI can extract surface-level estimates from column data. Limitations: measures column average not surface level, blocked by thick clouds and aerosol layers, spatial resolution ~3.5km² minimum.',
+          'Low-cost sensors — Strengths: dense urban networks for block-level detail, community-owned and operated, AirQo deploying across African cities. Limitations: lower accuracy and needs calibration against reference, humidity and temperature affect readings, data quality varies widely by device and location.',
+        ],
       },
       {
         title: 'The WHO 2021 revision',
@@ -203,24 +220,130 @@ export const storyThemes: StoryTheme[] = [
     status: 'ready',
     humanSections: [
       {
-        title: 'Ranking cities turns AQI into action',
+        title: 'Deep dives: the worst-affected places',
         body:
-          'A city ranking translates abstract AQI values into a practical list people can understand quickly. Instead of one isolated measurement, rankings reveal which places are persistently cleaner or more polluted.',
+          'In order to deep dive, we need to know what are the best and worst cities according to the air quality index.\n\nThere are certain factors that contribute to the root cause of the cities having a bad air quality. The five cities we see share a structural cluster of causes such as fossil-fuel transport, coal-fired kilns and industrial emissions. These are then amplified by flat basin geography that traps pollutants in winter inversions, and undermined by weak cross-boundary governance.',
+        table: {
+          columns: [
+            'Lahore (~102–195 µg/m³)',
+            'Delhi (~170 µg/m³)',
+            'New Delhi (~165 µg/m³)',
+            'Dhaka (~66–195 µg/m³)',
+            'Ghaziabad (~158 µg/m³)',
+          ],
+          rows: [
+            {
+              label: 'Transport & vehicles',
+              values: [
+                '35% of PM2.5; 6.3M registered vehicles, mostly old diesel; low-grade Euro II fuel',
+                'Largest single source (17–39%); 2- and 3-wheelers dominate (50% of transport share)',
+                'Same NCR transport network as Delhi; shared airshed compounds exposure',
+                'Up to 15% of PM2.5; 6.17 lakh unfit vehicles with expired fitness certificates',
+                'Dense truck and heavy vehicle corridor on NH-9; industrial transport hub',
+              ],
+            },
+            {
+              label: 'Brick kilns',
+              values: [
+                '17% of PM2.5; thousands of coal-burning kilns across Punjab; often illegal/unregulated',
+                'Significant contributor; kilns in NCR periphery burn coal and agricultural waste',
+                'Shared NCR kiln belt; kilns in UP and Haryana directly affect New Delhi airshed',
+                '2,000+ kilns surrounding city; historically the #1 source, now 13–29% of PM2.5',
+                'Major kiln clusters in Ghaziabad district itself; part of Delhi NCR kiln belt',
+              ],
+            },
+            {
+              label: 'Industry & power',
+              values: [
+                '28% of PM2.5; steel, foundry, textile factories burn coal/furnace oil; unregulated',
+                "Regional power & industry 14% of daily PM2.5; coal plants in NCR; Badarpur plant (now closed) responsible for 80–90% of power-sector particulates",
+                'Industrial estates in NCR; shared regional industry emissions',
+                'Factories discharge without filtration; household fuel combustion 28% of PM2.5',
+                "Heavy industrial base - plastics, metals, chemicals; one of UP's most industrialised districts",
+              ],
+            },
+            {
+              label: 'Crop burning',
+              values: [
+                'Seasonal spikes from Punjab (Pakistan & India border) stubble burning; worsens Oct–Nov',
+                '~30–40% of winter PM2.5 spikes; paddy stubble burning in Haryana & Punjab',
+                'Same seasonal biomass spike as Delhi; transboundary contribution from UP fields',
+                '10% from transboundary sources; regional agricultural burning drifts in',
+                'Surrounded by agricultural land in western UP; crop fire smoke a major seasonal driver',
+              ],
+            },
+            {
+              label: 'Geography & meteorology',
+              values: [
+                'Flat Punjab plain; winter temperature inversions trap pollutants; no dispersion',
+                'Landlocked; surrounded by states; winter fog + low wind = PM2.5 accumulation',
+                'Same bowl geography as Delhi; no natural ventilation corridor',
+                'River delta city; dense fog and low wind in winter trap particulates',
+                'Downwind of Delhi; elevated from Yamuna floodplain; receives pollution from west',
+              ],
+            },
+            {
+              label: 'Urban sprawl & construction',
+              values: [
+                'Unregulated construction over green/agricultural land; loss of tree cover',
+                'Rapid unplanned urbanisation; construction dust among top sources',
+                'Construction boom in NCR; road dust 35–66% of PM10',
+                '30% of pollution from construction and road works; fastest-growing urban area',
+                'Rapid high-rise construction; road dust and debris uncontrolled',
+              ],
+            },
+            {
+              label: 'Governance gap',
+              values: [
+                'Poor enforcement; companies, farmers, vehicle owners undeterred; policy not implemented',
+                'Multiple overlapping jurisdictions (Delhi, UP, Haryana); no single authority',
+                'Same multi-state governance gap as Delhi',
+                '75% of closed kilns resume operations; only 10% of eco-brick target met by 2025',
+                'UP state enforcement weaker than Delhi; proximity to capital creates regulatory grey zone',
+              ],
+            },
+          ],
+        },
       },
       {
-        title: 'Worst-city rankings highlight urgent health risk',
+        title: 'Human stories: Real lives shaped by air quality',
         body:
-          'The highest average AQI cities often face sustained exposure burdens, especially for children, older adults, and people with respiratory conditions. These rankings help prioritize where interventions are most urgent.',
+          'Beyond rankings and metrics, air quality is a daily reality for families across the world. These voices from Gulf News and lung.org (2020–2025) share how poor air quality has profoundly changed their lives, their health, and their choices. Each story reveals not just suffering, but a pattern: pollution is not something that happened once, but something people wake up to every single day, with often no real way out.',
       },
       {
-        title: 'Best-city rankings provide realistic benchmarks',
+        title: 'Syed Hasnain: A child\'s pneumonia and the invisible threat',
         body:
-          'Cities with lower average AQI show what better outcomes look like in similar regions. Comparing policy, transport, and emission patterns helps others adopt proven strategies.',
+          'Syed Hasnain watched his 4-year-old develop a persistent cough and struggle to breathe, with a high temperature following. Thinking it might be coronavirus, he rushed his son to the hospital. But the doctors delivered an unexpected diagnosis: pneumonia caused by smog. The air itself had become the infection vector. For a parent, that realisation transforms how you see every breath your child takes—the very air that should sustain them had instead become the weapon that harmed them.',
       },
       {
-        title: 'User-selected top N keeps analysis flexible',
+        title: 'Cheri M.: A coastal dream interrupted by worsening asthma',
         body:
-          'Allowing users to choose top 3, 5, or 10 cities adapts the analysis for quick overviews or deeper reviews. This creates a reusable decision-support view for dashboards and reports.',
+          'Cheri M. lives in what should be a clean area—coastal Encinitas, California. But her worsening asthma has drastically altered her life. Doctors told her she now has the lungs of a 90-year-old smoker, despite being in her late 50s. Living near a busy road, she keeps air purifiers in every room and doesn\'t dare walk without a mask because of diesel trucks and flying dust. She has had to carefully monitor the people she\'s around and the places she goes to avoid even catching a common cold, which could have dire consequences for her respiratory health. Clean air, for her, is no longer a backdrop to life—it\'s become a daily condition she must negotiate.',
+      },
+      {
+        title: 'Khushboo Bharti: Watching her infant\'s struggle',
+        body:
+          'Khushboo Bharti remembers the moment her 1-year-old daughter Samaira woke with a violent cough that made her vomit several times. On the way to the hospital, Samaira didn\'t react to anyone or anything—very unlike her usually bubbly nature. She wouldn\'t even lift her head. It was the worst moment of Khushboo\'s life. Even now, if her daughter coughs just a few times, Khushboo panics. Doctors told her Samaira might need to be on inhalers for some time. Khushboo asks the question that haunts many parents in polluted cities: "What is the point of living in a city where my daughter can\'t even breathe safely?" Her husband\'s business is in Delhi, so they can\'t simply leave. But the moment they have a chance, they\'ll move.',
+      },
+      {
+        title: 'Jeanne W.: From pollen allergies to daily asthma management',
+        body:
+          'Jeanne W. was always susceptible to lung irritation from pollens, dust, and mold. As a child, she dealt with seasonal allergies from grasses and sweet clover. But since moving to Utah ten years ago, she has been diagnosed with asthma. Managing asthma has become a daily part of her life. She takes long-term asthma control medications, allergy-induced asthma treatments, and quick-relief medications. When these don\'t work, she uses a nebulizer that turns liquid medicine into a mist just so she can breathe. What started as seasonal susceptibility has become a chronic condition managed by multiple medications and devices every single day.',
+      },
+      {
+        title: 'kathleen f.: Watching her father\'s final stages',
+        body:
+          'kathleen f. is fighting for air quality because her father is in the final stages of emphysema. He is on oxygen 24/7 and on every medication available for emphysema treatment. It hurts to hear him tell her that it\'s getting harder to breathe, that he has good days and bad days—but mostly bad. He is 76 years old, but kathleen still thinks that\'s too young to lose someone when there\'s nothing fundamentally wrong with him except his damaged lungs. She loves her dad very much, and watching him struggle has become the deepest motivation for her to hope and pray he\'ll be with them for at least a few more years. His suffering is her reason to care about air quality.',
+      },
+      {
+        title: 'Mark E.: Transport choices and air quality memories',
+        body:
+          'Mark E. would be elated to return to a 55 mph speed limit. Right now, he drives at that speed himself and stays 5 mph slower in town. He shuts off his engine when sitting in a line at a food place or doing banking. He lived in San Diego, California in the 1960s and early 1970s, when his family moved to the high desert to escape pollution and the allergies it triggered. It helped a lot. Later, when he came to Sioux Falls, South Dakota, he discovered the real villain wasn\'t pollen—it was smog. He believes that if we could improve air quality, we could eliminate some of the lung problems and allergies that plague so many people. His choices around transport and his memory of moving to escape pollution drive his conviction that cleaner air is possible.',
+      },
+      {
+        title: 'Sue B.: A respiratory therapist\'s daily witness',
+        body:
+          'Sue B. is a respiratory therapist at Cincinnati Children\'s Hospital. Every single day, she sees children struggling to breathe. None of us can exist without air and water—these are the fundamental stuff of life for each of us. But for the children she treats, even breathing has become a medical challenge. Her frontline perspective means she sees the consequences of air pollution not as statistics or trends, but as families in crisis, and children fighting for every breath. Her calling is to care for them, but her deeper wish is that fewer children would need her help at all.',
       },
     ],
     aiSections: [
