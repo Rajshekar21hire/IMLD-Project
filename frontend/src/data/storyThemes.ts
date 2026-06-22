@@ -539,11 +539,14 @@ export const storyThemes: StoryTheme[] = [
       {
         title: 'Human element - resident testimonials, health worker interviews',
         body:
-          'Three human voices show how clean air becomes real through grief, community action, and climate advocacy. Their stories connect asthma, household energy, and toxic exposure to the wider fight for healthier lives.',
+          'Six human voices show how clean air becomes real through grief, community action, and climate advocacy. Their stories connect asthma, household energy, and toxic exposure to the wider fight for healthier lives across high-burden cities.',
         bullets: [
           '“No child in this country should die from asthma.” - Rosamund. Ella Roberta was born healthy, but by age seven she had asthma, and at nine she died of a fatal asthma attack. Her mother Rosamund turned that loss into campaign work, helping push Ella\'s Law — a Clean Air (Human Rights) Bill that would enshrine clean air as a legal right and bind the UK to WHO air-quality targets.',
           '“Zero-cost stoves, built by the community, for the community.” - Nitisha Agrawal. As founder and director of the Smokeless Cookstove Foundation, she works with marginalised communities across India to teach people how to make zero-cost, mud-based improved cookstoves. Her approach is built on co-creation, with stoves designed and made locally rather than handed down from outside.',
           '“I grew up knowing that the very first danger I ever faced was something invisible, something we had not ever chosen.” - Nomundari (Nomu) Urantulga. Born in Ulaanbaatar, Mongolia, she grew up around coal-burning ger-district stoves and a toxic winter haze; a family tragedy linked to exposure during pregnancy turned her pain into purpose, and she now campaigns with youth movements and Climate Healthy Planet Now to carry that lesson into every room she enters.',
+          '“In Delhi winter, morning school assembly feels like breathing smoke; by noon we keep inhalers in three classrooms.” - Government school teacher, Delhi. Repeated high-PM2.5 days in peak season have shifted classes indoors and increased absenteeism among children with asthma symptoms.',
+          '“In Lahore, emergency breathing cases rise when the smog settles and visibility drops.” - Respiratory nurse, Lahore public hospital. During severe haze episodes, outpatient queues lengthen and families report persistent cough, eye irritation, and sleep disruption.',
+          '“In Cairo traffic corridors, we plan outdoor work before sunrise because roadside air gets heavy by mid-day.” - Municipal field worker, Cairo. Colleagues report throat irritation and headaches on days with prolonged traffic congestion and dust resuspension.',
         ],
       },
       {
@@ -570,7 +573,7 @@ export const storyModes: { id: StoryMode; label: string; description: string }[]
   },
   {
     id: 'ai',
-    label: 'AI / Olamala Generated',
+    label: 'AI / Ollama Generated',
     description: 'An AI-style version using the same theme and subtopic structure.',
   },
   {

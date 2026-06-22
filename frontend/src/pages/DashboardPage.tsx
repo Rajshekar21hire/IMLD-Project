@@ -8,6 +8,8 @@ import {
   CartesianGrid,
   Cell,
   Legend,
+  Pie,
+  PieChart,
   ReferenceLine,
   ResponsiveContainer,
   Tooltip,
@@ -15,8 +17,6 @@ import {
   YAxis,
   Line,
   LineChart,
-  PieChart,
-  Pie,
 } from 'recharts';
 import { storyAPI, dataAPI } from '../services/api';
 import { storyModes, storyThemes, StoryMode, StoryTheme, StorySection, StoryCategoryBlock } from '../data/storyThemes';
@@ -140,6 +140,7 @@ export const DashboardPage: React.FC = () => {
   const [storyFourAiVoiceIndex, setStoryFourAiVoiceIndex] = useState(0);
   const [storyFourOutcomeFilter, setStoryFourOutcomeFilter] = useState<'All' | 'Health' | 'Economy' | 'Environment' | 'Technology'>('All');
   const [storyFourCaseStudyId, setStoryFourCaseStudyId] = useState('china-pm25');
+  const [storyThreeTestimonialsChoice, setStoryThreeTestimonialsChoice] = useState<'idle' | 'yes' | 'no'>('idle');
 
   const selectedTheme = useMemo(
     () => storyThemes.find((theme) => theme.id === selectedThemeId) ?? storyThemes[0],
@@ -266,6 +267,25 @@ export const DashboardPage: React.FC = () => {
   }, [storyFourAiVoices, storyFourAiVoiceIndex]);
 
   const selectedStoryFourAiVoice = storyFourAiVoices[storyFourAiVoiceIndex];
+  const storyThreeHumanTestimonials = useMemo(() => {
+    const governanceTheme = storyThemes.find((theme) => theme.id === 'measurement-and-governance');
+    const voiceSection = governanceTheme?.humanSections?.[1];
+    const sourceBullets = voiceSection?.bullets || [];
+
+    return sourceBullets.map((bullet) => {
+      const quoteMatch = bullet.match(/^“([^”]+)”\s*[-–—]\s*([^\.]+)\.\s*(.*)$/);
+      const quote = quoteMatch?.[1] ? `"${quoteMatch[1]}"` : bullet;
+      const author = quoteMatch?.[2]?.trim() || 'Human testimonial';
+      const details = quoteMatch?.[3]?.trim() || '';
+
+      return {
+        id: `${author}-${quote}`.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        quote,
+        author,
+        details,
+      };
+    });
+  }, []);
   const storyFourOutcomeCards = useMemo(() => {
     return [
       {
@@ -548,9 +568,11 @@ export const DashboardPage: React.FC = () => {
     }
   }, [selectedTheme, aiGenerationSections]);
 
-  const generateCityRankings = useCallback(async () => {
+  const generateCityRankings = useCallback(async (overrideRankingType?: 'best' | 'worst' | 'both') => {
+    const effectiveRankingType = overrideRankingType ?? rankingType;
     setRankingLoading(true);
     setRankingError('');
+    setStoryThreeTestimonialsChoice('idle');
     setSelectedCityLabel('');
     setSelectedCityBucket(null);
     setCityDetails(null);
@@ -559,7 +581,7 @@ export const DashboardPage: React.FC = () => {
     try {
       const response = await storyAPI.generateCityRankings({
         count: rankingCount,
-        ranking_type: rankingType,
+        ranking_type: effectiveRankingType,
       });
 
       if (response.data?.success) {
@@ -654,7 +676,7 @@ export const DashboardPage: React.FC = () => {
                   Story studio for human and AI-generated air narratives
                 </h1>
                 <p className="mt-4 text-base md:text-lg text-slate-300 leading-relaxed">
-                  Choose one of the four story themes, switch between the human version and the AI/Olamala version,
+                  Choose one of the four story themes, switch between the human version and the AI/Ollama version,
                   and drill into subtopics that keep the same subject structure across both modes.
                 </p>
               </div>
@@ -1614,20 +1636,21 @@ export const DashboardPage: React.FC = () => {
                   </div>
 
                   {isStoryThreeAiView && (
+                    <>
                     <div className="mt-6 rounded-2xl border border-sky-200 bg-white p-5">
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                         <div>
                           <div className="inline-flex items-center gap-2 rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">
                             <Bot className="h-3.5 w-3.5" />
-                            AI Agent 1
+                            Story 3
                           </div>
-                          <h4 className="mt-3 text-xl font-bold text-slate-950">Best and worst cities by PM2.5</h4>
+                          <h4 className="mt-3 text-xl font-bold text-slate-950">Best and worst cities by AQI</h4>
                           <p className="mt-2 text-sm text-slate-600">
                             Enter how many cities to rank, choose worst, best, or both, then generate AI-powered results.
                           </p>
                         </div>
 
-                        <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-3 lg:w-auto">
+                        <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:w-auto">
                           <label className="flex flex-col text-sm font-semibold text-slate-700">
                             City count
                             <input
@@ -1644,8 +1667,14 @@ export const DashboardPage: React.FC = () => {
                             Ranking mode
                             <select
                               value={rankingType}
-                              onChange={(event) => setRankingType(event.target.value as 'best' | 'worst' | 'both')}
-                              className="mt-1 rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                              onChange={(event) => {
+                                const nextRankingType = event.target.value as 'best' | 'worst' | 'both';
+                                setRankingType(nextRankingType);
+                                if (rankingResult) {
+                                  void generateCityRankings(nextRankingType);
+                                }
+                              }}
+                              className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
                             >
                               <option value="worst">Top worst cities</option>
                               <option value="best">Top best cities</option>
@@ -1655,12 +1684,14 @@ export const DashboardPage: React.FC = () => {
 
                           <button
                             type="button"
-                            onClick={generateCityRankings}
+                            onClick={() => {
+                              void generateCityRankings();
+                            }}
                             disabled={rankingLoading}
                             className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
                           >
                             <BarChart3 className="h-4 w-4" />
-                            {rankingLoading ? 'Generating...' : 'Run AI Agent 1'}
+                            {rankingLoading ? 'Generating...' : 'Run Story 3'}
                           </button>
                         </div>
                       </div>
@@ -1718,7 +1749,7 @@ export const DashboardPage: React.FC = () => {
                                       <Legend
                                         formatter={(value) => (value === 'avg_pm25' ? 'City average PM2.5' : 'Standard PM2.5')}
                                       />
-                                      <Bar dataKey="avg_pm25" fill="#dc2626" radius={[8, 8, 0, 0]}>
+                                      <Bar dataKey="avg_pm25" fill={rankingType === 'best' ? '#16a34a' : '#dc2626'} radius={[8, 8, 0, 0]}>
                                         {activeRankingRows.map((row) => (
                                           <Cell
                                             key={row.label}
@@ -1802,7 +1833,7 @@ export const DashboardPage: React.FC = () => {
                                             return [`${value.toFixed(2)} ug/m3`, 'Best city PM2.5'];
                                           }}
                                         />
-                                        <Bar dataKey="avg_pm25" fill="#dc2626" radius={[8, 8, 0, 0]} />
+                                        <Bar dataKey="avg_pm25" fill="#16a34a" radius={[8, 8, 0, 0]} />
                                         <Bar dataKey="standard_pm25" fill="#2563eb" radius={[8, 8, 0, 0]} />
                                       </BarChart>
                                     </ResponsiveContainer>
@@ -1838,235 +1869,275 @@ export const DashboardPage: React.FC = () => {
                             </div>
                           </div>
 
-                          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                            {(rankingType === 'worst' || rankingType === 'both') && (
-                              <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                                <h6 className="text-base font-bold text-slate-900">Worst city ranking details</h6>
-                                <p className="mt-1 text-xs text-slate-500">Click a city row to view detailed city profile.</p>
-                                <div className="mt-3 overflow-x-auto">
-                                  <table className="min-w-full text-sm">
-                                    <thead>
-                                      <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-[0.18em] text-slate-500">
-                                        <th className="px-2 py-2">Rank</th>
-                                        <th className="px-2 py-2">City</th>
-                                        <th className="px-2 py-2">Avg PM2.5</th>
-                                        <th className="px-2 py-2">Samples</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {rankingResult.worst_cities.map((row) => (
-                                        <tr
-                                          key={`worst-${row.rank}-${formatRankingRowLabel(row)}`}
-                                          onClick={() => loadCityDetails(row, 'worst')}
-                                          className={`cursor-pointer border-b border-slate-100 text-slate-700 transition-colors hover:bg-sky-50 ${
-                                            selectedCityLabel === formatRankingRowLabel(row) ? 'bg-sky-50' : ''
-                                          }`}
-                                        >
-                                          <td className="px-2 py-2 font-semibold">#{row.rank}</td>
-                                          <td className="px-2 py-2">{formatRankingRowLabel(row)}</td>
-                                          <td className="px-2 py-2 font-medium text-red-700">{row.avg_pm25.toFixed(2)}</td>
-                                          <td className="px-2 py-2">{row.sample_count}</td>
+                          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
+                            <h5 className="text-lg font-bold text-slate-950">City Ranking Details</h5>
+                            <p className="mt-1 text-sm text-slate-600">Explore ranked city rows and open city-level profiles in one place.</p>
+
+                            <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
+                              {(rankingType === 'worst' || rankingType === 'both') && (
+                                <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                                  <h6 className="text-base font-bold text-slate-900">Worst city ranking details</h6>
+                                  <p className="mt-1 text-xs text-slate-500">Click a city row to view detailed city profile.</p>
+                                  <div className="mt-3 overflow-x-auto">
+                                    <table className="min-w-full text-sm">
+                                      <thead>
+                                        <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-[0.18em] text-slate-500">
+                                          <th className="px-2 py-2">Rank</th>
+                                          <th className="px-2 py-2">City</th>
+                                          <th className="px-2 py-2">Avg PM2.5</th>
+                                          <th className="px-2 py-2">Samples</th>
                                         </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
+                                      </thead>
+                                      <tbody>
+                                        {rankingResult.worst_cities.map((row) => (
+                                          <tr
+                                            key={`worst-${row.rank}-${formatRankingRowLabel(row)}`}
+                                            onClick={() => loadCityDetails(row, 'worst')}
+                                            className={`cursor-pointer border-b border-slate-100 text-slate-700 transition-colors hover:bg-sky-50 ${
+                                              selectedCityLabel === formatRankingRowLabel(row) ? 'bg-sky-50' : ''
+                                            }`}
+                                          >
+                                            <td className="px-2 py-2 font-semibold">#{row.rank}</td>
+                                            <td className="px-2 py-2">{formatRankingRowLabel(row)}</td>
+                                            <td className="px-2 py-2 font-medium text-red-700">{row.avg_pm25.toFixed(2)}</td>
+                                            <td className="px-2 py-2">{row.sample_count}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
+                                  </div>
                                 </div>
-                              </div>
-                            )}
-
-                            {(rankingType === 'best' || rankingType === 'both') && (
-                              <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                                <h6 className="text-base font-bold text-slate-900">Best city ranking details</h6>
-                                <p className="mt-1 text-xs text-slate-500">Click a city row to view detailed city profile.</p>
-                                <div className="mt-3 overflow-x-auto">
-                                  <table className="min-w-full text-sm">
-                                    <thead>
-                                      <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-[0.18em] text-slate-500">
-                                        <th className="px-2 py-2">Rank</th>
-                                        <th className="px-2 py-2">City</th>
-                                        <th className="px-2 py-2">Avg PM2.5</th>
-                                        <th className="px-2 py-2">Samples</th>
-                                      </tr>
-                                    </thead>
-                                    <tbody>
-                                      {rankingResult.best_cities.map((row) => (
-                                        <tr
-                                          key={`best-${row.rank}-${formatRankingRowLabel(row)}`}
-                                          onClick={() => loadCityDetails(row, 'best')}
-                                          className={`cursor-pointer border-b border-slate-100 text-slate-700 transition-colors hover:bg-sky-50 ${
-                                            selectedCityLabel === formatRankingRowLabel(row) ? 'bg-sky-50' : ''
-                                          }`}
-                                        >
-                                          <td className="px-2 py-2 font-semibold">#{row.rank}</td>
-                                          <td className="px-2 py-2">{formatRankingRowLabel(row)}</td>
-                                          <td className="px-2 py-2 font-medium text-emerald-700">{row.avg_pm25.toFixed(2)}</td>
-                                          <td className="px-2 py-2">{row.sample_count}</td>
-                                        </tr>
-                                      ))}
-                                    </tbody>
-                                  </table>
-                                </div>
-                              </div>
-                            )}
-                          </div>
-
-                          {(selectedCityLabel || cityDetailsLoading || cityDetails || cityDetailsError) && (
-                            <div className="rounded-2xl border border-slate-200 bg-white p-5">
-                              <div className="flex flex-wrap items-center justify-between gap-3">
-                                <h6 className="text-lg font-bold text-slate-900">
-                                  City details {selectedCityLabel ? `- ${selectedCityLabel}` : ''}
-                                </h6>
-                                {cityDetails?.provider && (
-                                  <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
-                                    Guidance provider: {cityDetails.provider}
-                                  </span>
-                                )}
-                              </div>
-
-                              {cityDetailsLoading && (
-                                <p className="mt-4 text-sm text-slate-600">Loading city profile...</p>
                               )}
 
-                              {cityDetailsError && (
-                                <p className="mt-4 text-sm text-red-600">{cityDetailsError}</p>
-                              )}
-
-                              {cityDetails && (
-                                <div className="mt-4 space-y-5">
-                                  {/** Use all pollutants for chart display and keep top list for reasoning logic. */}
-                                  {(() => {
-                                    const chartPollutants = cityDetails.pollutant_breakdown && cityDetails.pollutant_breakdown.length > 0
-                                      ? cityDetails.pollutant_breakdown
-                                      : cityDetails.top_pollutants;
-
-                                    return (
-                                      <>
-                                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                      <div className="text-xs uppercase tracking-[0.16em] text-slate-500">Average AQI</div>
-                                      <div className="mt-1 text-2xl font-bold text-slate-900">
-                                        {cityDetails.aqi_avg !== null ? cityDetails.aqi_avg.toFixed(2) : 'N/A'}
-                                      </div>
-                                    </div>
-                                    <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
-                                      <div className="text-xs uppercase tracking-[0.16em] text-slate-500">Data samples</div>
-                                      <div className="mt-1 text-2xl font-bold text-slate-900">{cityDetails.sample_count}</div>
-                                    </div>
+                              {(rankingType === 'best' || rankingType === 'both') && (
+                                <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                                  <h6 className="text-base font-bold text-slate-900">Best city ranking details</h6>
+                                  <p className="mt-1 text-xs text-slate-500">Click a city row to view detailed city profile.</p>
+                                  <div className="mt-3 overflow-x-auto">
+                                    <table className="min-w-full text-sm">
+                                      <thead>
+                                        <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-[0.18em] text-slate-500">
+                                          <th className="px-2 py-2">Rank</th>
+                                          <th className="px-2 py-2">City</th>
+                                          <th className="px-2 py-2">Avg PM2.5</th>
+                                          <th className="px-2 py-2">Samples</th>
+                                        </tr>
+                                      </thead>
+                                      <tbody>
+                                        {rankingResult.best_cities.map((row) => (
+                                          <tr
+                                            key={`best-${row.rank}-${formatRankingRowLabel(row)}`}
+                                            onClick={() => loadCityDetails(row, 'best')}
+                                            className={`cursor-pointer border-b border-slate-100 text-slate-700 transition-colors hover:bg-sky-50 ${
+                                              selectedCityLabel === formatRankingRowLabel(row) ? 'bg-sky-50' : ''
+                                            }`}
+                                          >
+                                            <td className="px-2 py-2 font-semibold">#{row.rank}</td>
+                                            <td className="px-2 py-2">{formatRankingRowLabel(row)}</td>
+                                            <td className="px-2 py-2 font-medium text-emerald-700">{row.avg_pm25.toFixed(2)}</td>
+                                            <td className="px-2 py-2">{row.sample_count}</td>
+                                          </tr>
+                                        ))}
+                                      </tbody>
+                                    </table>
                                   </div>
-
-                                  <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                                    <h6 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">
-                                      All pollutants (top 3 highlighted)
-                                    </h6>
-                                    <div className="mt-3 h-72">
-                                      <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart data={chartPollutants} margin={{ top: 8, right: 20, left: 10, bottom: 24 }}>
-                                          <CartesianGrid strokeDasharray="3 3" />
-                                          <XAxis dataKey="name" />
-                                          <YAxis />
-                                          <Tooltip formatter={(value: number) => [value.toFixed(2), 'Average concentration']} />
-                                          <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                                            {chartPollutants.map((pollutant, index) => (
-                                              <Cell
-                                                key={`${pollutant.key}-${pollutant.value}`}
-                                                fill={index < 3 ? '#0284c7' : '#94a3b8'}
-                                              />
-                                            ))}
-                                          </Bar>
-                                        </BarChart>
-                                      </ResponsiveContainer>
-                                    </div>
-                                  </div>
-
-                                  {selectedCityBucket !== 'best' && (
-                                    <div className="space-y-4">
-                                      <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
-                                        <div className="flex items-center gap-2 text-base font-bold text-rose-800">
-                                          <AlertTriangle className="h-4 w-4" />
-                                          Reasons this city is highly polluted
-                                        </div>
-                                        <ul className="mt-3 space-y-2">
-                                          {cityDetails.reasons.map((reason) => (
-                                            <li key={reason} className="flex gap-2 text-sm text-rose-900">
-                                              <span className="mt-1 h-2 w-2 rounded-full bg-rose-500" />
-                                              <span>{reason}</span>
-                                            </li>
-                                          ))}
-                                        </ul>
-                                      </div>
-
-                                      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                                      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-                                        <div className="flex items-center gap-2 text-base font-bold text-amber-800">
-                                          <AlertTriangle className="h-4 w-4" />
-                                          Possible problems
-                                        </div>
-                                        <ul className="mt-3 space-y-2">
-                                          {cityDetails.problems.map((problem) => (
-                                            <li key={problem} className="flex gap-2 text-sm text-amber-900">
-                                              <span className="mt-1 h-2 w-2 rounded-full bg-amber-500" />
-                                              <span>{problem}</span>
-                                            </li>
-                                          ))}
-                                        </ul>
-                                      </div>
-
-                                      <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-                                        <div className="flex items-center gap-2 text-base font-bold text-emerald-800">
-                                          <ShieldCheck className="h-4 w-4" />
-                                          Precautions
-                                        </div>
-                                        <ul className="mt-3 space-y-2">
-                                          {cityDetails.precautions.map((item) => (
-                                            <li key={item} className="flex gap-2 text-sm text-emerald-900">
-                                              <span className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
-                                              <span>{item}</span>
-                                            </li>
-                                          ))}
-                                        </ul>
-                                      </div>
-                                      </div>
-                                    </div>
-                                  )}
-                                      </>
-                                    );
-                                  })()}
                                 </div>
                               )}
                             </div>
-                          )}
+
+                            {(selectedCityLabel || cityDetailsLoading || cityDetails || cityDetailsError) && (
+                              <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5">
+                                <div className="flex flex-wrap items-center justify-between gap-3">
+                                  <h6 className="text-lg font-bold text-slate-900">
+                                    City details {selectedCityLabel ? `- ${selectedCityLabel}` : ''}
+                                  </h6>
+                                  {cityDetails?.provider && (
+                                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
+                                      Guidance provider: {cityDetails.provider}
+                                    </span>
+                                  )}
+                                </div>
+
+                                {cityDetailsLoading && (
+                                  <p className="mt-4 text-sm text-slate-600">Loading city profile...</p>
+                                )}
+
+                                {cityDetailsError && (
+                                  <p className="mt-4 text-sm text-red-600">{cityDetailsError}</p>
+                                )}
+
+                                {cityDetails && (
+                                  <div className="mt-4 space-y-5">
+                                    {/** Use all pollutants for chart display and keep top list for reasoning logic. */}
+                                    {(() => {
+                                      const chartPollutants = cityDetails.pollutant_breakdown && cityDetails.pollutant_breakdown.length > 0
+                                        ? cityDetails.pollutant_breakdown
+                                        : cityDetails.top_pollutants;
+
+                                      return (
+                                        <>
+                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                        <div className="text-xs uppercase tracking-[0.16em] text-slate-500">Average AQI</div>
+                                        <div className="mt-1 text-2xl font-bold text-slate-900">
+                                          {cityDetails.aqi_avg !== null ? cityDetails.aqi_avg.toFixed(2) : 'N/A'}
+                                        </div>
+                                      </div>
+                                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                        <div className="text-xs uppercase tracking-[0.16em] text-slate-500">Data samples</div>
+                                        <div className="mt-1 text-2xl font-bold text-slate-900">{cityDetails.sample_count}</div>
+                                      </div>
+                                    </div>
+
+                                    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                                      <h6 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">
+                                        All pollutants (top 3 highlighted)
+                                      </h6>
+                                      <div className="mt-3 h-72">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                          <BarChart data={chartPollutants} margin={{ top: 8, right: 20, left: 10, bottom: 24 }}>
+                                            <CartesianGrid strokeDasharray="3 3" />
+                                            <XAxis dataKey="name" />
+                                            <YAxis />
+                                            <Tooltip formatter={(value: number) => [value.toFixed(2), 'Average concentration']} />
+                                            <Bar dataKey="value" radius={[8, 8, 0, 0]}>
+                                              {chartPollutants.map((pollutant, index) => (
+                                                <Cell
+                                                  key={`${pollutant.key}-${pollutant.value}`}
+                                                  fill={index < 3 ? '#0284c7' : '#94a3b8'}
+                                                />
+                                              ))}
+                                            </Bar>
+                                          </BarChart>
+                                        </ResponsiveContainer>
+                                      </div>
+                                    </div>
+
+                                    {selectedCityBucket !== 'best' && (
+                                      <div className="space-y-4">
+                                        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
+                                          <div className="flex items-center gap-2 text-base font-bold text-rose-800">
+                                            <AlertTriangle className="h-4 w-4" />
+                                            Reasons this city is highly polluted
+                                          </div>
+                                          <ul className="mt-3 space-y-2">
+                                            {cityDetails.reasons.map((reason) => (
+                                              <li key={reason} className="flex gap-2 text-sm text-rose-900">
+                                                <span className="mt-1 h-2 w-2 rounded-full bg-rose-500" />
+                                                <span>{reason}</span>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                                        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                                          <div className="flex items-center gap-2 text-base font-bold text-amber-800">
+                                            <AlertTriangle className="h-4 w-4" />
+                                            Possible problems
+                                          </div>
+                                          <ul className="mt-3 space-y-2">
+                                            {cityDetails.problems.map((problem) => (
+                                              <li key={problem} className="flex gap-2 text-sm text-amber-900">
+                                                <span className="mt-1 h-2 w-2 rounded-full bg-amber-500" />
+                                                <span>{problem}</span>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        </div>
+
+                                        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
+                                          <div className="flex items-center gap-2 text-base font-bold text-emerald-800">
+                                            <ShieldCheck className="h-4 w-4" />
+                                            Precautions
+                                          </div>
+                                          <ul className="mt-3 space-y-2">
+                                            {cityDetails.precautions.map((item) => (
+                                              <li key={item} className="flex gap-2 text-sm text-emerald-900">
+                                                <span className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
+                                                <span>{item}</span>
+                                              </li>
+                                            ))}
+                                          </ul>
+                                        </div>
+                                        </div>
+                                      </div>
+                                    )}
+                                        </>
+                                      );
+                                    })()}
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       )}
 
-                      <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-5">
-                        <h5 className="text-lg font-bold text-slate-950">Human Stories from the Air We Breathe</h5>
-                        <div className="mt-3 flex flex-col gap-3">
-                          {(() => {
-                            const introIndex = selectedTheme.humanSections.findIndex(
-                              (section) => section.title === 'Human stories: Real lives shaped by air quality'
-                            );
-                            const testimonials =
-                              introIndex >= 0 ? selectedTheme.humanSections.slice(introIndex + 1) : [];
-
-                            return testimonials.map((testimonial) => (
-                              <article
-                                key={testimonial.title}
-                                className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
-                              >
-                                <p className="text-sm text-slate-700">{testimonial.body}</p>
-                                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                                  {testimonial.title}
-                                </p>
-                              </article>
-                            ));
-                          })()}
-                        </div>
-                        <p className="mt-4 text-sm text-slate-600">
-                          Sourced from Gulf News and lung.org (2020–2025). Across locations and age groups, the pattern is the same:
-                          chronic exposure turns ordinary routines into daily risk management, with no real exit.
-                        </p>
-                      </div>
                     </div>
+
+                    <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
+                        <h5 className="text-lg font-bold text-slate-950">Human Stories from the Air We Breathe</h5>
+                        <p className="mt-2 text-sm font-bold text-slate-700">Do you want to know real stories?</p>
+                        <div className="mt-3 flex flex-wrap gap-3">
+                          <button
+                            type="button"
+                            onClick={() => setStoryThreeTestimonialsChoice('yes')}
+                            className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                              storyThreeTestimonialsChoice === 'yes'
+                                ? 'bg-emerald-700 text-white'
+                                : 'border border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50'
+                            }`}
+                          >
+                            Yes
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setStoryThreeTestimonialsChoice('no')}
+                            className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
+                              storyThreeTestimonialsChoice === 'no'
+                                ? 'bg-slate-700 text-white'
+                                : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
+                            }`}
+                          >
+                            No
+                          </button>
+                        </div>
+
+                        {storyThreeTestimonialsChoice === 'yes' && (
+                          <>
+                            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                              {storyThreeHumanTestimonials.length > 0 ? (
+                                storyThreeHumanTestimonials.map((testimonial) => (
+                                  <article key={testimonial.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                                    <p className="text-sm text-slate-700">{testimonial.quote}</p>
+                                    {testimonial.details && (
+                                      <p className="mt-2 text-sm text-slate-600">{testimonial.details}</p>
+                                    )}
+                                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{testimonial.author}</p>
+                                  </article>
+                                ))
+                              ) : (
+                                <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                                  <p className="text-sm text-slate-700">
+                                    Human testimonials are not available in the current source story yet.
+                                  </p>
+                                </article>
+                              )}
+                            </div>
+                            <p className="mt-4 text-sm text-slate-600">
+                              These testimonials are pulled from the human source narrative so the Story 3 panel reflects lived-experience context alongside ranking data.
+                            </p>
+                          </>
+                        )}
+
+                        {storyThreeTestimonialsChoice === 'no' && (
+                          <p className="mt-4 text-sm text-slate-600">
+                            You can click Yes anytime to generate and view real stories.
+                          </p>
+                        )}
+                    </div>
+                    </>
                   )}
                 </div>
 

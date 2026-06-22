@@ -562,14 +562,59 @@ def get_city_details():
         pollutant_breakdown.sort(key=lambda item: item['value'], reverse=True)
         top_pollutants = pollutant_breakdown[:3]
 
+        global_stats = AirQualityData.query.with_entities(
+            func.avg(AirQualityData.aqi).label('aqi_avg'),
+            func.avg(AirQualityData.pm25).label('pm25'),
+            func.avg(AirQualityData.pm10).label('pm10'),
+            func.avg(AirQualityData.o3).label('o3'),
+            func.avg(AirQualityData.no2).label('no2'),
+            func.avg(AirQualityData.so2).label('so2'),
+            func.avg(AirQualityData.co).label('co'),
+        ).first()
+
+        city_aqi_avg = float(avg_stats.aqi_avg) if avg_stats.aqi_avg is not None else None
+        global_aqi_avg = float(global_stats.aqi_avg) if global_stats and global_stats.aqi_avg is not None else None
+        global_pollutant_values = {
+            'pm25': float(global_stats.pm25) if global_stats and global_stats.pm25 is not None else None,
+            'pm10': float(global_stats.pm10) if global_stats and global_stats.pm10 is not None else None,
+            'o3': float(global_stats.o3) if global_stats and global_stats.o3 is not None else None,
+            'no2': float(global_stats.no2) if global_stats and global_stats.no2 is not None else None,
+            'so2': float(global_stats.so2) if global_stats and global_stats.so2 is not None else None,
+            'co': float(global_stats.co) if global_stats and global_stats.co is not None else None,
+        }
+
+        city_vs_global = []
+        for key in ('pm25', 'pm10', 'o3', 'no2', 'so2', 'co'):
+            city_value = pollutant_values.get(key)
+            global_value = global_pollutant_values.get(key)
+            if city_value is None or global_value is None or global_value == 0:
+                continue
+            ratio = city_value / global_value
+            city_vs_global.append(
+                {
+                    'key': key,
+                    'name': pollutant_labels[key],
+                    'city_value': round(city_value, 2),
+                    'global_value': round(global_value, 2),
+                    'ratio': round(ratio, 2),
+                }
+            )
+        city_vs_global.sort(key=lambda item: item['ratio'], reverse=True)
+        strongest_deviations = city_vs_global[:3]
+        source_signals = _derive_city_source_signals(strongest_deviations)
+
         ai_prompt = f"""
 You are AI Agent 1 for an air-quality dashboard.
-Given the city pollutant profile, return likely problems and practical precautions.
+Given the city pollutant profile, return city-specific reasons, problems, and practical precautions.
 
 City: {city}
 Country: {country or 'Unknown'}
-Average AQI: {round(float(avg_stats.aqi_avg), 2) if avg_stats.aqi_avg is not None else 'Unknown'}
+Sample count: {len(records)}
+Average AQI (city): {round(city_aqi_avg, 2) if city_aqi_avg is not None else 'Unknown'}
+Average AQI (global baseline): {round(global_aqi_avg, 2) if global_aqi_avg is not None else 'Unknown'}
 Top pollutants: {json.dumps(top_pollutants, indent=2)}
+Strongest city-vs-global pollutant deviations: {json.dumps(strongest_deviations, indent=2)}
+Likely source signals inferred from measured pollutants: {json.dumps(source_signals, indent=2)}
 
 Return valid JSON only:
 {{
@@ -579,6 +624,8 @@ Return valid JSON only:
 }}
 
 Rules:
+- Every item must explicitly reference {city} and include at least one concrete metric from the input where relevant.
+- In reasons, explicitly connect pollutant evidence to likely sources such as traffic, industry/power generation, construction/road dust, or combustion where supported by the signals.
 - Keep each item short and action-oriented.
 - No markdown fences.
 - No extra keys.
@@ -598,23 +645,37 @@ Rules:
         except Exception:
             ai_payload = None
 
-        fallback_problems, fallback_precautions = _fallback_city_guidance(top_pollutants)
-        fallback_reasons = _fallback_city_reasons(city, top_pollutants)
+        fallback_problems, fallback_precautions = _fallback_city_guidance(
+            city,
+            city_aqi_avg,
+            top_pollutants,
+            global_pollutant_values,
+        )
+        fallback_reasons = _fallback_city_reasons(
+            city,
+            country or records[0].country,
+            city_aqi_avg,
+            global_aqi_avg,
+            top_pollutants,
+            len(records),
+            strongest_deviations,
+            source_signals,
+        )
 
         response_payload = {
             'city': city,
             'country': country or records[0].country,
             'sample_count': len(records),
-            'aqi_avg': round(float(avg_stats.aqi_avg), 2) if avg_stats.aqi_avg is not None else None,
+            'aqi_avg': round(city_aqi_avg, 2) if city_aqi_avg is not None else None,
             'geo': {
                 'latitude': round(float(avg_stats.latitude), 4) if avg_stats.latitude is not None else None,
                 'longitude': round(float(avg_stats.longitude), 4) if avg_stats.longitude is not None else None,
             },
             'pollutant_breakdown': pollutant_breakdown,
             'top_pollutants': top_pollutants,
-            'reasons': (ai_payload or {}).get('reasons') or fallback_reasons,
-            'problems': (ai_payload or {}).get('problems') or fallback_problems,
-            'precautions': (ai_payload or {}).get('precautions') or fallback_precautions,
+            'reasons': _prefer_city_specific_items((ai_payload or {}).get('reasons'), fallback_reasons, city),
+            'problems': _prefer_city_specific_items((ai_payload or {}).get('problems'), fallback_problems, city),
+            'precautions': _prefer_city_specific_items((ai_payload or {}).get('precautions'), fallback_precautions, city),
             'provider': provider_used,
         }
 
@@ -623,46 +684,160 @@ Rules:
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-def _fallback_city_guidance(top_pollutants):
-    """Fallback problems and precautions when model output is unavailable."""
+def _fallback_city_guidance(city_name, city_aqi_avg, top_pollutants, global_pollutant_values):
+    """Fallback problems and precautions with city-specific pollutant metrics."""
+    city_tag = city_name or 'This city'
+    city_aqi_text = f"{city_aqi_avg:.2f}" if city_aqi_avg is not None else 'unknown'
+
     if not top_pollutants:
+        aqi_text = f"{city_aqi_avg:.2f}" if city_aqi_avg is not None else 'unknown'
         return (
             [
-                'Limited pollutant measurements reduce confidence in risk profiling.',
-                'Episodes of poor air quality may still occur without detailed pollutant attribution.',
-                'Sensitive groups can still face respiratory discomfort during AQI spikes.',
+                f"{city_tag} has an average AQI near {aqi_text}, but limited pollutant granularity makes root-cause analysis less precise.",
+                f"In {city_tag}, short-term pollution spikes can still impact respiratory comfort even when monthly averages look stable.",
+                f"Without detailed pollutant attribution in {city_tag}, sensitive groups may not receive timely exposure-specific guidance.",
             ],
             [
-                'Monitor local AQI daily and reduce exposure during higher-value periods.',
-                'Use indoor ventilation and filtration strategies during poor air episodes.',
-                'Protect sensitive groups with reduced outdoor exertion on high-pollution days.',
+                f"Track daily AQI in {city_tag} and reduce outdoor exertion on days that exceed your normal baseline.",
+                f"Use portable or indoor filtration in {city_tag} during poor-air episodes and close windows during peak traffic periods.",
+                f"Prioritize school and elderly protection plans in {city_tag} when AQI increases for multiple consecutive days.",
             ],
         )
 
-    dominant = [item['name'] for item in top_pollutants]
+    dominant = top_pollutants[0]
+    dominant_key = dominant.get('key')
+    dominant_name = dominant.get('name', 'PM2.5')
+    dominant_value = dominant.get('value')
+    global_value = global_pollutant_values.get(dominant_key) if dominant_key else None
+    ratio_text = ''
+    if dominant_value is not None and global_value not in (None, 0):
+        ratio_text = f" ({dominant_value / global_value:.2f}x global avg)"
+
     problems = [
-        f"Elevated {dominant[0]} may increase respiratory stress and irritation.",
-        'Sustained pollutant exposure can worsen outcomes for children, older adults, and asthma patients.',
-        'Higher pollution periods can reduce outdoor activity safety and quality of life.',
+        f"{city_tag} shows elevated {dominant_name} at {dominant_value:.2f}{ratio_text}, increasing irritation and respiratory burden risk.",
+        f"Multi-pollutant exposure in {city_tag} (top contributors: {', '.join(item['name'] for item in top_pollutants[:3])}) can amplify cardiovascular and lung stress.",
+        f"When AQI in {city_tag} remains near {city_aqi_text} on average, repeated moderate-to-poor days can reduce safe outdoor activity windows.",
     ]
+
     precautions = [
-        'Plan outdoor activities for lower AQI periods and avoid heavy exertion during peaks.',
-        'Use masks and indoor air filtration when pollution levels rise.',
-        'Support local traffic and emission reduction actions to lower long-term exposure.',
+        f"In {city_tag}, schedule outdoor exercise for lower-AQI hours and avoid roadside routes when {dominant_name} peaks.",
+        f"Use well-fitted masks and indoor HEPA filtration in {city_tag} on high-pollution days, especially for children and asthma patients.",
+        f"For {city_tag}, prioritize local actions that reduce {dominant_name} sources (traffic management, cleaner fuels, and industrial controls).",
     ]
     return problems, precautions
 
 
-def _fallback_city_reasons(city_name, top_pollutants):
-    """Fallback city-specific reasons for elevated pollution when AI output is unavailable."""
-    city_tag = city_name or 'this city'
-    dominant_pollutant = top_pollutants[0]['name'] if top_pollutants else 'PM2.5'
+def _prefer_city_specific_items(ai_items, fallback_items, city_name):
+    """Prefer AI items only when they contain city context or concrete metrics."""
+    if not isinstance(ai_items, list) or not ai_items:
+        return fallback_items
+
+    city_token = (city_name or '').strip().lower()
+
+    def _is_specific(text):
+        if not isinstance(text, str):
+            return False
+        candidate = text.strip()
+        if not candidate:
+            return False
+        has_city = bool(city_token and city_token in candidate.lower())
+        has_metric = bool(re.search(r'\d', candidate))
+        return has_city or has_metric
+
+    if not any(_is_specific(item) for item in ai_items):
+        return fallback_items
+
+    cleaned = [item.strip() for item in ai_items if isinstance(item, str) and item.strip()]
+    return cleaned or fallback_items
+
+
+def _fallback_city_reasons(
+    city_name,
+    country_name,
+    city_aqi_avg,
+    global_aqi_avg,
+    top_pollutants,
+    sample_count,
+    strongest_deviations,
+    source_signals,
+):
+    """Fallback city-specific reasons grounded in measured city metrics."""
+    city_tag = city_name or 'This city'
+    country_tag = country_name or 'Unknown country'
+    city_aqi_text = f"{city_aqi_avg:.2f}" if city_aqi_avg is not None else 'unknown'
+    global_aqi_text = f"{global_aqi_avg:.2f}" if global_aqi_avg is not None else 'unknown'
+
+    if strongest_deviations:
+        top_dev = strongest_deviations[0]
+        deviation_text = (
+            f"{top_dev['name']} in {city_tag} averages {top_dev['city_value']:.2f}, "
+            f"about {top_dev['ratio']:.2f}x the global baseline ({top_dev['global_value']:.2f})."
+        )
+    elif top_pollutants:
+        top_pollutant = top_pollutants[0]
+        deviation_text = f"{top_pollutant['name']} is a dominant pollutant in {city_tag} at {top_pollutant['value']:.2f}."
+    else:
+        deviation_text = f"Available measurements indicate recurring air-quality pressure in {city_tag}."
+
+    source_reason = _compose_source_reason(city_tag, source_signals)
 
     return [
-        f"{city_tag} shows persistent {dominant_pollutant} concentration, suggesting continuous local emission pressure.",
-        f"Traffic density and fuel combustion likely contribute to day-to-day pollution accumulation in {city_tag}.",
-        f"Weather and seasonal conditions can trap pollutants over {city_tag}, increasing multi-day exposure levels.",
+        f"{city_tag}, {country_tag} has an average AQI of {city_aqi_text} across {sample_count} records versus a global average near {global_aqi_text}.",
+        deviation_text,
+        source_reason,
     ]
+
+
+def _derive_city_source_signals(strongest_deviations):
+    """Infer likely emission source signals from measured pollutant deviations."""
+    signal_map = {
+        'no2': 'Traffic emissions are a strong signal (vehicle combustion and road congestion).',
+        'so2': 'Industrial or power-generation emissions are a strong signal (sulfur-containing fuel combustion).',
+        'pm25': 'Fine-particle combustion sources are a strong signal (traffic exhaust, fuel burning, mixed urban emissions).',
+        'pm10': 'Dust and coarse particles are a strong signal (construction activity, road dust, mechanical abrasion).',
+        'co': 'Incomplete combustion is a strong signal (traffic queues, fuel burning, inefficient combustion sources).',
+        'o3': 'Photochemical pollution is a strong signal (sunlight-driven reactions of NOx/VOCs in urban air).',
+    }
+
+    signals = []
+    for item in strongest_deviations:
+        key = item.get('key')
+        if key not in signal_map:
+            continue
+        signals.append(
+            {
+                'pollutant': item.get('name'),
+                'ratio': item.get('ratio'),
+                'city_value': item.get('city_value'),
+                'global_value': item.get('global_value'),
+                'source_signal': signal_map[key],
+            }
+        )
+    return signals
+
+
+def _compose_source_reason(city_name, source_signals):
+    """Compose one city-specific source explanation sentence from pollutant evidence."""
+    if not source_signals:
+        return (
+            f"Measured pollutant patterns in {city_name} indicate mixed local emission sources, and additional source-apportionment data is needed "
+            f"to separate traffic, industry, and dust contributions with higher certainty."
+        )
+
+    primary = source_signals[0]
+    lead_text = (
+        f"In {city_name}, {primary['pollutant']} is {primary['ratio']:.2f}x the global average "
+        f"({primary['city_value']:.2f} vs {primary['global_value']:.2f}), and this pattern suggests: {primary['source_signal']}"
+    )
+
+    if len(source_signals) == 1:
+        return lead_text
+
+    secondary = source_signals[1]
+    return (
+        f"{lead_text} A second signal appears in {secondary['pollutant']} at {secondary['ratio']:.2f}x global, "
+        f"which supports a combined-source pressure rather than a single pollution driver."
+    )
 
 
 def _parse_story_from_text(response_text, fallback_title, source_sections):

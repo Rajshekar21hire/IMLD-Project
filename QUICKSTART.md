@@ -10,6 +10,10 @@ Download from [ollama.com](https://ollama.com/) and pull a model:
 ollama pull llama3.2:3b
 ```
 
+This must match `OLLAMA_MODEL` in `backend/.env` exactly (tag included). If you change the model, update `.env` and **restart the backend** — it only reads `.env` at startup. Run `ollama list` anytime to check what's actually pulled.
+
+> If you still get a 404 for a model you never set in `.env`, check for a stale OS-level environment variable (`OLLAMA_MODEL` / `OLLAMA_STORY_MODEL`) — those silently override `.env`. See the Troubleshooting section in [README.md](./README.md).
+
 ### Step 2: Backend
 
 ```bash
@@ -39,7 +43,7 @@ npm install
 npm start
 ```
 
-Browser opens at `http://localhost:3000`.
+Browser opens at `http://localhost:3001`.
 
 ### Step 4: Generate your first story
 
