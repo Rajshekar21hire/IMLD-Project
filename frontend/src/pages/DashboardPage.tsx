@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, BarChart3, BookOpen, Bot, Copy, Globe, Layers, ShieldCheck, Sparkles } from 'lucide-react';
+import { AlertTriangle, BarChart3, BookOpen, Bot, Copy, Globe, Layers, ShieldCheck, Sparkles, Users, Wind, HeartPulse, Megaphone, Quote } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Bar,
   BarChart,
@@ -18,7 +19,7 @@ import {
   LineChart,
 } from 'recharts';
 import { storyAPI, dataAPI } from '../services/api';
-import { storyModes, storyThemes, StoryMode, StoryTheme, StorySection } from '../data/storyThemes';
+import { storyModes, storyThemes, StoryMode, StoryTheme, StorySection, StoryCategoryBlock } from '../data/storyThemes';
 import { pollutantTrendData, pollutantColors, pollutantLabels } from '../data/pollutantTrendsData';
 
 interface CityRankingRecord {
@@ -69,16 +70,44 @@ interface CityDetailsResult {
 const formatRankingRowLabel = (row: CityRankingRecord) => `${row.city}, ${row.country}`;
 
 const buildPrompt = (theme: StoryTheme, mode: StoryMode, sections: StorySection[]) => {
-  const sectionTitles = sections.length
-    ? sections.map((section) => section.title).join(', ')
+  const sourceSections = sections.length
+    ? sections
+        .map((section, index) => {
+          const lines = [`${index + 1}. ${section.title}`];
+
+          if (section.body) {
+            lines.push(`Body: ${section.body}`);
+          }
+
+          if (section.categoryBlocks && section.categoryBlocks.length > 0) {
+            lines.push('Categories:');
+            section.categoryBlocks.forEach((group) => {
+              lines.push(`  - ${group.label}`);
+              group.cards.forEach((card) => {
+                lines.push(`    * ${card.title}`);
+                lines.push(`      Body: ${card.body}`);
+                lines.push(`      Footer: ${card.footer}`);
+              });
+            });
+          }
+
+          if (section.bullets && section.bullets.length > 0) {
+            lines.push('Bullets:');
+            section.bullets.forEach((bullet) => lines.push(`  - ${bullet}`));
+          }
+
+          return lines.join('\n');
+        })
+        .join('\n\n')
     : 'No source sections provided yet';
 
   return [
     `You are an AI storytelling agent.`,
     `Theme: ${theme.title}`,
-    `Mode: ${mode === 'human' ? 'Human-curated source story' : 'AI/Ollama-generated story'}`,
+    `Mode: ${mode === 'human' ? 'Human-curated source story' : mode === 'agentic' ? 'Agentic AI-generated story' : 'AI/Ollama-generated story'}`,
     `Prompt focus: ${theme.promptFocus}`,
-    `Subtopics to cover: ${sectionTitles}`,
+    `Subtopics to cover: ${sections.length ? sections.map((section) => section.title).join(', ') : 'No source sections provided yet'}`,
+    `Source details:\n${sourceSections}`,
     'Write in a clear, accessible, story-first style with short sections, strong transitions, and factual grounding.',
     'Keep the narrative aligned with the same theme and subtopic structure.',
     'Do not copy the human story wording; rewrite it in a fresh voice with different examples and transitions.',
@@ -91,12 +120,9 @@ export const DashboardPage: React.FC = () => {
   const [selectedMode, setSelectedMode] = useState<StoryMode>('human');
   const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
   const [aiStories, setAiStories] = useState<Record<string, { title: string; summary: string; sections: StorySection[]; provider?: string }>>({});
-  const [humanizedStories, setHumanizedStories] = useState<Record<string, { title: string; summary: string; sections: StorySection[]; provider?: string }>>({});
   const [aiLoading, setAiLoading] = useState(false);
-  const [humanizeLoading, setHumanizeLoading] = useState(false);
   const [aiRequested, setAiRequested] = useState<Record<string, boolean>>({});
   const [aiError, setAiError] = useState('');
-  const [humanizeError, setHumanizeError] = useState('');
   const [rankingCount, setRankingCount] = useState(5);
   const [rankingType, setRankingType] = useState<'best' | 'worst' | 'both'>('worst');
   const [rankingLoading, setRankingLoading] = useState(false);
@@ -110,6 +136,10 @@ export const DashboardPage: React.FC = () => {
   const [yearlyTrends, setYearlyTrends] = useState<any | null>(null);
   const [selectedTrendPollutant, setSelectedTrendPollutant] = useState<'pm25' | 'pm10' | 'o3' | 'no2' | 'so2' | 'co'>('pm25');
   const [inequalityLens, setInequalityLens] = useState<'geography' | 'exposure'>('geography');
+  const [storyFourAiCategory, setStoryFourAiCategory] = useState('Personal');
+  const [storyFourAiVoiceIndex, setStoryFourAiVoiceIndex] = useState(0);
+  const [storyFourOutcomeFilter, setStoryFourOutcomeFilter] = useState<'All' | 'Health' | 'Economy' | 'Environment' | 'Technology'>('All');
+  const [storyFourCaseStudyId, setStoryFourCaseStudyId] = useState('china-pm25');
 
   const selectedTheme = useMemo(
     () => storyThemes.find((theme) => theme.id === selectedThemeId) ?? storyThemes[0],
@@ -117,17 +147,15 @@ export const DashboardPage: React.FC = () => {
   );
 
   const selectedAiStory = aiStories[selectedTheme.id];
-  const selectedHumanizedStory = humanizedStories[selectedTheme.id];
+  const hasGeneratedAiStory = Boolean(aiRequested[selectedTheme.id] || selectedAiStory);
   const activeSections = useMemo(
     () => {
       if (selectedMode === 'human') {
         return selectedTheme.humanSections;
       }
-      // Prefer humanized story if available, otherwise use raw AI story
-      const displayStory = selectedHumanizedStory || selectedAiStory;
-      return displayStory?.sections || [];
+      return selectedAiStory?.sections || [];
     },
-    [selectedTheme, selectedMode, selectedAiStory, selectedHumanizedStory]
+    [selectedTheme, selectedMode, selectedAiStory]
   );
   const aiGenerationSections = useMemo(() => {
     if (selectedTheme.id === 'pollution-and-health') {
@@ -139,10 +167,244 @@ export const DashboardPage: React.FC = () => {
   const promptText = buildPrompt(
     selectedTheme,
     selectedMode,
-    selectedMode === 'ai' ? aiGenerationSections : selectedTheme.humanSections
+    selectedMode !== 'human' ? aiGenerationSections : selectedTheme.humanSections
   );
-  const isStoryThreeAiView = selectedTheme.id === 'aqi-and-decisions' && selectedMode === 'ai';
-  const isPollutionHealthAiView = selectedTheme.id === 'pollution-and-health' && selectedMode === 'ai';
+  const isAiLikeMode = selectedMode !== 'human';
+  const isStoryThreeAiView = selectedTheme.id === 'aqi-and-decisions' && isAiLikeMode;
+  const isPollutionHealthAiView = selectedTheme.id === 'pollution-and-health' && isAiLikeMode;
+  const isStoryFourHumanView = selectedTheme.id === 'measurement-and-governance' && selectedMode === 'human';
+  const isStoryFourAiView = selectedTheme.id === 'measurement-and-governance' && isAiLikeMode;
+  const storyFourCategoryStyles: Record<string, { labelClass: string; headerClass: string; cardClass: string; footerClass: string }> = {
+    Personal: {
+      labelClass: 'text-blue-700',
+      headerClass: 'bg-blue-600 text-white',
+      cardClass: 'bg-[#cdd6ee]',
+      footerClass: 'text-[#1f5d8f]',
+    },
+    Household: {
+      labelClass: 'text-green-700',
+      headerClass: 'bg-green-600 text-white',
+      cardClass: 'bg-[#dfead7]',
+      footerClass: 'text-[#5f8c3d]',
+    },
+    Policy: {
+      labelClass: 'text-orange-500',
+      headerClass: 'bg-orange-500 text-white',
+      cardClass: 'bg-[#f9dfd4]',
+      footerClass: 'text-[#f28b2c]',
+    },
+    Community: {
+      labelClass: 'text-amber-500',
+      headerClass: 'bg-amber-400 text-white',
+      cardClass: 'bg-[#fdeac9]',
+      footerClass: 'text-[#f7b500]',
+    },
+  };
+  const storyFourAiCategories = useMemo(() => {
+    const generatedSource = selectedAiStory?.sections?.find((section) => section.categoryBlocks && section.categoryBlocks.length > 0);
+    const source = generatedSource || selectedTheme.humanSections[0];
+    const blocks: StoryCategoryBlock[] = source?.categoryBlocks ?? [];
+    return blocks.reduce<Record<string, StoryCategoryBlock>>((accumulator, block) => {
+      accumulator[block.label] = block;
+      return accumulator;
+    }, {} as Record<string, StoryCategoryBlock>);
+  }, [selectedAiStory, selectedTheme]);
+  const storyFourAiCategoryData = storyFourAiCategories[storyFourAiCategory] || storyFourAiCategories.Personal;
+  const storyFourAiCategoriesList = ['Personal', 'Household', 'Community', 'Policy'] as const;
+  const storyFourAiVoices = useMemo(() => {
+    const generatedVoiceSection = selectedAiStory?.sections?.[1];
+    const humanVoiceSection = selectedTheme.humanSections[1];
+    const sourceBullets = generatedVoiceSection?.bullets && generatedVoiceSection.bullets.length >= 3
+      ? generatedVoiceSection.bullets
+      : humanVoiceSection?.bullets || [];
+
+    const issueDefaults = [
+      'Childhood asthma and urban air pollution',
+      'Indoor smoke exposure from traditional cooking',
+      'Winter PM2.5 exposure and respiratory harm',
+    ];
+    const outcomeDefaults = [
+      'Campaigning for clean-air legislation',
+      'Community-built clean cookstove adoption',
+      'Youth-led climate and clean-air advocacy',
+    ];
+
+    return sourceBullets.map((bullet, index) => {
+      const match = bullet.match(/^“([^”]+)”\s*-\s*([^\.]+)\.\s*(.*)$/);
+      const quote = match?.[1] ? `“${match[1]}”` : bullet;
+      const person = match?.[2]?.trim() || `Voice ${index + 1}`;
+      const narrative = match?.[3]?.trim() || bullet;
+
+      return {
+        id: person.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        person,
+        quote,
+        preview: narrative.length > 170 ? `${narrative.slice(0, 170)}...` : narrative,
+        narrative,
+        issue: issueDefaults[index] || 'Air pollution exposure and health equity',
+        outcome: outcomeDefaults[index] || 'Community action and policy visibility',
+        affectedPopulation: index === 0 ? 'Children with asthma in high-traffic zones' : index === 1 ? 'Low-income households relying on biomass fuels' : 'Urban families exposed to winter smog',
+        pollutant: index === 0 ? 'PM2.5 / NO2' : index === 1 ? 'Indoor PM2.5' : 'PM2.5',
+        healthConsequence: index === 0 ? 'Severe asthma events and early-life respiratory risk' : index === 1 ? 'Frequent respiratory infections in children' : 'Maternal and child respiratory complications',
+        actionTaken: index === 0 ? 'Legal advocacy and public campaigning' : index === 1 ? 'Locally built smokeless cookstove training' : 'Climate storytelling and youth mobilization',
+      };
+    });
+  }, [selectedAiStory, selectedTheme]);
+
+  useEffect(() => {
+    if (storyFourAiVoiceIndex >= storyFourAiVoices.length) {
+      setStoryFourAiVoiceIndex(0);
+    }
+  }, [storyFourAiVoices, storyFourAiVoiceIndex]);
+
+  const selectedStoryFourAiVoice = storyFourAiVoices[storyFourAiVoiceIndex];
+  const storyFourOutcomeCards = useMemo(() => {
+    return [
+      {
+        id: 'lives-saved',
+        icon: '🫁',
+        metric: '3.7 Million Lives Saved Per Year',
+        category: 'Health',
+        explanation: 'Meeting WHO clean-air targets could prevent millions of premature deaths globally.',
+        example: 'WHO global mortality modeling',
+        timeline: '2030 target horizon',
+      },
+      {
+        id: 'visible-change',
+        icon: '🏙',
+        metric: 'Visible Change Within 5 Years',
+        category: 'Environment',
+        explanation: 'China reduced urban PM2.5 by 35% through strict industrial controls and enforcement.',
+        example: 'China PM2.5 reduction program',
+        timeline: '5 years',
+      },
+      {
+        id: 'indoor-air',
+        icon: '🏠',
+        metric: 'Immediate Indoor Air Improvement',
+        category: 'Health',
+        explanation: 'Clean cooking technologies can cut indoor PM2.5 exposure by more than 90%.',
+        example: 'UNEP and clean cooking initiatives',
+        timeline: 'Immediate to 12 months',
+      },
+      {
+        id: 'forecasting',
+        icon: '🤖',
+        metric: '72-Hour Air Quality Forecasting',
+        category: 'Technology',
+        explanation: 'Machine-learning systems now predict high-pollution episodes before they occur.',
+        example: 'City-level AI forecasting pilots',
+        timeline: '1-3 years',
+      },
+      {
+        id: 'asthma',
+        icon: '👶',
+        metric: 'Reduced Childhood Asthma',
+        category: 'Health',
+        explanation: 'Low Emission Zones and transport policies reduce pediatric respiratory admissions.',
+        example: 'London ULEZ and EEA analyses',
+        timeline: '2-4 years',
+      },
+      {
+        id: 'healthcare-cost',
+        icon: '💸',
+        metric: 'Lower Healthcare Costs',
+        category: 'Economy',
+        explanation: 'Reduced pollution burden lowers emergency visits and long-term treatment costs.',
+        example: 'OECD and World Bank policy impact studies',
+        timeline: '3-8 years',
+      },
+      {
+        id: 'productivity',
+        icon: '🏭',
+        metric: 'Higher Worker Productivity',
+        category: 'Economy',
+        explanation: 'Cleaner air supports fewer sick days and stronger labor output in major cities.',
+        example: 'World Bank urban productivity analysis',
+        timeline: '2-6 years',
+      },
+      {
+        id: 'heat-stress',
+        icon: '🌳',
+        metric: 'Reduced Urban Heat Stress',
+        category: 'Environment',
+        explanation: 'Urban greening and low-emission transport reduce both PM exposure and heat burden.',
+        example: 'Copenhagen and city greening programs',
+        timeline: '3-10 years',
+      },
+      {
+        id: 'monitoring',
+        icon: '📡',
+        metric: 'Fewer Pollution Emergency Days',
+        category: 'Technology',
+        explanation: 'Smart monitoring networks improve targeting and response to high-risk episodes.',
+        example: 'Multi-city AQ monitoring modernization',
+        timeline: '1-4 years',
+      },
+    ] as const;
+  }, []);
+
+  const filteredStoryFourOutcomeCards = useMemo(() => {
+    if (storyFourOutcomeFilter === 'All') {
+      return storyFourOutcomeCards;
+    }
+    return storyFourOutcomeCards.filter((card) => card.category === storyFourOutcomeFilter);
+  }, [storyFourOutcomeFilter, storyFourOutcomeCards]);
+
+  const storyFourCaseStudies = useMemo(() => {
+    return [
+      {
+        id: 'china-pm25',
+        title: 'China PM2.5 reduction program',
+        policy: 'Industrial emission controls with strict enforcement',
+        pollutant: 'PM2.5',
+        outcome: '35% reduction in major urban PM2.5 concentrations',
+        period: '2014-2019',
+      },
+      {
+        id: 'london-ulez',
+        title: 'London ULEZ',
+        policy: 'Low Emission Zone and transport pricing',
+        pollutant: 'NO2 / PM2.5',
+        outcome: 'Substantial roadside NO2 reductions and cleaner vehicle fleet mix',
+        period: '2019-present',
+      },
+      {
+        id: 'shenzhen-bus',
+        title: 'Shenzhen electric bus fleet',
+        policy: 'Electrified public transport rollout',
+        pollutant: 'PM2.5 / NO2',
+        outcome: 'Strong corridor-level pollution reductions from fleet electrification',
+        period: '2010s rollout',
+      },
+      {
+        id: 'copenhagen-cycling',
+        title: 'Copenhagen cycling infrastructure',
+        policy: 'Active mobility and street redesign',
+        pollutant: 'Traffic PM / NO2',
+        outcome: 'Lower transport emissions and sustained modal shift',
+        period: 'Long-term infrastructure program',
+      },
+      {
+        id: 'california-regulations',
+        title: 'California clean-air regulations',
+        policy: 'Vehicle and industrial standards with enforcement',
+        pollutant: 'Ozone precursors / PM2.5',
+        outcome: 'Long-run regional air-quality and health improvements',
+        period: 'Multi-decade program',
+      },
+      {
+        id: 'singapore-emissions',
+        title: 'Singapore emissions management',
+        policy: 'Integrated monitoring, controls, and compliance systems',
+        pollutant: 'Multiple pollutants',
+        outcome: 'Efficient episode management and data-driven interventions',
+        period: 'Continuous modernization',
+      },
+    ] as const;
+  }, []);
+
+  const selectedStoryFourCaseStudy = storyFourCaseStudies.find((caseStudy) => caseStudy.id === storyFourCaseStudyId) || storyFourCaseStudies[0];
 
   const trendOptions = [
     { key: 'pm25', label: 'PM2.5' },
@@ -295,47 +557,6 @@ export const DashboardPage: React.FC = () => {
     }
   }, [selectedTheme, aiGenerationSections]);
 
-  const humanizeAiStory = useCallback(async () => {
-    if (!selectedAiStory) {
-      setHumanizeError('No AI story generated yet. Generate one first.');
-      return;
-    }
-
-    setHumanizeLoading(true);
-    setHumanizeError('');
-
-    try {
-      const response = await storyAPI.humanizeStory({
-        story: selectedAiStory,
-        theme: {
-          id: selectedTheme.id,
-          title: selectedTheme.title,
-          overview: selectedTheme.overview,
-          promptFocus: selectedTheme.promptFocus,
-        },
-      });
-
-      if (response.data?.success) {
-        const story = response.data.data.story;
-        setHumanizedStories((current) => ({
-          ...current,
-          [selectedTheme.id]: {
-            title: story.title || selectedTheme.title,
-            summary: story.summary || selectedTheme.overview,
-            sections: story.sections || selectedAiStory.sections,
-            provider: response.data.data.provider,
-          },
-        }));
-      } else {
-        throw new Error(response.data?.error || 'Failed to humanize story');
-      }
-    } catch (error: any) {
-      setHumanizeError(error.response?.data?.error || error.message || 'Failed to humanize story');
-    } finally {
-      setHumanizeLoading(false);
-    }
-  }, [selectedTheme, selectedAiStory]);
-
   const generateCityRankings = useCallback(async () => {
     setRankingLoading(true);
     setRankingError('');
@@ -389,10 +610,10 @@ export const DashboardPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (selectedMode === 'ai' && selectedTheme.status === 'ready' && aiRequested[selectedTheme.id] && !selectedAiStory && !aiLoading) {
+    if (isAiLikeMode && selectedTheme.status === 'ready' && aiRequested[selectedTheme.id] && !selectedAiStory && !aiLoading) {
       generateAiStory();
     }
-  }, [selectedMode, selectedThemeId, selectedTheme.id, selectedTheme.status, selectedAiStory, aiLoading, generateAiStory, aiRequested]);
+  }, [isAiLikeMode, selectedMode, selectedThemeId, selectedTheme.id, selectedTheme.status, selectedAiStory, aiLoading, generateAiStory, aiRequested]);
 
   useEffect(() => {
     setRankingError('');
@@ -516,9 +737,6 @@ export const DashboardPage: React.FC = () => {
                     <Copy className="w-4 h-4" />
                     {copyState === 'copied' ? 'Prompt copied' : 'Copy prompt'}
                   </button>
-                  <pre className="mt-4 whitespace-pre-wrap rounded-2xl bg-white/5 p-4 text-xs leading-6 text-slate-200 border border-white/10">
-                    {promptText}
-                  </pre>
                 </div>
               </aside>
 
@@ -535,43 +753,44 @@ export const DashboardPage: React.FC = () => {
                           ? 'This theme is waiting for the story text you will send next.'
                           : selectedMode === 'human'
                           ? selectedTheme.overview
-                          : selectedHumanizedStory?.summary || selectedAiStory?.summary || selectedTheme.overview}
+                          : hasGeneratedAiStory
+                          ? selectedAiStory?.summary || selectedTheme.overview
+                          : 'Click Generate AI story to reveal the Ollama-generated version for this theme.'}
                       </p>
-                      {selectedMode === 'ai' && selectedTheme.status === 'ready' && (
+                      {isAiLikeMode && selectedTheme.status === 'ready' && (
                         <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
-                          <span className={`rounded-full px-3 py-1 font-semibold border ${selectedHumanizedStory ? 'bg-purple-50 text-purple-700 border-purple-200' : 'bg-emerald-50 text-emerald-700 border-emerald-200'}`}>
-                            {selectedHumanizedStory ? 'Humanized' : 'Raw'} by {selectedHumanizedStory?.provider || selectedAiStory?.provider || 'Ollama'}
-                          </span>
+                          {hasGeneratedAiStory && (
+                            <span className="rounded-full px-3 py-1 font-semibold border bg-emerald-50 text-emerald-700 border-emerald-200">
+                              Generated by {selectedAiStory?.provider || 'Ollama'}
+                            </span>
+                          )}
                           <button
                             type="button"
                             onClick={generateAiStory}
-                            disabled={aiLoading}
-                            className="rounded-full bg-slate-950 px-3 py-1 font-semibold text-white disabled:opacity-60"
+                            disabled={aiLoading || hasGeneratedAiStory}
+                            className="rounded-full bg-slate-950 px-3 py-1 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
                           >
-                            {aiLoading ? 'Generating...' : selectedAiStory ? 'Regenerate story' : 'Generate AI story'}
+                            {aiLoading ? 'Generating...' : hasGeneratedAiStory ? 'Generated AI' : 'Generate AI'}
                           </button>
-                          {selectedAiStory && (
+                          {selectedMode === 'agentic' && hasGeneratedAiStory && (
                             <button
                               type="button"
-                              onClick={humanizeAiStory}
-                              disabled={humanizeLoading}
-                              className="rounded-full bg-blue-600 px-3 py-1 font-semibold text-white hover:bg-blue-500 disabled:opacity-60"
+                              className="rounded-full border border-slate-300 bg-white px-3 py-1 font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
                             >
-                              {humanizeLoading ? 'Humanizing...' : 'Humanize AI'}
+                              Humanize AI
                             </button>
                           )}
                         </div>
                       )}
-                      {(aiError || humanizeError) && selectedMode === 'ai' && (
+                      {aiError && isAiLikeMode && (
                         <div className="mt-3 space-y-2">
                           {aiError && <p className="text-sm text-red-600">{aiError}</p>}
-                          {humanizeError && <p className="text-sm text-red-600">{humanizeError}</p>}
                         </div>
                       )}
                     </div>
 
                     <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2 shadow-inner">
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-3 gap-2">
                         {storyModes.map((mode) => {
                           const active = mode.id === selectedMode;
 
@@ -598,7 +817,7 @@ export const DashboardPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className={`grid grid-cols-1 gap-5 ${selectedTheme.id === 'pollution-and-health' && selectedMode === 'ai' ? 'md:grid-cols-1' : 'md:grid-cols-2'}`}>
+                <div className={`grid grid-cols-1 gap-5 ${isPollutionHealthAiView || isStoryFourHumanView || isStoryFourAiView ? 'md:grid-cols-1' : 'md:grid-cols-2'}`}>
                   {activeSections.map((section, index) => (
                     <article
                       key={`${selectedTheme.id}-${selectedMode}-${section.title}`}
@@ -882,15 +1101,439 @@ export const DashboardPage: React.FC = () => {
                         </div>
                       )}
 
-                      {section.bullets && section.bullets.length > 0 && (
-                        <ul className="mt-4 space-y-2">
-                          {section.bullets.map((bullet) => (
-                            <li key={bullet} className="flex gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                              <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-sky-500" />
-                              <span>{bullet}</span>
-                            </li>
-                          ))}
-                        </ul>
+                      {selectedMode === 'human' && section.categoryBlocks && isStoryFourHumanView && index === 0 ? (
+                        <div className="mt-4 space-y-8">
+                          {section.categoryBlocks.map((group) => {
+                            const style = storyFourCategoryStyles[group.label] || storyFourCategoryStyles.Personal;
+
+                            return (
+                              <section key={group.label} className="space-y-4">
+                                <div className={`text-2xl font-semibold ${style.labelClass}`}>{group.label}</div>
+                                <div
+                                  className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4"
+                                  style={{ gridTemplateColumns: `repeat(${Math.min(group.cards.length, 4)}, minmax(0, 1fr))` }}
+                                >
+                                  {group.cards.map((card) => (
+                                    <div key={card.title} className={`overflow-hidden ${style.cardClass} shadow-sm`}>
+                                      <div className={`px-4 py-3 text-center text-lg font-bold leading-tight ${style.headerClass}`}>
+                                        {card.title}
+                                      </div>
+                                      <div className="px-4 py-4 text-[17px] leading-snug text-slate-900">
+                                        {card.body}
+                                      </div>
+                                      <div className={`px-4 pb-4 pt-2 text-center text-lg font-bold leading-tight ${style.footerClass}`}>
+                                        {card.footer}
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </section>
+                            );
+                          })}
+                        </div>
+                      ) : isStoryFourAiView && index === 0 ? (
+                        hasGeneratedAiStory ? (
+                          <motion.div
+                            key={storyFourAiCategory}
+                            initial={{ opacity: 0, y: 14 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -10 }}
+                            transition={{ duration: 0.35, ease: 'easeOut' }}
+                            className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4"
+                          >
+                            <div className="space-y-5">
+                              <div>
+                                <h4 className="mt-3 text-2xl font-black text-slate-950">The air can get better. Here&apos;s how.</h4>
+                                <p className="mt-2 text-lg font-semibold text-slate-700">4 categories, 12 proven interventions.</p>
+                              </div>
+
+                              <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
+                                {storyFourAiCategoriesList.map((category) => {
+                                  const active = storyFourAiCategory === category;
+                                  const categoryStyle = storyFourCategoryStyles[category];
+
+                                  return (
+                                    <motion.button
+                                      key={category}
+                                      type="button"
+                                      whileTap={{ scale: 0.98 }}
+                                      onClick={() => setStoryFourAiCategory(category)}
+                                      className={`rounded-2xl border px-4 py-4 text-left transition ${active ? 'border-slate-950 bg-slate-950 text-white shadow-lg' : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-100'}`}
+                                    >
+                                      <div className={`text-lg font-bold ${active ? 'text-white' : categoryStyle.labelClass}`}>{category}</div>
+                                      <div className={`mt-2 text-sm ${active ? 'text-slate-200' : 'text-slate-500'}`}>
+                                        {category === 'Personal' && 'Choices for individuals and families'}
+                                        {category === 'Household' && 'Actions that improve indoor air immediately'}
+                                        {category === 'Community' && 'Neighbourhood action and civic pressure'}
+                                        {category === 'Policy' && 'System-level interventions with the largest reach'}
+                                      </div>
+                                    </motion.button>
+                                  );
+                                })}
+                              </div>
+
+                              <div className="space-y-4">
+                                <AnimatePresence mode="wait">
+                                  {(storyFourAiCategoryData?.cards || []).map((card) => (
+                                    <motion.div
+                                      key={card.title}
+                                      initial={{ opacity: 0, x: -8 }}
+                                      animate={{ opacity: 1, x: 0 }}
+                                      exit={{ opacity: 0, x: -8 }}
+                                      transition={{ duration: 0.25 }}
+                                      className={`overflow-hidden rounded-3xl border border-slate-200 ${storyFourCategoryStyles[storyFourAiCategory]?.cardClass || 'bg-white'} shadow-sm`}
+                                    >
+                                      <div className={`px-4 py-3 text-center text-lg font-bold ${storyFourCategoryStyles[storyFourAiCategory]?.headerClass || 'bg-slate-600 text-white'}`}>
+                                        {card.title}
+                                      </div>
+                                      <div className="space-y-4 p-4">
+                                        <div className="grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-5">
+                                          <div className="rounded-2xl bg-white/70 p-4 shadow-sm">
+                                            <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Pollutant affected</div>
+                                            <div className="mt-2 text-lg font-bold text-slate-950">{card.pollutant}</div>
+                                          </div>
+                                          <div className="rounded-2xl bg-white/70 p-4 shadow-sm">
+                                            <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Reduction</div>
+                                            <div className="mt-2 text-lg font-bold text-slate-950">{card.reduction}</div>
+                                          </div>
+                                          <div className="rounded-2xl bg-white/70 p-4 shadow-sm">
+                                            <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Impact score</div>
+                                            <div className="mt-3 flex items-center gap-3">
+                                              <div className="h-3 flex-1 overflow-hidden rounded-full bg-slate-200">
+                                                <motion.div
+                                                  initial={{ width: 0 }}
+                                                  animate={{ width: `${card.impactScore}%` }}
+                                                  transition={{ duration: 0.7, ease: 'easeOut' }}
+                                                  className="h-full rounded-full bg-slate-950"
+                                                />
+                                              </div>
+                                              <div className="text-lg font-black text-slate-950">{card.impactScore}</div>
+                                            </div>
+                                          </div>
+                                          <div className="rounded-2xl bg-white/70 p-4 shadow-sm">
+                                            <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Impact chart</div>
+                                            <div className="mt-3 h-28">
+                                              <ResponsiveContainer width="100%" height="100%">
+                                                <BarChart data={[{ name: card.title, value: card.impactScore }]}>
+                                                  <XAxis dataKey="name" hide />
+                                                  <YAxis hide domain={[0, 100]} />
+                                                  <Tooltip formatter={(value: number) => [`${value}%`, 'Relative reduction']} />
+                                                  <Bar dataKey="value" radius={[12, 12, 0, 0]} fill="#0f172a" />
+                                                </BarChart>
+                                              </ResponsiveContainer>
+                                            </div>
+                                          </div>
+                                          <div className="rounded-2xl bg-white/70 p-4 shadow-sm">
+                                            <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Radial impact</div>
+                                            <div className="mt-3 h-28">
+                                              <ResponsiveContainer width="100%" height="100%">
+                                                <PieChart>
+                                                  <Pie data={[{ name: 'impact', value: card.impactScore }, { name: 'rest', value: 100 - card.impactScore }]} dataKey="value" innerRadius={24} outerRadius={42} startAngle={90} endAngle={-270}>
+                                                    <Cell fill="#0f172a" />
+                                                    <Cell fill="#e2e8f0" />
+                                                  </Pie>
+                                                  <Tooltip formatter={(value: number) => [`${value}%`, 'Impact']} />
+                                                </PieChart>
+                                              </ResponsiveContainer>
+                                            </div>
+                                          </div>
+                                        </div>
+
+                                        <p className="text-[17px] leading-relaxed text-slate-900">{card.body}</p>
+
+                                        <div className="space-y-3">
+                                          <div className="rounded-2xl bg-white/70 p-4 shadow-sm">
+                                            <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Real-world evidence</div>
+                                            <p className="mt-2 text-sm leading-relaxed text-slate-700">{card.evidence}</p>
+                                          </div>
+                                          <div className="rounded-2xl bg-white/70 p-4 shadow-sm">
+                                            <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Example</div>
+                                            <p className="mt-2 text-sm leading-relaxed text-slate-700">{card.example}</p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    </motion.div>
+                                  ))}
+                                </AnimatePresence>
+                              </div>
+
+                              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                                <div className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">Impact visualization</div>
+                                <p className="mt-2 text-sm text-slate-600">
+                                  Compare the relative pollution reduction of each intervention as you switch categories.
+                                </p>
+                                <div className="mt-5 h-72">
+                                  <ResponsiveContainer width="100%" height="100%">
+                                    <BarChart data={(storyFourAiCategoryData?.cards || []).map((card) => ({ name: card.title, value: card.impactScore }))} layout="vertical" margin={{ top: 8, right: 16, left: 0, bottom: 8 }}>
+                                      <CartesianGrid strokeDasharray="3 3" />
+                                      <XAxis type="number" domain={[0, 100]} />
+                                      <YAxis type="category" dataKey="name" width={220} tick={{ fontSize: 12 }} />
+                                      <Tooltip formatter={(value: number) => [`${value}`, 'Impact score']} />
+                                      <Bar dataKey="value" radius={[0, 12, 12, 0]} fill="#0f172a" />
+                                    </BarChart>
+                                  </ResponsiveContainer>
+                                </div>
+                              </div>
+
+                              <div className="rounded-3xl bg-white p-4 shadow-sm">
+                                <div className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">Storytelling summary</div>
+                                <p className="mt-2 text-base leading-relaxed text-slate-700">
+                                  Individual actions improve exposure. Community actions improve neighbourhoods. Policy actions create the largest population-wide impact.
+                                </p>
+                              </div>
+                            </div>
+                          </motion.div>
+                        ) : null
+                      ) : isStoryFourAiView && index === 1 ? (
+                        hasGeneratedAiStory && storyFourAiVoices.length > 0 ? (
+                          <div className="mt-4 space-y-5">
+                            <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+                              {storyFourAiVoices.map((voice, voiceIndex) => {
+                                const active = voiceIndex === storyFourAiVoiceIndex;
+
+                                return (
+                                  <motion.button
+                                    key={voice.id}
+                                    type="button"
+                                    onClick={() => setStoryFourAiVoiceIndex(voiceIndex)}
+                                    whileTap={{ scale: 0.98 }}
+                                    className={`rounded-2xl border p-4 text-left transition ${active ? 'border-slate-950 bg-slate-950 text-white shadow-lg' : 'border-slate-200 bg-white text-slate-800 hover:border-slate-300'}`}
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <div className={`flex h-11 w-11 items-center justify-center rounded-full text-sm font-bold ${active ? 'bg-white/15 text-white' : 'bg-slate-100 text-slate-700'}`}>
+                                        {voice.person.charAt(0)}
+                                      </div>
+                                      <div>
+                                        <div className="text-base font-bold">{voice.person}</div>
+                                        <div className={`text-xs ${active ? 'text-slate-300' : 'text-slate-500'}`}>Read Story</div>
+                                      </div>
+                                    </div>
+                                    <p className={`mt-3 text-sm leading-relaxed ${active ? 'text-slate-200' : 'text-slate-600'}`}>{voice.preview}</p>
+                                  </motion.button>
+                                );
+                              })}
+                            </div>
+
+                            <AnimatePresence mode="wait">
+                              {selectedStoryFourAiVoice && (
+                                <motion.div
+                                  key={selectedStoryFourAiVoice.id}
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  exit={{ opacity: 0, y: -8 }}
+                                  transition={{ duration: 0.3, ease: 'easeOut' }}
+                                  className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
+                                >
+                                  <div className="flex items-start gap-3">
+                                    <Quote className="mt-1 h-5 w-5 text-sky-600" />
+                                    <p className="text-xl font-bold leading-relaxed text-slate-950">{selectedStoryFourAiVoice.quote}</p>
+                                  </div>
+
+                                  <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+                                    <div className="space-y-3">
+                                      <p className="text-sm leading-relaxed text-slate-700">{selectedStoryFourAiVoice.narrative}</p>
+                                      <div className="rounded-2xl bg-slate-50 p-3 text-sm text-slate-700">
+                                        <span className="font-bold text-slate-900">Issue: </span>{selectedStoryFourAiVoice.issue}
+                                      </div>
+                                      <div className="rounded-2xl bg-slate-50 p-3 text-sm text-slate-700">
+                                        <span className="font-bold text-slate-900">Outcome: </span>{selectedStoryFourAiVoice.outcome}
+                                      </div>
+                                    </div>
+
+                                    <div className="space-y-3">
+                                      <div className="rounded-2xl border border-slate-200 p-3">
+                                        <div className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Story impact</div>
+                                        <div className="mt-3 space-y-2 text-sm text-slate-700">
+                                          <div className="flex items-start gap-2"><Users className="mt-0.5 h-4 w-4 text-sky-600" /><span><strong>Affected:</strong> {selectedStoryFourAiVoice.affectedPopulation}</span></div>
+                                          <div className="flex items-start gap-2"><Wind className="mt-0.5 h-4 w-4 text-sky-600" /><span><strong>Pollutant:</strong> {selectedStoryFourAiVoice.pollutant}</span></div>
+                                          <div className="flex items-start gap-2"><HeartPulse className="mt-0.5 h-4 w-4 text-sky-600" /><span><strong>Health:</strong> {selectedStoryFourAiVoice.healthConsequence}</span></div>
+                                          <div className="flex items-start gap-2"><Megaphone className="mt-0.5 h-4 w-4 text-sky-600" /><span><strong>Action:</strong> {selectedStoryFourAiVoice.actionTaken}</span></div>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                                    <div className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Timeline</div>
+                                    <div className="mt-3 grid grid-cols-1 gap-2 md:grid-cols-5">
+                                      {['Exposure', 'Health Impact', 'Personal Response', 'Community Action', 'Wider Change'].map((step, stepIndex) => (
+                                        <motion.div
+                                          key={step}
+                                          initial={{ opacity: 0, y: 8 }}
+                                          animate={{ opacity: 1, y: 0 }}
+                                          transition={{ duration: 0.25, delay: stepIndex * 0.05 }}
+                                          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-xs font-semibold text-slate-700"
+                                        >
+                                          {step}
+                                        </motion.div>
+                                      ))}
+                                    </div>
+                                  </div>
+
+                                  <div className="mt-4 rounded-2xl bg-slate-950 p-4 text-slate-100">
+                                    <div className="text-xs font-bold uppercase tracking-[0.2em] text-slate-300">Why this story matters</div>
+                                    <p className="mt-2 text-sm leading-relaxed">
+                                      Personal experience makes air-quality metrics actionable by connecting exposure data to health outcomes, intervention choices, and policy accountability.
+                                    </p>
+                                  </div>
+                                </motion.div>
+                              )}
+                            </AnimatePresence>
+                          </div>
+                        ) : null
+                      ) : isStoryFourAiView && index === 2 ? (
+                        hasGeneratedAiStory ? (
+                          <div className="mt-4 space-y-5 rounded-3xl border border-slate-200 bg-slate-50 p-4">
+                            <div>
+                              <div className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Future Outcomes and Pathways to Progress</div>
+                              <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                                Explore what successful government action can achieve through evidence-backed outcomes, policy timelines, and measurable air-quality improvements.
+                              </p>
+                            </div>
+
+                            <div className="flex flex-wrap gap-2">
+                              {(['All', 'Health', 'Economy', 'Environment', 'Technology'] as const).map((filter) => (
+                                <button
+                                  key={filter}
+                                  type="button"
+                                  onClick={() => setStoryFourOutcomeFilter(filter)}
+                                  className={`rounded-full border px-3 py-1 text-sm font-semibold transition ${storyFourOutcomeFilter === filter ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-300 bg-white text-slate-700 hover:bg-slate-100'}`}
+                                >
+                                  {filter}
+                                </button>
+                              ))}
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+                              <AnimatePresence mode="popLayout">
+                                {filteredStoryFourOutcomeCards.map((card) => (
+                                  <motion.div
+                                    key={card.id}
+                                    initial={{ opacity: 0, y: 12 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: 8 }}
+                                    transition={{ duration: 0.25 }}
+                                    className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                                  >
+                                    <div className="text-2xl">{card.icon}</div>
+                                    <h5 className="mt-2 text-lg font-bold text-slate-950">{card.metric}</h5>
+                                    <p className="mt-2 text-sm leading-relaxed text-slate-700">{card.explanation}</p>
+                                    <div className="mt-3 space-y-1 text-xs text-slate-600">
+                                      <div><span className="font-semibold text-slate-800">Example:</span> {card.example}</div>
+                                      <div><span className="font-semibold text-slate-800">Timeline:</span> {card.timeline}</div>
+                                    </div>
+                                  </motion.div>
+                                ))}
+                              </AnimatePresence>
+                            </div>
+
+                            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                              <div className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Government Success Stories</div>
+                              <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-[0.95fr_1.05fr]">
+                                <div className="space-y-2">
+                                  {storyFourCaseStudies.map((caseStudy) => (
+                                    <button
+                                      key={caseStudy.id}
+                                      type="button"
+                                      onClick={() => setStoryFourCaseStudyId(caseStudy.id)}
+                                      className={`w-full rounded-xl border px-3 py-2 text-left text-sm font-semibold transition ${storyFourCaseStudyId === caseStudy.id ? 'border-slate-950 bg-slate-950 text-white' : 'border-slate-200 bg-white text-slate-700 hover:bg-slate-50'}`}
+                                    >
+                                      {caseStudy.title}
+                                    </button>
+                                  ))}
+                                </div>
+
+                                <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-sm text-slate-700">
+                                  <div><span className="font-bold text-slate-900">Policy implemented:</span> {selectedStoryFourCaseStudy.policy}</div>
+                                  <div className="mt-2"><span className="font-bold text-slate-900">Pollutant targeted:</span> {selectedStoryFourCaseStudy.pollutant}</div>
+                                  <div className="mt-2"><span className="font-bold text-slate-900">Measurable outcome:</span> {selectedStoryFourCaseStudy.outcome}</div>
+                                  <div className="mt-2"><span className="font-bold text-slate-900">Implementation period:</span> {selectedStoryFourCaseStudy.period}</div>
+                                </div>
+                              </div>
+                            </div>
+
+                            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                              <div className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">What Clean Air Looks Like in 2035</div>
+                              <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
+                                {[
+                                  { label: 'Public health', value: '+18% better respiratory outcomes' },
+                                  { label: 'Urban air quality', value: '-35% PM2.5 in high-risk corridors' },
+                                  { label: 'Life expectancy', value: '+2.4 years in high-burden regions' },
+                                  { label: 'Healthcare savings', value: '$180B avoided annual costs' },
+                                  { label: 'Sustainability', value: 'Fewer emergency pollution days' },
+                                ].map((item, index) => (
+                                  <motion.div
+                                    key={item.label}
+                                    initial={{ opacity: 0, y: 8 }}
+                                    whileInView={{ opacity: 1, y: 0 }}
+                                    viewport={{ once: true, amount: 0.5 }}
+                                    transition={{ duration: 0.3, delay: index * 0.05 }}
+                                    className="rounded-xl border border-slate-200 bg-slate-50 p-3"
+                                  >
+                                    <div className="text-xs uppercase tracking-[0.15em] text-slate-500">{item.label}</div>
+                                    <div className="mt-2 text-sm font-semibold text-slate-900">{item.value}</div>
+                                  </motion.div>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        ) : null
+                      ) : section.bullets && section.bullets.length > 0 && !(isPollutionHealthAiView && (index === 0 || index === 1)) && (
+                        isStoryFourHumanView && index === 1 ? (
+                          <div className="mt-4 overflow-hidden rounded-2xl border border-slate-300 bg-white">
+                            <div className="grid grid-cols-[0.34fr_0.66fr] border-b border-slate-300 bg-slate-50 text-sm font-bold text-slate-900">
+                              <div className="border-r border-slate-300 px-4 py-3">Human voice</div>
+                              <div className="px-4 py-3">Story details</div>
+                            </div>
+                            <div className="divide-y divide-slate-300">
+                              {section.bullets.map((bullet) => {
+                                const quoteMatch = bullet.match(/^“([^”]+)”\s*[-–—]\s*([^\.]+)\.\s*(.*)$/);
+                                const quote = quoteMatch?.[1] ? `“${quoteMatch[1]}”` : bullet;
+                                const author = quoteMatch?.[2]?.trim() || '';
+                                const details = quoteMatch?.[3]?.trim() || '';
+                                const [leadSentence, ...rest] = details.split('. ');
+                                const body = rest.length > 0 ? `${leadSentence}. ${rest.join('. ')}` : leadSentence;
+
+                                return (
+                                  <div key={bullet} className="grid grid-cols-[0.34fr_0.66fr]">
+                                    <div className="border-r border-slate-300 bg-white px-4 py-4 align-top text-sm text-slate-900">
+                                      <p className="font-semibold leading-relaxed">{quote}</p>
+                                      {author && <p className="mt-2 text-center text-sm text-slate-600">- {author}</p>}
+                                    </div>
+                                    <div className="bg-white px-4 py-4 text-sm leading-relaxed text-slate-800">
+                                      <p>{body}</p>
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ) : isPollutionHealthAiView && index === 2 ? (
+                          <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+                            <div className="grid grid-cols-1 gap-px bg-slate-200 md:grid-cols-2 xl:grid-cols-4">
+                              {section.bullets.map((bullet) => {
+                                const [headline, ...rest] = bullet.split(':');
+                                const detail = rest.join(':').trim();
+
+                                return (
+                                  <div key={bullet} className="min-h-full bg-white p-4 text-sm text-slate-700">
+                                    <div className="text-base font-bold text-slate-950">{headline.trim()}</div>
+                                    <p className="mt-3 leading-relaxed text-slate-600">{detail || headline.trim()}</p>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        ) : (
+                          <ul className="mt-4 space-y-2">
+                            {section.bullets.map((bullet) => (
+                              <li key={bullet} className="flex gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                                <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-sky-500" />
+                                <span>{bullet}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        )
                       )}
                     </article>
                   ))}
@@ -1353,13 +1996,13 @@ export const DashboardPage: React.FC = () => {
                   </div>
                 )}
 
-                {selectedMode === 'ai' && selectedTheme.status === 'ready' && aiLoading && (
+                {isAiLikeMode && selectedTheme.status === 'ready' && aiLoading && (
                   <div className="rounded-3xl border border-slate-200 bg-white p-6 text-slate-600">
                     Generating a new AI/Ollama story for this theme... this can take a moment on a local model.
                   </div>
                 )}
 
-                {selectedMode === 'ai' && selectedTheme.status === 'ready' && !aiLoading && !selectedAiStory && !aiError && (
+                {isAiLikeMode && selectedTheme.status === 'ready' && !aiLoading && !hasGeneratedAiStory && !aiError && (
                   <div className="rounded-3xl border border-slate-200 bg-white p-6 text-slate-600">
                     No AI story has been generated yet. Click the button above when you want Ollama to generate one.
                   </div>
@@ -1372,3 +2015,5 @@ export const DashboardPage: React.FC = () => {
     </div>
   );
 };
+
+

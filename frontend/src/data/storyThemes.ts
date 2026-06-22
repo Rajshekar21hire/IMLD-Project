@@ -1,14 +1,31 @@
-export type StoryMode = 'human' | 'ai';
+export type StoryMode = 'human' | 'ai' | 'agentic';
 
 export interface StorySection {
   title: string;
   body: string;
   bullets?: string[];
+  categoryBlocks?: StoryCategoryBlock[];
   label?: string;
   chart?: {
     type: 'line' | 'bar';
     dataSourceKey: string;
   };
+}
+
+export interface StoryCategoryCard {
+  title: string;
+  pollutant: string;
+  reduction: string;
+  evidence: string;
+  example: string;
+  impactScore: number;
+  body: string;
+  footer: string;
+}
+
+export interface StoryCategoryBlock {
+  label: string;
+  cards: StoryCategoryCard[];
 }
 
 export interface StoryTheme {
@@ -217,14 +234,207 @@ export const storyThemes: StoryTheme[] = [
   {
     id: 'measurement-and-governance',
     badge: 'Story 4',
-    title: 'Measuring the Atmosphere and Setting the Standard',
-    shortDescription: 'Awaiting source story content.',
+    title: 'Future predictions and pathways to clean air',
+    shortDescription: 'A forward-looking story on proven fixes, lived experiences, and policy action for cleaner air.',
     overview:
-      'This theme is reserved for the next story you send. Once you provide the source text, the dashboard will turn it into a human story and an AI/Ollama counterpart.',
+      'This story explores practical methods to improve air quality, human voices showing the change on the ground, and the government action needed to make clean air real.',
     promptFocus:
-      'Write a grounded story about air quality monitoring technologies, their strengths and limitations, and how the WHO 2021 guideline changed the meaning of clean air.',
-    status: 'awaiting-source',
-    humanSections: [],
+      'Write a grounded story about pathways to clean air through proven methods, human experiences of improvement, and the government actions required to lock in progress.',
+    status: 'ready',
+    humanSections: [
+      {
+        title: 'Methods to improve air quality',
+        body:
+          'The air can get better. Here\'s how. 4 categories, 12 proven interventions.',
+        categoryBlocks: [
+          {
+            label: 'Personal',
+            cards: [
+              {
+                title: 'Switch to an electric or hybrid vehicle',
+                pollutant: 'NO2',
+                reduction: '60-100%',
+                evidence:
+                  'Road transport is the largest single contributor to urban NO2, and switching away from petrol removes tailpipe PM2.5 at the source.',
+                example: 'Urban transport transition in European clean-air zones',
+                impactScore: 90,
+                body:
+                  'Road transport is the largest single contributor to urban NO2. Switching from a petrol car eliminates tailpipe PM2.5 entirely. If you cannot switch, walk, cycle, or use public transport.',
+                footer: 'NO2 cut 60-100% per vehicle',
+              },
+              {
+                title: 'Choose cycling or walking for short trips',
+                pollutant: 'PM2.5 / NO2',
+                reduction: 'Zero tailpipe emissions',
+                evidence:
+                  'Each trip moved away from a car removes a pollution source and cuts time spent in the highest-concentration traffic environment.',
+                example: 'Short-trip mode shift in compact cities',
+                impactScore: 75,
+                body:
+                  'Every trip shifted from car to bike removes a vehicle from the road and removes you as a pollution source. Cycling also means you spend less time in traffic - the highest-concentration microenvironment.',
+                footer: 'Zero tailpipe emissions per trip',
+              },
+            ],
+          },
+          {
+            label: 'Household',
+            cards: [
+              {
+                title: 'Replace gas cooking with induction',
+                pollutant: 'NO2 / PM2.5',
+                reduction: 'Indoor NO2 cut up to 40%',
+                evidence:
+                  'Gas hobs release combustion pollution directly into kitchens, while induction removes that point-of-use exposure immediately.',
+                example: 'Household kitchen upgrades in urban apartments',
+                impactScore: 80,
+                body:
+                  'Gas hobs emit NO2 and PM2.5 directly into your kitchen. Induction is zero-emission at the point of use and reduces indoor air pollution immediately.',
+                footer: 'Indoor NO2 cut up to 40%',
+              },
+              {
+                title: 'Stop burning wood or waste indoors',
+                pollutant: 'PM2.5',
+                reduction: 'Indoor PM2.5 cut 50-90%',
+                evidence:
+                  'Open fires and wood-burning stoves are among the leading sources of indoor particulate exposure, so removing combustion sharply lowers risk.',
+                example: 'Cleaner cookstove adoption in households',
+                impactScore: 92,
+                body:
+                  'Open fires and wood-burning stoves are the leading source of indoor PM2.5. Switching to a certified low-emission stove or, better, eliminating combustion heating entirely, dramatically reduces exposure.',
+                footer: 'Indoor PM2.5 cut 50-90%',
+              },
+              {
+                title: 'Use a HEPA air purifier indoors',
+                pollutant: 'PM2.5',
+                reduction: 'Indoor PM2.5 cut 70-90%',
+                evidence:
+                  'Bedroom filtration reduces overnight exposure during the longest continuous indoor period, when health benefits are easiest to sustain.',
+                example: 'Bedroom air cleaning in polluted cities',
+                impactScore: 88,
+                body:
+                  'A HEPA purifier in your bedroom reduces overnight PM2.5 exposure by 70-90%. Given that we spend 8+ hours sleeping, this is the highest-value personal investment for health in a polluted city.',
+                footer: 'Indoor PM2.5 cut 70-90%',
+              },
+              {
+                title: 'Switch to solar or renewable electricity',
+                pollutant: 'SO2 / PM',
+                reduction: 'Demand eliminated',
+                evidence:
+                  'Renewable electricity cuts demand for coal power, which is one of the largest global sources of sulphur dioxide and particulate pollution.',
+                example: 'Home tariff switching and rooftop solar',
+                impactScore: 85,
+                body:
+                  'Coal power plants are the largest single source of SO2 globally. Switching your home to a renewable tariff or installing solar panels directly reduces demand for the dirtiest electricity generation.',
+                footer: 'SO2 and PM demand eliminated',
+              },
+            ],
+          },
+          {
+            label: 'Policy',
+            cards: [
+              {
+                title: 'Industrial emission standards with enforcement',
+                pollutant: 'PM2.5',
+                reduction: 'PM2.5 cut 35%',
+                evidence:
+                  'Mandatory scrubbers, fuel switching, and real-time monitoring can drive large reductions when enforcement has real penalties behind it.',
+                example: 'China\'s war on pollution (2014-2019)',
+                impactScore: 95,
+                body:
+                  'Mandatory scrubbers, fuel switching, and real-time stack monitoring with penalties. China\'s war on pollution (2014-2019) cut PM2.5 by 35% using this approach.',
+                footer: 'PM2.5 cut 35% (China, 5 years)',
+              },
+              {
+                title: 'Electrify urban bus fleets',
+                pollutant: 'PM2.5 / NO2',
+                reduction: 'PM2.5 cut 48%',
+                evidence:
+                  'Fleet electrification removes exhaust pollution from dense transport corridors and delivers one of the strongest per-vehicle health returns.',
+                example: 'Shenzhen bus fleet electrification',
+                impactScore: 93,
+                body:
+                  'Shenzhen\'s full electric bus fleet of 16,000 vehicles reduced bus-attributable PM2.5 by 48% in major corridors. Public transport electrification has the highest per-vehicle health return of any fleet policy.',
+                footer: 'PM2.5 cut 48% in corridors',
+              },
+              {
+                title: 'End agricultural burning - with alternatives',
+                pollutant: 'PM2.5',
+                reduction: 'Delhi winter AQI: ~30% potential',
+                evidence:
+                  'Burn bans fail without economic alternatives, but subsidy-backed alternatives and payments for not burning can reduce seasonal spikes.',
+                example: 'Punjab and Haryana stubble burning',
+                impactScore: 82,
+                body:
+                  'Stubble burning in Punjab and Haryana causes Delhi\'s worst air events. Banning without economic alternatives fails. Subsidising mechanical harvesters and direct payment for not burning works.',
+                footer: 'Delhi winter AQI: ~30% potential',
+              },
+            ],
+          },
+          {
+            label: 'Community',
+            cards: [
+              {
+                title: 'Plant trees on busy streets',
+                pollutant: 'NO2 / PM',
+                reduction: 'PM2.5 cut 15-25%',
+                evidence:
+                  'Tree canopies absorb gases and intercept particles, especially in street canyons where pollutants are concentrated.',
+                example: 'Tree-lined streets in dense urban corridors',
+                impactScore: 68,
+                body:
+                  'Street trees absorb NO2 through leaf stomata and physically intercept PM particles. A dense tree canopy on a canyon street can reduce PM2.5 at pavement level by up to 25%.',
+                footer: 'PM2.5 cut 15-25% on tree-lined streets',
+              },
+              {
+                title: 'Advocate for a low-emission zone in your city',
+                pollutant: 'NO2',
+                reduction: 'NO2 cut 30-50%',
+                evidence:
+                  'Low-emission zones consistently reduce roadside pollution and can also lower childhood asthma hospitalisations.',
+                example: 'London ULEZ and 320+ LEZs across Europe',
+                impactScore: 89,
+                body:
+                  'London\'s ULEZ reduced roadside NO2 by 44% in covered areas and cut childhood asthma hospitalisations. Over 320 LEZs now operate across European cities - they consistently deliver measurable results.',
+                footer: 'NO2 cut 30-50% in zone',
+              },
+              {
+                title: 'Demand real-time AQI monitoring and data',
+                pollutant: 'All pollutants',
+                reduction: 'Foundation for all other action',
+                evidence:
+                  'Cities cannot manage what they do not measure, so transparent data makes every other intervention enforceable.',
+                example: 'Public AQI monitoring and open-data dashboards',
+                impactScore: 100,
+                body:
+                  'Cities cannot manage what they do not measure. Advocating for free public AQI monitoring, transparent data, and legally binding standards makes all other interventions enforceable.',
+                footer: 'Foundation for all other action',
+              },
+            ],
+          },
+        ],
+      },
+      {
+        title: 'Human element - resident testimonials, health worker interviews',
+        body:
+          'Three human voices show how clean air becomes real through grief, community action, and climate advocacy. Their stories connect asthma, household energy, and toxic exposure to the wider fight for healthier lives.',
+        bullets: [
+          '“No child in this country should die from asthma.” - Rosamund. Ella Roberta was born healthy, but by age seven she had asthma, and at nine she died of a fatal asthma attack. Her mother Rosamund turned that loss into campaign work, helping push Ella\'s Law — a Clean Air (Human Rights) Bill that would enshrine clean air as a legal right and bind the UK to WHO air-quality targets.',
+          '“Zero-cost stoves, built by the community, for the community.” - Nitisha Agrawal. As founder and director of the Smokeless Cookstove Foundation, she works with marginalised communities across India to teach people how to make zero-cost, mud-based improved cookstoves. Her approach is built on co-creation, with stoves designed and made locally rather than handed down from outside.',
+          '“I grew up knowing that the very first danger I ever faced was something invisible, something we had not ever chosen.” - Nomundari (Nomu) Urantulga. Born in Ulaanbaatar, Mongolia, she grew up around coal-burning ger-district stoves and a toxic winter haze; a family tragedy linked to exposure during pregnancy turned her pain into purpose, and she now campaigns with youth movements and Climate Healthy Planet Now to carry that lesson into every room she enters.',
+        ],
+      },
+      {
+        title: 'What governments must do',
+        body:
+          'What clean air actually looks like is a set of measurable gains across health, cities, households, and technology. If these interventions were implemented globally, the shift would be visible in lives saved, faster policy impact, safer indoor environments, and better warnings before dangerous pollution spikes.',
+        bullets: [
+          '3.7 million lives saved per year: meeting WHO 2030 clean air targets would eliminate the majority of pollution-related deaths, and South Asia alone would gain an average of 5 additional years of life expectancy.',
+          'Visible change within 5 years: China cut PM2.5 by 35% in major cities in just 5 years through industrial regulation, while London’s ULEZ reduced roadside NO2 by 44%. Change at city scale is fast when policy is enforced.',
+          'Immediate indoor air improvement: switching from a wood fire to a clean cookstove reduces indoor PM2.5 by over 90% from the first day of use, and children in clean-cooking households have 68% fewer respiratory infections.',
+          '48-hour warnings now possible: machine learning models can forecast city-level AQI 72 hours ahead with over 90% accuracy, enabling schools to close before a hazardous event instead of after. This capability is expanding rapidly.',
+        ],
+      },
+    ],
     aiSections: [],
   },
 ];
@@ -239,6 +449,11 @@ export const storyModes: { id: StoryMode; label: string; description: string }[]
     id: 'ai',
     label: 'AI / Olamala Generated',
     description: 'An AI-style version using the same theme and subtopic structure.',
+  },
+  {
+    id: 'agentic',
+    label: 'Agentic AI Generated',
+    description: 'Agentic AI narrative using the same theme and subtopic structure.',
   },
 ];
 
