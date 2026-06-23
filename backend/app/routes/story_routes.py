@@ -60,6 +60,63 @@ def _repair_json_like_text(text):
     repaired = re.sub(r',\s*([}\]])', r'\1', repaired)
     return repaired
 
+
+def _build_theme_story_fallback(title, overview, prompt_focus, source_sections):
+    """Create a deterministic companion story when local AI generation is unavailable."""
+    fallback_sections = []
+
+    for index, section in enumerate(source_sections, start=1):
+        if isinstance(section, dict):
+            section_title = str(section.get('title', '')).strip() or f'Section {index}'
+            section_body = str(section.get('body', '')).strip()
+            bullets = section.get('bullets') or []
+
+            body_parts = []
+            if section_body:
+                body_parts.append(section_body)
+            if bullets:
+                body_parts.append(
+                    'Key interactive cues: ' + '; '.join(str(bullet).strip() for bullet in bullets if str(bullet).strip())
+                )
+
+            fallback_sections.append(
+                {
+                    'title': section_title,
+                    'body': ' '.join(body_parts).strip() or f'An AI companion view for {section_title.lower()}.',
+                    'bullets': [str(bullet).strip() for bullet in bullets if str(bullet).strip()],
+                }
+            )
+        else:
+            fallback_sections.append(
+                {
+                    'title': f'Section {index}',
+                    'body': 'An AI companion view for this section is not available yet.',
+                    'bullets': [],
+                }
+            )
+
+    if not fallback_sections:
+        fallback_sections = [
+            {
+                'title': title,
+                'body': overview or prompt_focus or 'An AI companion story is not available yet.',
+                'bullets': [],
+            }
+        ]
+
+    summary_bits = [
+        f'AI companion story for {title}',
+        'reframed into an interactive dashboard voice',
+    ]
+    if prompt_focus:
+        summary_bits.append(prompt_focus.strip())
+
+    return {
+        'title': f'{title} - AI Story',
+        'summary': '. '.join(bit for bit in summary_bits if bit),
+        'sections': fallback_sections,
+    }
+
 @bp.route('/generate', methods=['POST'])
 def generate_story():
     """Generate a new story from air quality data"""
@@ -266,16 +323,24 @@ Source subtopics:
 {chr(10).join(section_brief)}
 """
 
-        response_text, provider_used = chat_provider_service.generate_local_answer(
-            prompt,
-            model=chat_provider_service.story_ollama_model,
-            num_predict=700,
-            timeout_seconds=chat_provider_service.story_timeout_seconds,
-        )
-        parsed = _safe_json_loads(response_text)
+        provider_used = 'fallback'
+        parsed = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=700,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            parsed = _safe_json_loads(response_text)
+
+            if not parsed:
+                parsed = _parse_story_from_text(response_text, title, sections)
+        except Exception:
+            parsed = None
 
         if not parsed:
-            parsed = _parse_story_from_text(response_text, title, sections)
+            parsed = _build_theme_story_fallback(title, overview, prompt_focus, sections)
 
         return jsonify({
             'success': True,
