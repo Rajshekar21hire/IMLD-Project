@@ -240,14 +240,20 @@ export const DashboardPage: React.FC = () => {
   const selectedAiSummary = toSafeText(selectedAiStory?.summary) || selectedTheme.overview;
   const selectedAiProvider = toSafeText(selectedAiStory?.provider) || 'Ollama';
   const hasGeneratedAiStory = Boolean(aiRequested[selectedTheme.id] || selectedAiStory);
+  const isAiLikeMode = selectedMode !== 'human';
+  const isStoryThreeAiView = selectedTheme.id === 'aqi-and-decisions' && isAiLikeMode;
+  const canShowStoryThreeAiSections = isStoryThreeAiView && Boolean(selectedAiStory);
   const activeSections = useMemo(
     () => {
       if (selectedMode === 'human') {
         return selectedTheme.humanSections;
       }
+      if (isStoryThreeAiView && !canShowStoryThreeAiSections) {
+        return [];
+      }
       return normalizedAiSections;
     },
-    [selectedTheme, selectedMode, normalizedAiSections]
+    [selectedTheme, selectedMode, normalizedAiSections, isStoryThreeAiView, canShowStoryThreeAiSections]
   );
   const aiGenerationSections = useMemo(() => {
     if (selectedTheme.id === 'pollution-and-health') {
@@ -261,9 +267,6 @@ export const DashboardPage: React.FC = () => {
     selectedMode,
     selectedMode !== 'human' ? aiGenerationSections : selectedTheme.humanSections
   );
-  const isAiLikeMode = selectedMode !== 'human';
-  const isStoryThreeAiView = selectedTheme.id === 'aqi-and-decisions' && isAiLikeMode;
-  const canShowStoryThreeAiSections = isStoryThreeAiView && (aiLoading || hasGeneratedAiStory);
   const isPollutionHealthAiView = selectedTheme.id === 'pollution-and-health' && isAiLikeMode;
   const isStoryFourHumanView = selectedTheme.id === 'measurement-and-governance' && selectedMode === 'human';
   const isStoryFourAiView = selectedTheme.id === 'measurement-and-governance' && isAiLikeMode;
@@ -647,7 +650,14 @@ export const DashboardPage: React.FC = () => {
         throw new Error(response.data?.error || 'Failed to generate AI story');
       }
     } catch (error: any) {
-      setAiError(error.response?.data?.error || error.message || 'Failed to generate AI story');
+      const isNetworkError = error?.code === 'ERR_NETWORK' || (!error?.response && !!error?.request);
+      const backendUrl = error?.config?.baseURL || 'http://localhost:5000/api';
+
+      if (isNetworkError) {
+        setAiError(`Cannot reach backend (${backendUrl}). Start the backend server and try again.`);
+      } else {
+        setAiError(error.response?.data?.error || error.message || 'Failed to generate AI story');
+      }
     } finally {
       setAiLoading(false);
     }
