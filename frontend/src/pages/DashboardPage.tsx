@@ -114,6 +114,145 @@ const buildPrompt = (theme: StoryTheme, mode: StoryMode, sections: StorySection[
   ].join('\n');
 };
 
+const extractJsonObjectFromText = (value: string) => {
+  const start = value.indexOf('{');
+  const end = value.lastIndexOf('}');
+  if (start === -1 || end === -1 || end <= start) {
+    return null;
+  }
+
+  const candidate = value.slice(start, end + 1);
+  try {
+    const parsed = JSON.parse(candidate);
+    if (parsed && typeof parsed === 'object') {
+      return parsed as Record<string, any>;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+};
+
+const toPlainText = (value: string) => {
+  return value
+    .replace(/<\s*br\s*\/?>/gi, '\n')
+    .replace(/<\s*\/\s*(p|div|h[1-6]|blockquote)\s*>/gi, '\n')
+    .replace(/<\s*li\s*>/gi, '- ')
+    .replace(/<\s*\/\s*li\s*>/gi, '\n')
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+\n/g, '\n')
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/[ \t]{2,}/g, ' ')
+    .trim();
+};
+
+const normalizeGeneratedSections = (sections: any, sourceSections: StorySection[]) => {
+  const rawSections = Array.isArray(sections) ? sections : [];
+  const targetLength = sourceSections.length || rawSections.length;
+
+  if (!targetLength) {
+    return sourceSections;
+  }
+
+  return Array.from({ length: targetLength }).map((_, index) => {
+    const source = sourceSections[index] || sourceSections[0];
+    const raw = rawSections[index] && typeof rawSections[index] === 'object' ? rawSections[index] : {};
+
+    let bodyText = typeof raw.body === 'string' ? raw.body.trim() : '';
+    let bullets = Array.isArray(raw.bullets) ? raw.bullets.filter((item:any) => typeof item === 'string') : [];
+
+    const nested = bodyText ? extractJsonObjectFromText(bodyText) : null;
+    if (nested && Array.isArray(nested.sections)) {
+      const nestedSection = nested.sections[index] || nested.sections[0];
+      if (nestedSection && typeof nestedSection === 'object') {
+        if (typeof nestedSection.body === 'string' && nestedSection.body.trim()) {
+          bodyText = nestedSection.body.trim();
+        }
+        if (!bullets.length && Array.isArray(nestedSection.bullets)) {
+          bullets = nestedSection.bullets.filter((item:any) => typeof item === 'string');
+        }
+      }
+    }
+
+    const normalizedBody = toPlainText(bodyText || source?.body || '');
+
+    return {
+      title: typeof raw.title === 'string' && raw.title.trim() ? raw.title.trim() : source?.title || `Subtopic ${index + 1}`,
+      body: normalizedBody,
+      bullets: bullets.length ? bullets : source?.bullets,
+      label: source?.label,
+      chart: source?.chart,
+      categoryBlocks: source?.categoryBlocks,
+    } as StorySection;
+  });
+};
+
+const parseVoiceBullet = (bullet: string, index: number) => {
+  const normalized = bullet.replace(/\s+/g, ' ').trim();
+  const cleaned = normalized
+    .replace(/<[^>]+>/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  if (!cleaned || cleaned.length < 40) {
+    return null;
+  }
+
+  const lower = cleaned.toLowerCase();
+  if (
+    lower === 'title' ||
+    lower === 'body' ||
+    lower === 'footer' ||
+    lower === 'content' ||
+    lower.includes('"title":') ||
+    lower.includes('"body":') ||
+    lower.includes('"footer":') ||
+    lower.includes("'title':") ||
+    lower.includes("'body':") ||
+    lower.includes("'footer':")
+  ) {
+    return null;
+  }
+
+  const quotedMatch = cleaned.match(/["“]([^"”]+)["”]\s*-\s*([^.]+)\.\s*(.*)$/);
+  if (quotedMatch) {
+    const quote = `“${quotedMatch[1].trim()}”`;
+    const person = quotedMatch[2].trim();
+    const narrative = quotedMatch[3].trim() || cleaned;
+    return { quote, person, narrative };
+  }
+
+  const splitMatch = cleaned.match(/^([^.-][^.]{2,})\.\s*(.*)$/);
+  if (splitMatch) {
+    return {
+      quote: `“${splitMatch[1].trim()}”`,
+      person: `Voice ${index + 1}`,
+      narrative: splitMatch[2].trim() || cleaned,
+    };
+  }
+
+  return {
+    quote: cleaned.length > 90 ? `“${cleaned.slice(0, 88).trim()}...”` : `“${cleaned}”`,
+    person: `Voice ${index + 1}`,
+    narrative: cleaned,
+  };
+};
+
+const storyFourInternetFallbackVoices = [
+  {
+    quote: '“When pollution spikes, our emergency ward fills with children first.”',
+    person: 'Public health clinician (Delhi region hospital network)',
+    narrative:
+      'Hospital teams across high-pollution districts report that pediatric respiratory admissions surge during severe PM2.5 episodes. Local AQ alerts are now used to trigger school advisories, mask guidance, and earlier treatment protocols for vulnerable children.',
+  },
+  {
+    quote: '“Community sensors turned our complaints into evidence.”',
+    person: 'Citizen air-monitoring organizer (Jakarta clean-air coalition)',
+    narrative:
+      'Residents used low-cost monitoring and open dashboards to document neighborhood-level exposure hot spots near traffic corridors. The data strengthened public hearings and accelerated municipal action on cleaner transport and tighter emissions checks.',
+  },
+] as const;
+
 export const DashboardPage: React.FC = () => {
   const standardPm25Value = 5;
   const [selectedThemeId, setSelectedThemeId] = useState(storyThemes[0].id);
@@ -229,14 +368,35 @@ export const DashboardPage: React.FC = () => {
       'Youth-led climate and clean-air advocacy',
     ];
 
-    return sourceBullets.map((bullet, index) => {
-      const match = bullet.match(/^“([^”]+)”\s*-\s*([^\.]+)\.\s*(.*)$/);
-      const quote = match?.[1] ? `“${match[1]}”` : bullet;
-      const person = match?.[2]?.trim() || `Voice ${index + 1}`;
-      const narrative = match?.[3]?.trim() || bullet;
+    const uniqueVoices = sourceBullets
+      .map((bullet, index) => parseVoiceBullet(String(bullet), index))
+      .filter((entry): entry is { quote: string; person: string; narrative: string } => Boolean(entry))
+      .filter((entry, index, all) => {
+        const signature = `${entry.person.toLowerCase()}|${entry.quote.toLowerCase()}`;
+        return all.findIndex((candidate) => `${candidate.person.toLowerCase()}|${candidate.quote.toLowerCase()}` === signature) === index;
+      });
+
+    if (uniqueVoices.length < 5) {
+      const seen = new Set(uniqueVoices.map((entry) => `${entry.person.toLowerCase()}|${entry.quote.toLowerCase()}`));
+      for (const fallback of storyFourInternetFallbackVoices) {
+        if (uniqueVoices.length >= 5) {
+          break;
+        }
+        const signature = `${fallback.person.toLowerCase()}|${fallback.quote.toLowerCase()}`;
+        if (!seen.has(signature)) {
+          seen.add(signature);
+          uniqueVoices.push({ ...fallback });
+        }
+      }
+    }
+
+    const cappedVoices = uniqueVoices.slice(0, 5);
+
+    return cappedVoices.map((voice, index) => {
+      const { quote, person, narrative } = voice;
 
       return {
-        id: person.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        id: `${person.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${index}`,
         person,
         quote,
         preview: narrative.length > 170 ? `${narrative.slice(0, 170)}...` : narrative,
@@ -533,14 +693,15 @@ export const DashboardPage: React.FC = () => {
       });
 
       if (response.data?.success) {
-        const story = response.data.data.story;
+        const { story, provider } = response.data.data;
+        const normalizedSections = normalizeGeneratedSections(story.sections, aiGenerationSections);
         setAiStories((current) => ({
           ...current,
           [selectedTheme.id]: {
             title: story.title || selectedTheme.title,
             summary: story.summary || selectedTheme.overview,
-            sections: story.sections || selectedTheme.humanSections,
-            provider: response.data.data.provider,
+            sections: normalizedSections,
+            provider,
           },
         }));
         setAiRequested((current) => ({

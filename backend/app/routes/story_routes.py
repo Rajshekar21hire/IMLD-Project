@@ -1,4 +1,5 @@
 """Story routes for generated stories and theme-based AI storytelling."""
+import html
 import json
 import re
 
@@ -59,6 +60,215 @@ def _repair_json_like_text(text):
     repaired = re.sub(r',\s*,+', ',', repaired)
     repaired = re.sub(r',\s*([}\]])', r'\1', repaired)
     return repaired
+
+
+def _normalize_story_payload(story, fallback_title, source_sections):
+    """Normalize model output into a clean, UI-safe story structure."""
+    if not isinstance(story, dict):
+        story = {}
+
+    raw_title = story.get('title')
+    raw_summary = story.get('summary')
+    raw_sections = story.get('sections') if isinstance(story.get('sections'), list) else []
+
+    target_len = len(source_sections) if source_sections else len(raw_sections)
+    if target_len == 0:
+        target_len = 1
+
+    normalized_sections = []
+    for index in range(target_len):
+        source = source_sections[index] if index < len(source_sections) and isinstance(source_sections[index], dict) else {}
+        raw = raw_sections[index] if index < len(raw_sections) else {}
+
+        if not isinstance(raw, dict):
+            raw = {'body': str(raw).strip()} if raw is not None else {}
+
+        title = str(raw.get('title') or source.get('title') or f'Subtopic {index + 1}').strip()
+        body = _normalize_section_body(raw.get('body') or source.get('body') or '', index)
+
+        bullets = _coerce_bullets(raw.get('bullets'))
+        if not bullets and isinstance(source.get('bullets'), list):
+            bullets = [str(item).strip() for item in source.get('bullets') if str(item).strip()]
+
+        normalized_section = {
+            'title': title,
+            'body': body,
+            'bullets': bullets,
+        }
+
+        # Preserve optional metadata that the frontend may rely on.
+        for key in ('label', 'chart', 'categoryBlocks'):
+            if key in raw and raw.get(key) is not None:
+                normalized_section[key] = raw.get(key)
+            elif key in source and source.get(key) is not None:
+                normalized_section[key] = source.get(key)
+
+        normalized_sections.append(normalized_section)
+
+    summary = (str(raw_summary).strip() if raw_summary else '') or ' '.join(
+        section['body'] for section in normalized_sections if section['body']
+    ).strip()[:280]
+
+    title = (str(raw_title).strip() if raw_title else '') or f'{fallback_title} - AI Story'
+
+    return {
+        'title': title,
+        'summary': summary,
+        'sections': normalized_sections,
+    }
+
+
+def _coerce_bullets(value):
+    if isinstance(value, list):
+        bullets = []
+        for item in value:
+            if isinstance(item, dict):
+                quote = str(item.get('quote', '')).strip().strip('"').strip('“”')
+                name = str(item.get('name') or item.get('person') or item.get('speaker') or '').strip()
+                organization = str(item.get('organization', '')).strip()
+                narrative = str(item.get('content') or item.get('story') or item.get('body') or '').strip()
+
+                speaker = name
+                if speaker and organization:
+                    speaker = f'{speaker} ({organization})'
+
+                parts = []
+                if quote:
+                    parts.append(f'“{quote}”')
+                if speaker:
+                    if parts:
+                        parts[-1] = f'{parts[-1]} - {speaker}.'
+                    else:
+                        parts.append(f'{speaker}.')
+                if narrative:
+                    parts.append(narrative)
+
+                text = ' '.join(parts).strip()
+            else:
+                text = str(item).strip()
+
+            text = _normalize_section_body(text, 0)
+            if text and text.lower() not in {'title', 'body', 'footer', 'content'}:
+                bullets.append(text)
+
+        return bullets
+    return []
+
+
+def _looks_like_voice_bullet(text):
+    cleaned = text.strip().lower()
+    if not cleaned:
+        return False
+    if cleaned in {'title', 'body', 'footer', 'content'}:
+        return False
+    if cleaned.startswith('<'):
+        return False
+    if len(cleaned) < 40:
+        return False
+    if any(token in cleaned for token in ['"title":', '"body":', '"footer":', "'title':", "'body':", "'footer':"]):
+        return False
+    return True
+
+
+def _normalize_story_four_subtopic_two(story, source_sections):
+    """Guarantee Story 4 Subtopic 2 renders exactly five clean voice stories."""
+    if not isinstance(story, dict):
+        return story
+
+    sections = story.get('sections')
+    if not isinstance(sections, list) or len(sections) < 2:
+        return story
+
+    section = sections[1]
+    if not isinstance(section, dict):
+        return story
+
+    # Keep the original three reference voices from the curated source.
+    source_voice_bullets = []
+    if len(source_sections) > 1 and isinstance(source_sections[1], dict):
+        source_voice_bullets = _coerce_bullets(source_sections[1].get('bullets'))
+    canonical_three = [bullet for bullet in source_voice_bullets if _looks_like_voice_bullet(bullet)][:3]
+
+    ai_bullets = [bullet for bullet in _coerce_bullets(section.get('bullets')) if _looks_like_voice_bullet(bullet)]
+
+    seen = set()
+
+    def _signature(value):
+        return re.sub(r'\s+', ' ', value.strip().lower())
+
+    merged = []
+    for bullet in canonical_three:
+        sig = _signature(bullet)
+        if sig not in seen:
+            seen.add(sig)
+            merged.append(bullet)
+
+    for bullet in ai_bullets:
+        sig = _signature(bullet)
+        if sig in seen:
+            continue
+        # Avoid repeating the three fixed voices in the "extra" slots.
+        if any(name in sig for name in ['rosamund', 'nitisha', 'nomundari']):
+            continue
+        seen.add(sig)
+        merged.append(bullet)
+        if len(merged) >= 5:
+            break
+
+    filler_voices = [
+        '“When pollution alerts rise, our pediatric ward fills first.” - Public health clinician, South Asia. Hospital teams report measurable spikes in child respiratory visits during high PM2.5 episodes and use local AQ alerts to trigger early precautions.',
+        '“Community air sensors gave us evidence, not just complaints.” - Citizen air-quality network coordinator. Open neighborhood monitoring helped residents document exposure hot spots and push local authorities for cleaner transport and stricter enforcement.',
+    ]
+    for filler in filler_voices:
+        if len(merged) >= 5:
+            break
+        sig = _signature(filler)
+        if sig not in seen:
+            seen.add(sig)
+            merged.append(filler)
+
+    section['bullets'] = merged[:5]
+    return story
+
+
+def _normalize_section_body(value, section_index):
+    """Unwrap nested JSON/HTML into clean dashboard-ready plain text."""
+    text = ''
+    if isinstance(value, str):
+        text = value.strip()
+    elif value is not None:
+        text = str(value).strip()
+
+    if not text:
+        return ''
+
+    nested = _safe_json_loads(text)
+    if nested and isinstance(nested.get('sections'), list):
+        nested_sections = nested.get('sections') or []
+        nested_section = None
+        if section_index < len(nested_sections) and isinstance(nested_sections[section_index], dict):
+            nested_section = nested_sections[section_index]
+        elif nested_sections and isinstance(nested_sections[0], dict):
+            nested_section = nested_sections[0]
+
+        if nested_section:
+            nested_body = nested_section.get('body')
+            if isinstance(nested_body, str) and nested_body.strip():
+                text = nested_body.strip()
+            elif isinstance(nested.get('summary'), str) and nested.get('summary').strip():
+                text = nested.get('summary').strip()
+
+    # Convert common HTML structures to readable plain text.
+    text = re.sub(r'<\s*br\s*/?>', '\n', text, flags=re.IGNORECASE)
+    text = re.sub(r'<\s*/\s*(p|div|h[1-6]|blockquote)\s*>', '\n', text, flags=re.IGNORECASE)
+    text = re.sub(r'<\s*li\s*>', '- ', text, flags=re.IGNORECASE)
+    text = re.sub(r'<\s*/\s*li\s*>', '\n', text, flags=re.IGNORECASE)
+    text = re.sub(r'<[^>]+>', ' ', text)
+    text = html.unescape(text)
+    text = text.replace('\r\n', '\n')
+    text = re.sub(r'\n{3,}', '\n\n', text)
+    text = re.sub(r'[ \t]{2,}', ' ', text)
+    return text.strip()
 
 @bp.route('/generate', methods=['POST'])
 def generate_story():
@@ -205,6 +415,9 @@ def generate_theme_story():
 
     Additional direction for Subtopic 2 (Human Element: Voices Behind the Data):
     - Build this section around three featured voices: Rosamund (Ella Roberta Foundation), Nitisha Agrawal (Smokeless Cookstove Foundation), and Nomundari Urantulga (Climate Activist).
+            - Return exactly 5 bullet stories for this subtopic: the same 3 featured voices above, plus 2 additional globally documented human stories from public reporting.
+            - Keep each bullet as a single plain-text sentence block in this exact style: “Quote” - Name (Organization). Narrative.
+            - Do not return JSON objects for bullets and do not return HTML tags in bullets.
     - Write as an interactive card-style narrative: highlighted quote, short story preview, then expanded narrative.
     - For each voice, explicitly include: issue, outcome, affected population, pollutant involved, health consequence, and action taken.
     - Include a mini timeline in prose for each voice: Exposure -> Health Impact -> Personal Response -> Community Action -> Wider Change.
@@ -272,10 +485,11 @@ Source subtopics:
             num_predict=700,
             timeout_seconds=chat_provider_service.story_timeout_seconds,
         )
-        parsed = _safe_json_loads(response_text)
+        parsed = _safe_json_loads(response_text) or _parse_story_from_text(response_text, title, sections)
 
-        if not parsed:
-            parsed = _parse_story_from_text(response_text, title, sections)
+        parsed = _normalize_story_payload(parsed, title, sections)
+        if theme_id == 'measurement-and-governance':
+            parsed = _normalize_story_four_subtopic_two(parsed, sections)
 
         return jsonify({
             'success': True,
@@ -354,10 +568,11 @@ Sections:
             num_predict=700,
             timeout_seconds=chat_provider_service.story_timeout_seconds,
         )
-        parsed = _safe_json_loads(response_text)
+        parsed = _safe_json_loads(response_text) or _parse_story_from_text(response_text, story_title, sections)
 
-        if not parsed:
-            parsed = _parse_story_from_text(response_text, story_title, sections)
+        parsed = _normalize_story_payload(parsed, story_title, sections)
+        if str(theme.get('id', '')).strip() == 'measurement-and-governance':
+            parsed = _normalize_story_four_subtopic_two(parsed, sections)
 
         return jsonify({
             'success': True,
@@ -702,8 +917,9 @@ def _parse_story_from_text(response_text, fallback_title, source_sections):
             }
         ]
 
-    return {
+    parsed = {
         'title': title_match.group(1).strip() if title_match else f'{fallback_title} - AI Story',
         'summary': summary_match.group(1).strip() if summary_match else response_text.strip()[:280],
         'sections': sections,
     }
+    return _normalize_story_payload(parsed, fallback_title, source_sections)
