@@ -40,25 +40,80 @@ git clone <repository-url>
 cd "IMLD Project"
 ```
 
-### 2. Backend setup
+### 2. Start with Docker
+
+**Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) (includes Docker Compose)
+
+```bash
+# Copy the environment template
+cp .env.example .env
+# Edit .env and set a SECRET_KEY (and any API keys if not using Ollama)
+
+# Build and start all services
+docker compose up --build
+
+# (First time only) Pull the default Ollama model
+docker compose exec ollama ollama pull llama3.2:3b
+```
+
+| Service | URL |
+|---------|-----|
+| Frontend | http://localhost:3001 |
+| Backend API | http://localhost:5000/api |
+| Ollama | http://localhost:11434 |
+
+The frontend nginx container proxies all `/api/` requests to the backend, so there are no CORS issues and no extra ports to configure.
+
+Then click **"Add Sample Data"** on the Dashboard and hit **"Generate Data Story"**.
+
+### Using a different AI provider (skip Ollama)
+
+If you prefer Gemini or OpenAI, set the relevant variables in `.env` and start only the backend and frontend:
+
+```env
+CHAT_PROVIDER=gemini
+GEMINI_API_KEY=your-key-here
+```
+
+```bash
+docker compose up --build backend frontend
+```
+
+### Useful Docker commands
+
+```bash
+# Stop all services
+docker compose down
+
+# Stop and wipe volumes (resets the database and downloaded Ollama models)
+docker compose down -v
+
+# View backend logs
+docker compose logs -f backend
+
+# Rebuild a single service after code changes
+docker compose up --build backend
+```
+
+## Manual Setup (without Docker)
+
+> **Note:** Without Docker, Ollama runs directly on your machine without container resource management. The AI model will respond **slower** — especially on first load and for long story generation requests. Docker is strongly recommended for the best experience.
+
+### 1. Backend
 
 ```bash
 cd backend
 
-# Create and activate virtual environment
-python -m venv venv
-
-# Windows:
-venv\Scripts\activate
-# macOS/Linux:
-source venv/bin/activate
+# Activate the virtual environment
+.\venv311\Scripts\Activate.ps1          # Windows (PowerShell)
+# source venv311/bin/activate           # macOS/Linux
 
 # Install dependencies
 pip install -r requirements.txt
 
 # Create your .env file
 cp .env.example .env
-# Edit .env if needed (defaults work out of the box with Ollama)
+# Edit .env if needed
 
 # Start the server
 python run.py
@@ -66,7 +121,7 @@ python run.py
 
 Backend runs at `http://localhost:5000`
 
-### 3. Frontend setup
+### 2. Frontend
 
 ```bash
 # Open a new terminal
@@ -77,13 +132,15 @@ npm start
 
 Frontend opens at `http://localhost:3001`
 
-### 4. Pull an Ollama model (first time only)
+### 3. Pull an Ollama model (first time only)
 
 ```bash
 ollama pull llama3.2:3b
 ```
 
-Then click **"Add Sample Data"** on the Dashboard and hit **"Generate Data Story"**.
+Make sure [Ollama](https://ollama.com/) is installed and running (`ollama serve`) before starting the backend.
+
+---
 
 ## Environment Variables
 

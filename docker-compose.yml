@@ -1,0 +1,59 @@
+services:
+
+  # ── Backend (Flask / Gunicorn) ─────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      # Mount the project-level data directory (read-only) so the backend can
+      # read waqi-airquality-master-dataset.csv at /data/ inside the container
+      - ./data:/data:ro
+      # Persist the SQLite database between container restarts
+      - db_data:/app/instance
+    environment:
+      FLASK_ENV: ${FLASK_ENV:-production}
+      FLASK_DEBUG: ${FLASK_DEBUG:-false}
+      SECRET_KEY: ${SECRET_KEY:-change-me-in-production}
+      # Absolute SQLite path inside the container
+      DATABASE_URL: ${DATABASE_URL:-sqlite:////app/instance/air_quality_portal.db}
+      # Allow the frontend container (nginx on port 3001) and direct localhost access
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3001,http://127.0.0.1:3001}
+      # AI chat provider — defaults to Ollama (free, local)
+      CHAT_PROVIDER: ${CHAT_PROVIDER:-ollama}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+    depends_on:
+      - ollama
+    restart: unless-stopped
+
+  # ── Frontend (React → nginx) ───────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3001:80"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+  # ── Ollama (local LLM — can be removed if using Gemini / OpenAI) ──────────
+  ollama:
+    image: ollama/ollama:latest
+    ports:
+      - "11434:11434"
+    volumes:
+      # Persist downloaded models so they survive container restarts
+      - ollama_data:/root/.ollama
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  ollama_data:
