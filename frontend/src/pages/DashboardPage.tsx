@@ -242,18 +242,51 @@ export const DashboardPage: React.FC = () => {
   const hasGeneratedAiStory = Boolean(aiRequested[selectedTheme.id] || selectedAiStory);
   const isAiLikeMode = selectedMode !== 'human';
   const isStoryThreeAiView = selectedTheme.id === 'aqi-and-decisions' && isAiLikeMode;
+  const shouldHideAiSectionsUntilGenerated = isAiLikeMode && selectedTheme.id !== 'aqi-and-decisions' && !hasGeneratedAiStory;
   const canShowStoryThreeAiSections = isStoryThreeAiView && Boolean(selectedAiStory);
   const activeSections = useMemo(
     () => {
       if (selectedMode === 'human') {
         return selectedTheme.humanSections;
       }
+      if (shouldHideAiSectionsUntilGenerated) {
+        return [];
+      }
       if (isStoryThreeAiView && !canShowStoryThreeAiSections) {
         return [];
       }
+      if (selectedTheme.id === 'pollution-and-health') {
+        // Story 2 AI view intentionally shows only subtopics 1 and 2.
+        return normalizedAiSections.slice(0, 2);
+      }
+      if (selectedTheme.id === 'aqi-and-decisions') {
+        // Story 3 AI view shows only the first 2 subtopics.
+        return normalizedAiSections.slice(0, 2);
+      }
+      if (selectedTheme.id === 'measurement-and-governance') {
+        // Story 4 AI view always shows exactly three subtopics; pad with human sections if AI returned fewer.
+        const padded = [0, 1, 2].map(
+          (i) => normalizedAiSections[i] ?? selectedTheme.humanSections[i]
+        );
+        return padded.map((section, index) => {
+          if (index === 1) {
+            return {
+              ...section,
+              title: 'Human element - resident testimonials, health worker interviews',
+            };
+          }
+          if (index === 2) {
+            return {
+              ...section,
+              title: 'What governments must do',
+            };
+          }
+          return section;
+        });
+      }
       return normalizedAiSections;
     },
-    [selectedTheme, selectedMode, normalizedAiSections, isStoryThreeAiView, canShowStoryThreeAiSections]
+    [selectedTheme, selectedMode, normalizedAiSections, isStoryThreeAiView, canShowStoryThreeAiSections, shouldHideAiSectionsUntilGenerated]
   );
   const aiGenerationSections = useMemo(() => {
     if (selectedTheme.id === 'pollution-and-health') {
@@ -267,8 +300,31 @@ export const DashboardPage: React.FC = () => {
     selectedMode,
     selectedMode !== 'human' ? aiGenerationSections : selectedTheme.humanSections
   );
-  const isAiLikeMode = selectedMode !== 'human';
-  const isStoryThreeAiView = selectedTheme.id === 'aqi-and-decisions' && isAiLikeMode;
+  const isStoryThreeHumanView = selectedTheme.id === 'aqi-and-decisions' && selectedMode === 'human';
+  const storyThreeTestimonialIntroIndex = useMemo(() => {
+    if (!isStoryThreeHumanView) {
+      return -1;
+    }
+    const introIndex = selectedTheme.humanSections.findIndex(
+      (section) => section.title === 'Human stories: Real lives shaped by air quality'
+    );
+    return introIndex >= 0 ? introIndex : 1;
+  }, [isStoryThreeHumanView, selectedTheme]);
+  const storyThreeTestimonials = useMemo<StorySection[]>(() => {
+    if (!isStoryThreeHumanView) {
+      return [];
+    }
+    return selectedTheme.humanSections.filter((section, index) => {
+      if (index <= storyThreeTestimonialIntroIndex) {
+        return false;
+      }
+      // Keep the final summary section in the main grid, not in testimonial cards.
+      if (index === selectedTheme.humanSections.length - 1) {
+        return false;
+      }
+      return Boolean(section.body?.trim());
+    });
+  }, [isStoryThreeHumanView, selectedTheme, storyThreeTestimonialIntroIndex]);
   const isPollutionHealthAiView = selectedTheme.id === 'pollution-and-health' && isAiLikeMode;
   const isStoryFourHumanView = selectedTheme.id === 'measurement-and-governance' && selectedMode === 'human';
   const isStoryFourAiView = selectedTheme.id === 'measurement-and-governance' && isAiLikeMode;
@@ -310,11 +366,9 @@ export const DashboardPage: React.FC = () => {
   const storyFourAiCategoryData = storyFourAiCategories[storyFourAiCategory] || storyFourAiCategories.Personal;
   const storyFourAiCategoriesList = ['Personal', 'Household', 'Community', 'Policy'] as const;
   const storyFourAiVoices = useMemo(() => {
-    const generatedVoiceSection = normalizedAiSections[1];
+    // Always use the curated human section bullets so quotes and narratives display correctly.
     const humanVoiceSection = selectedTheme.humanSections[1];
-    const sourceBullets = generatedVoiceSection?.bullets && generatedVoiceSection.bullets.length >= 3
-      ? generatedVoiceSection.bullets
-      : humanVoiceSection?.bullets || [];
+    const sourceBullets = humanVoiceSection?.bullets || [];
 
     const issueDefaults = [
       'Childhood asthma and urban air pollution',
@@ -1067,7 +1121,7 @@ export const DashboardPage: React.FC = () => {
                   {activeSections
                     .filter((section, sectionIndex) =>
                       !isStoryThreeHumanView ||
-                      (sectionIndex !== storyThreeTestimonialIntroIndex && !storyThreeTestimonials.includes(section))
+                      sectionIndex < storyThreeTestimonialIntroIndex
                     )
                     .map((section, index) => (
                     <article
@@ -1834,7 +1888,7 @@ export const DashboardPage: React.FC = () => {
                   <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 md:p-8">
                     <h3 className="text-2xl font-black text-slate-950">Human stories: Real lives shaped by air quality</h3>
                     <p className="mt-3 text-slate-700 leading-relaxed">
-                      {selectedTheme.humanSections[storyThreeTestimonialIntroIndex].body}
+                      {selectedTheme.humanSections[storyThreeTestimonialIntroIndex]?.body || ''}
                     </p>
                     <div className="mt-5 flex flex-col gap-4">
                       {storyThreeTestimonials.map((testimonial) => (
