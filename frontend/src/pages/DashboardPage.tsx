@@ -67,6 +67,86 @@ interface CityDetailsResult {
   provider: string;
 }
 
+interface StoryThreeTestimonial {
+  id: string;
+  quote: string;
+  author: string;
+  details: string;
+}
+
+const toSafeText = (value: any): string => {
+  if (typeof value === 'string') {
+    return value.trim();
+  }
+  if (typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  if (value && typeof value === 'object') {
+    const candidate = value.text ?? value.label ?? value.value ?? value.name ?? value.title ?? value.description;
+    if (typeof candidate === 'string' || typeof candidate === 'number' || typeof candidate === 'boolean') {
+      return String(candidate).trim();
+    }
+    try {
+      return JSON.stringify(value);
+    } catch {
+      return '';
+    }
+  }
+  return '';
+};
+
+const toSafeTextList = (input: any, fallback: string[]): string[] => {
+  if (!Array.isArray(input)) {
+    return fallback;
+  }
+
+  const cleaned = input
+    .map((item) => toSafeText(item))
+    .filter((item) => item.length > 0);
+
+  return cleaned.length > 0 ? cleaned : fallback;
+};
+
+// JSON key names that Ollama sometimes emits as literal bullet strings
+const AI_JUNK_BULLETS = new Set([
+  'title', 'data', 'value', 'values', 'unit', 'units', 'text', 'body',
+  'label', 'labels', 'name', 'names', 'key', 'keys', 'type', 'types',
+  'description', 'content', 'summary', 'info', 'details', 'detail',
+  'item', 'items', 'entry', 'entries', 'field', 'fields', 'metric',
+  'metrics', 'note', 'notes', 'point', 'points', '%', '-', '–', '—',
+]);
+
+const isMeaningfulBullet = (text: string): boolean => {
+  const lower = text.trim().toLowerCase();
+  if (lower.length < 8) return false;
+  if (AI_JUNK_BULLETS.has(lower)) return false;
+  // filter bare single-word JSON keys (no spaces, no digits, short)
+  if (!/[\s\d]/.test(lower) && lower.length < 20) return false;
+  return true;
+};
+
+const normalizeStorySections = (input: any, fallback: StorySection[] = []): StorySection[] => {
+  const source = Array.isArray(input) ? input : fallback;
+
+  return source.map((section: any, index: number) => {
+    const fallbackSection = fallback[index];
+    const safeTitle = toSafeText(section?.title) || fallbackSection?.title || `Section ${index + 1}`;
+    const safeBody = toSafeText(section?.body) || fallbackSection?.body || '';
+    const safeBullets = Array.isArray(section?.bullets)
+      ? section.bullets
+          .map((item: any) => toSafeText(item))
+          .filter((item: string) => item.length > 0 && isMeaningfulBullet(item))
+      : fallbackSection?.bullets;
+
+    return {
+      ...section,
+      title: safeTitle,
+      body: safeBody,
+      bullets: safeBullets,
+    } as StorySection;
+  });
+};
+
 const formatRankingRowLabel = (row: CityRankingRecord) => `${row.city}, ${row.country}`;
 
 const buildPrompt = (theme: StoryTheme, mode: StoryMode, sections: StorySection[]) => {
@@ -140,7 +220,12 @@ export const DashboardPage: React.FC = () => {
   const [storyFourAiVoiceIndex, setStoryFourAiVoiceIndex] = useState(0);
   const [storyFourOutcomeFilter, setStoryFourOutcomeFilter] = useState<'All' | 'Health' | 'Economy' | 'Environment' | 'Technology'>('All');
   const [storyFourCaseStudyId, setStoryFourCaseStudyId] = useState('china-pm25');
-  const [storyThreeTestimonialsChoice, setStoryThreeTestimonialsChoice] = useState<'idle' | 'yes' | 'no'>('idle');
+
+  const [storyThreeAiTestimonials, setStoryThreeAiTestimonials] = useState<StoryThreeTestimonial[]>([]);
+  const [storyThreeTestimonialsLoading, setStoryThreeTestimonialsLoading] = useState(false);
+  const [storyThreeTestimonialsError, setStoryThreeTestimonialsError] = useState('');
+  const [storyThreeTestimonialsProvider, setStoryThreeTestimonialsProvider] = useState('');
+  const [storyThreeHumanTestimonialsRequested, setStoryThreeHumanTestimonialsRequested] = useState(false);
 
   const selectedTheme = useMemo(
     () => storyThemes.find((theme) => theme.id === selectedThemeId) ?? storyThemes[0],
@@ -148,15 +233,27 @@ export const DashboardPage: React.FC = () => {
   );
 
   const selectedAiStory = aiStories[selectedTheme.id];
+  const normalizedAiSections = useMemo(
+    () => normalizeStorySections(selectedAiStory?.sections, selectedTheme.humanSections),
+    [selectedAiStory?.sections, selectedTheme.humanSections]
+  );
+  const selectedAiSummary = toSafeText(selectedAiStory?.summary) || selectedTheme.overview;
+  const selectedAiProvider = toSafeText(selectedAiStory?.provider) || 'Ollama';
   const hasGeneratedAiStory = Boolean(aiRequested[selectedTheme.id] || selectedAiStory);
+  const isAiLikeMode = selectedMode !== 'human';
+  const isStoryThreeAiView = selectedTheme.id === 'aqi-and-decisions' && isAiLikeMode;
+  const canShowStoryThreeAiSections = isStoryThreeAiView && Boolean(selectedAiStory);
   const activeSections = useMemo(
     () => {
       if (selectedMode === 'human') {
         return selectedTheme.humanSections;
       }
-      return selectedAiStory?.sections || [];
+      if (isStoryThreeAiView && !canShowStoryThreeAiSections) {
+        return [];
+      }
+      return normalizedAiSections;
     },
-    [selectedTheme, selectedMode, selectedAiStory]
+    [selectedTheme, selectedMode, normalizedAiSections, isStoryThreeAiView, canShowStoryThreeAiSections]
   );
   const aiGenerationSections = useMemo(() => {
     if (selectedTheme.id === 'pollution-and-health') {
@@ -172,14 +269,6 @@ export const DashboardPage: React.FC = () => {
   );
   const isAiLikeMode = selectedMode !== 'human';
   const isStoryThreeAiView = selectedTheme.id === 'aqi-and-decisions' && isAiLikeMode;
-  const isStoryThreeHumanView = selectedTheme.id === 'aqi-and-decisions' && selectedMode === 'human';
-  const storyThreeTestimonialIntroIndex = selectedTheme.humanSections.findIndex(
-    (section) => section.title === 'Human stories: Real lives shaped by air quality'
-  );
-  const storyThreeTestimonials =
-    isStoryThreeHumanView && storyThreeTestimonialIntroIndex >= 0
-      ? selectedTheme.humanSections.slice(storyThreeTestimonialIntroIndex + 1)
-      : [];
   const isPollutionHealthAiView = selectedTheme.id === 'pollution-and-health' && isAiLikeMode;
   const isStoryFourHumanView = selectedTheme.id === 'measurement-and-governance' && selectedMode === 'human';
   const isStoryFourAiView = selectedTheme.id === 'measurement-and-governance' && isAiLikeMode;
@@ -210,18 +299,18 @@ export const DashboardPage: React.FC = () => {
     },
   };
   const storyFourAiCategories = useMemo(() => {
-    const generatedSource = selectedAiStory?.sections?.find((section) => section.categoryBlocks && section.categoryBlocks.length > 0);
+    const generatedSource = normalizedAiSections.find((section) => section.categoryBlocks && section.categoryBlocks.length > 0);
     const source = generatedSource || selectedTheme.humanSections[0];
     const blocks: StoryCategoryBlock[] = source?.categoryBlocks ?? [];
     return blocks.reduce<Record<string, StoryCategoryBlock>>((accumulator, block) => {
       accumulator[block.label] = block;
       return accumulator;
     }, {} as Record<string, StoryCategoryBlock>);
-  }, [selectedAiStory, selectedTheme]);
+  }, [normalizedAiSections, selectedTheme]);
   const storyFourAiCategoryData = storyFourAiCategories[storyFourAiCategory] || storyFourAiCategories.Personal;
   const storyFourAiCategoriesList = ['Personal', 'Household', 'Community', 'Policy'] as const;
   const storyFourAiVoices = useMemo(() => {
-    const generatedVoiceSection = selectedAiStory?.sections?.[1];
+    const generatedVoiceSection = normalizedAiSections[1];
     const humanVoiceSection = selectedTheme.humanSections[1];
     const sourceBullets = generatedVoiceSection?.bullets && generatedVoiceSection.bullets.length >= 3
       ? generatedVoiceSection.bullets
@@ -258,7 +347,7 @@ export const DashboardPage: React.FC = () => {
         actionTaken: index === 0 ? 'Legal advocacy and public campaigning' : index === 1 ? 'Locally built smokeless cookstove training' : 'Climate storytelling and youth mobilization',
       };
     });
-  }, [selectedAiStory, selectedTheme]);
+  }, [normalizedAiSections, selectedTheme]);
 
   useEffect(() => {
     if (storyFourAiVoiceIndex >= storyFourAiVoices.length) {
@@ -268,14 +357,14 @@ export const DashboardPage: React.FC = () => {
 
   const selectedStoryFourAiVoice = storyFourAiVoices[storyFourAiVoiceIndex];
   const storyThreeHumanTestimonials = useMemo(() => {
-    const governanceTheme = storyThemes.find((theme) => theme.id === 'measurement-and-governance');
-    const voiceSection = governanceTheme?.humanSections?.[1];
+    const storyThreeTheme = storyThemes.find((theme) => theme.id === 'aqi-and-decisions');
+    const voiceSection = storyThreeTheme?.humanSections?.find((section) => section.title === 'Human Stories from the Air We Breathe');
     const sourceBullets = voiceSection?.bullets || [];
 
     return sourceBullets.map((bullet) => {
       const quoteMatch = bullet.match(/^“([^”]+)”\s*[-–—]\s*([^\.]+)\.\s*(.*)$/);
       const quote = quoteMatch?.[1] ? `"${quoteMatch[1]}"` : bullet;
-      const author = quoteMatch?.[2]?.trim() || 'Human testimonial';
+      const author = quoteMatch?.[2]?.trim() || 'Community member';
       const details = quoteMatch?.[3]?.trim() || '';
 
       return {
@@ -545,13 +634,14 @@ export const DashboardPage: React.FC = () => {
 
       if (response.data?.success) {
         const story = response.data.data.story;
+        const normalizedGeneratedSections = normalizeStorySections(story?.sections, selectedTheme.humanSections);
         setAiStories((current) => ({
           ...current,
           [selectedTheme.id]: {
-            title: story.title || selectedTheme.title,
-            summary: story.summary || selectedTheme.overview,
-            sections: story.sections || selectedTheme.humanSections,
-            provider: response.data.data.provider,
+            title: toSafeText(story?.title) || selectedTheme.title,
+            summary: toSafeText(story?.summary) || selectedTheme.overview,
+            sections: normalizedGeneratedSections,
+            provider: toSafeText(response.data.data.provider) || 'Ollama',
           },
         }));
         setAiRequested((current) => ({
@@ -562,7 +652,14 @@ export const DashboardPage: React.FC = () => {
         throw new Error(response.data?.error || 'Failed to generate AI story');
       }
     } catch (error: any) {
-      setAiError(error.response?.data?.error || error.message || 'Failed to generate AI story');
+      const isNetworkError = error?.code === 'ERR_NETWORK' || (!error?.response && !!error?.request);
+      const backendUrl = error?.config?.baseURL || 'http://localhost:5000/api';
+
+      if (isNetworkError) {
+        setAiError(`Cannot reach backend (${backendUrl}). Start the backend server and try again.`);
+      } else {
+        setAiError(error.response?.data?.error || error.message || 'Failed to generate AI story');
+      }
     } finally {
       setAiLoading(false);
     }
@@ -572,7 +669,9 @@ export const DashboardPage: React.FC = () => {
     const effectiveRankingType = overrideRankingType ?? rankingType;
     setRankingLoading(true);
     setRankingError('');
-    setStoryThreeTestimonialsChoice('idle');
+    setStoryThreeAiTestimonials([]);
+    setStoryThreeTestimonialsError('');
+    setStoryThreeTestimonialsProvider('');
     setSelectedCityLabel('');
     setSelectedCityBucket(null);
     setCityDetails(null);
@@ -585,7 +684,51 @@ export const DashboardPage: React.FC = () => {
       });
 
       if (response.data?.success) {
-        setRankingResult(response.data.data as CityRankingResult);
+        const payload = response.data.data || {};
+        const normalizeRows = (rows: any) => (
+          Array.isArray(rows)
+            ? rows
+                .map((row: any, index: number) => {
+                  const rank = Number(row?.rank);
+                  const avgPm25 = Number(row?.avg_pm25);
+                  const sampleCount = Number(row?.sample_count);
+
+                  return {
+                    rank: Number.isFinite(rank) ? rank : index + 1,
+                    city: toSafeText(row?.city) || 'Unknown city',
+                    country: toSafeText(row?.country) || 'Unknown',
+                    avg_pm25: Number.isFinite(avgPm25) ? avgPm25 : 0,
+                    sample_count: Number.isFinite(sampleCount) ? sampleCount : 0,
+                  };
+                })
+                .filter((row: CityRankingRecord) => row.city.length > 0)
+            : []
+        );
+
+        const normalizedRankingType = ['best', 'worst', 'both'].includes(String(payload?.ranking_type))
+          ? (payload.ranking_type as 'best' | 'worst' | 'both')
+          : effectiveRankingType;
+
+        const normalizedRankingResult: CityRankingResult = {
+          headline: toSafeText(payload?.headline) || `Top ${rankingCount} ${normalizedRankingType} cities by average PM2.5`,
+          summary: toSafeText(payload?.summary) || 'AI-assisted city ranking summary is currently unavailable.',
+          insights: toSafeTextList(payload?.insights, [
+            'Higher average PM2.5 indicates persistent exposure pressure.',
+            'Comparing worst and best cities helps identify policy and emission differences.',
+            'Sample count provides confidence context for each ranking row.',
+          ]),
+          recommendations: toSafeTextList(payload?.recommendations, [
+            'Prioritize action in high-burden cities first.',
+            'Track changes over time to verify intervention impact.',
+          ]),
+          ranking_type: normalizedRankingType,
+          count: Number.isFinite(Number(payload?.count)) ? Number(payload.count) : rankingCount,
+          provider: toSafeText(payload?.provider) || 'fallback',
+          worst_cities: normalizeRows(payload?.worst_cities),
+          best_cities: normalizeRows(payload?.best_cities),
+        };
+
+        setRankingResult(normalizedRankingResult);
       } else {
         throw new Error(response.data?.error || 'Failed to generate city rankings');
       }
@@ -596,6 +739,70 @@ export const DashboardPage: React.FC = () => {
       setRankingLoading(false);
     }
   }, [rankingCount, rankingType]);
+
+  const generateStoryThreeTestimonials = useCallback(async () => {
+    if (!rankingResult) {
+      setStoryThreeTestimonialsError('Run Story 3 ranking first to generate city-linked testimonials.');
+      return;
+    }
+
+    const sourceCities = rankingResult.worst_cities.slice(0, 6);
+    if (!sourceCities.length) {
+      setStoryThreeTestimonialsError('No worst-city rows available to generate testimonials.');
+      return;
+    }
+
+    const localFallbackTestimonials: StoryThreeTestimonial[] = sourceCities.map((row, index) => ({
+      id: `local-testimonial-${index}-${row.city}`.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      quote: `In ${row.city}, air-quality alerts have become part of daily planning for families and commuters.`,
+      author: `Resident voice, ${row.city}, ${row.country}`,
+      details: `Average PM2.5 is ${row.avg_pm25.toFixed(2)} based on ${row.sample_count} records, and residents describe adjusting school, commute, and outdoor routines around high-pollution days.`,
+    }));
+
+    setStoryThreeTestimonialsLoading(true);
+    setStoryThreeTestimonialsError('');
+
+    try {
+      const response = await storyAPI.generateCityTestimonials({
+        cities: sourceCities,
+      });
+
+      if (response.data?.success) {
+        const testimonials = (response.data.data?.testimonials || []) as Array<{ quote?: string; author?: string; details?: string }>;
+        const mappedTestimonials = testimonials
+          .map((item, index) => {
+            const quote = String(item.quote || '').trim();
+            const author = String(item.author || '').trim();
+            const details = String(item.details || '').trim();
+            if (!quote || !author) {
+              return null;
+            }
+            return {
+              id: `ai-testimonial-${index}-${author}`.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+              quote,
+              author,
+              details,
+            };
+          })
+          .filter(Boolean) as StoryThreeTestimonial[];
+
+        if (!mappedTestimonials.length) {
+          throw new Error('AI returned empty testimonials');
+        }
+
+        setStoryThreeAiTestimonials(mappedTestimonials);
+        setStoryThreeTestimonialsProvider(response.data.data?.provider || 'Ollama');
+      } else {
+        throw new Error(response.data?.error || 'Failed to generate testimonials');
+      }
+    } catch (error: any) {
+      setStoryThreeAiTestimonials(localFallbackTestimonials);
+      setStoryThreeTestimonialsProvider('local-fallback');
+      setStoryThreeTestimonialsError('');
+    } finally {
+      setStoryThreeTestimonialsLoading(false);
+    }
+  }, [rankingResult]);
 
   const loadCityDetails = useCallback(async (row: CityRankingRecord, bucket: 'best' | 'worst') => {
     setSelectedCityLabel(formatRankingRowLabel(row));
@@ -610,7 +817,29 @@ export const DashboardPage: React.FC = () => {
       });
 
       if (response.data?.success) {
-        setCityDetails(response.data.data as CityDetailsResult);
+        const payload = response.data.data || {};
+        const normalizedCityDetails: CityDetailsResult = {
+          city: toSafeText(payload?.city) || row.city,
+          country: toSafeText(payload?.country) || row.country,
+          sample_count: Number.isFinite(Number(payload?.sample_count)) ? Number(payload.sample_count) : 0,
+          aqi_avg: Number.isFinite(Number(payload?.aqi_avg)) ? Number(payload.aqi_avg) : null,
+          geo: {
+            latitude: Number.isFinite(Number(payload?.geo?.latitude)) ? Number(payload.geo.latitude) : null,
+            longitude: Number.isFinite(Number(payload?.geo?.longitude)) ? Number(payload.geo.longitude) : null,
+          },
+          pollutant_breakdown: Array.isArray(payload?.pollutant_breakdown)
+            ? payload.pollutant_breakdown
+            : [],
+          top_pollutants: Array.isArray(payload?.top_pollutants)
+            ? payload.top_pollutants
+            : [],
+          reasons: toSafeTextList(payload?.reasons, ['No city-specific reasons are available yet.']),
+          problems: toSafeTextList(payload?.problems, ['No city-specific risk summary is available yet.']),
+          precautions: toSafeTextList(payload?.precautions, ['No city-specific precautions are available yet.']),
+          provider: toSafeText(payload?.provider) || 'fallback',
+        };
+
+        setCityDetails(normalizedCityDetails);
       } else {
         throw new Error(response.data?.error || 'Failed to load city details');
       }
@@ -634,6 +863,10 @@ export const DashboardPage: React.FC = () => {
     setSelectedCityBucket(null);
     setCityDetails(null);
     setCityDetailsError('');
+    setStoryThreeAiTestimonials([]);
+    setStoryThreeTestimonialsError('');
+    setStoryThreeTestimonialsProvider('');
+    setStoryThreeHumanTestimonialsRequested(false);
   }, [selectedThemeId, selectedMode]);
 
   useEffect(() => {
@@ -767,21 +1000,21 @@ export const DashboardPage: React.FC = () => {
                           : selectedMode === 'human'
                           ? selectedTheme.overview
                           : hasGeneratedAiStory
-                          ? selectedAiStory?.summary || selectedTheme.overview
+                          ? selectedAiSummary
                           : 'Click Generate AI story to reveal the Ollama-generated version for this theme.'}
                       </p>
                       {isAiLikeMode && selectedTheme.status === 'ready' && (
                         <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
                           {hasGeneratedAiStory && (
                             <span className="rounded-full px-3 py-1 font-semibold border bg-emerald-50 text-emerald-700 border-emerald-200">
-                              Generated by {selectedAiStory?.provider || 'Ollama'}
+                              Generated by {selectedAiProvider}
                             </span>
                           )}
                           <button
                             type="button"
                             onClick={generateAiStory}
                             disabled={aiLoading || hasGeneratedAiStory}
-                            className="rounded-full bg-slate-950 px-3 py-1 font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                            className="mt-1 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {aiLoading ? 'Generating...' : hasGeneratedAiStory ? 'Generated AI' : 'Generate AI'}
                           </button>
@@ -1536,7 +1769,7 @@ export const DashboardPage: React.FC = () => {
                             </div>
                           </div>
                         ) : null
-                      ) : section.bullets && section.bullets.length > 0 && !(isPollutionHealthAiView && (index === 0 || index === 1)) && (
+                      ) : section.bullets && section.bullets.length > 0 && !isAiLikeMode && !(isPollutionHealthAiView && (index === 0 || index === 1)) && (
                         isStoryFourHumanView && index === 1 ? (
                           <div className="mt-4 overflow-hidden rounded-2xl border border-slate-300 bg-white">
                             <div className="grid grid-cols-[0.34fr_0.66fr] border-b border-slate-300 bg-slate-50 text-sm font-bold text-slate-900">
@@ -1635,7 +1868,7 @@ export const DashboardPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {isStoryThreeAiView && (
+                  {canShowStoryThreeAiSections && (
                     <>
                     <div className="mt-6 rounded-2xl border border-sky-200 bg-white p-5">
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -2078,63 +2311,43 @@ export const DashboardPage: React.FC = () => {
 
                     <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
                         <h5 className="text-lg font-bold text-slate-950">Human Stories from the Air We Breathe</h5>
-                        <p className="mt-2 text-sm font-bold text-slate-700">Do you want to know real stories?</p>
-                        <div className="mt-3 flex flex-wrap gap-3">
-                          <button
-                            type="button"
-                            onClick={() => setStoryThreeTestimonialsChoice('yes')}
-                            className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                              storyThreeTestimonialsChoice === 'yes'
-                                ? 'bg-emerald-700 text-white'
-                                : 'border border-emerald-300 bg-white text-emerald-700 hover:bg-emerald-50'
-                            }`}
-                          >
-                            Yes
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setStoryThreeTestimonialsChoice('no')}
-                            className={`rounded-xl px-4 py-2 text-sm font-semibold transition ${
-                              storyThreeTestimonialsChoice === 'no'
-                                ? 'bg-slate-700 text-white'
-                                : 'border border-slate-300 bg-white text-slate-700 hover:bg-slate-100'
-                            }`}
-                          >
-                            No
-                          </button>
-                        </div>
 
-                        {storyThreeTestimonialsChoice === 'yes' && (
-                          <>
-                            <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-                              {storyThreeHumanTestimonials.length > 0 ? (
-                                storyThreeHumanTestimonials.map((testimonial) => (
-                                  <article key={testimonial.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-                                    <p className="text-sm text-slate-700">{testimonial.quote}</p>
-                                    {testimonial.details && (
-                                      <p className="mt-2 text-sm text-slate-600">{testimonial.details}</p>
-                                    )}
-                                    <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{testimonial.author}</p>
-                                  </article>
-                                ))
-                              ) : (
-                                <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                                  <p className="text-sm text-slate-700">
-                                    Human testimonials are not available in the current source story yet.
-                                  </p>
-                                </article>
-                              )}
-                            </div>
-                            <p className="mt-4 text-sm text-slate-600">
-                              These testimonials are pulled from the human source narrative so the Story 3 panel reflects lived-experience context alongside ranking data.
-                            </p>
-                          </>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStoryThreeHumanTestimonialsRequested(true);
+                            if (!storyThreeAiTestimonials.length && !storyThreeTestimonialsLoading) {
+                              void generateStoryThreeTestimonials();
+                            }
+                          }}
+                          disabled={storyThreeTestimonialsLoading}
+                          className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          {storyThreeTestimonialsLoading ? 'Generating Testimonials...' : 'Generate Human Testimonials'}
+                        </button>
+
+                        {storyThreeHumanTestimonialsRequested && storyThreeTestimonialsProvider && storyThreeAiTestimonials.length > 0 && (
+                          <div className="mt-3 inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                            Testimonials provider: {storyThreeTestimonialsProvider}
+                          </div>
                         )}
 
-                        {storyThreeTestimonialsChoice === 'no' && (
-                          <p className="mt-4 text-sm text-slate-600">
-                            You can click Yes anytime to generate and view real stories.
-                          </p>
+                        {storyThreeHumanTestimonialsRequested && storyThreeTestimonialsError && (
+                          <p className="mt-3 text-sm text-red-600">{storyThreeTestimonialsError}</p>
+                        )}
+
+                        {storyThreeHumanTestimonialsRequested && storyThreeAiTestimonials.length > 0 && (
+                          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
+                            {storyThreeAiTestimonials.map((testimonial) => (
+                              <article key={testimonial.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                                <p className="text-sm text-slate-700">{testimonial.quote}</p>
+                                {testimonial.details && (
+                                  <p className="mt-2 text-sm text-slate-600">{testimonial.details}</p>
+                                )}
+                                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{testimonial.author}</p>
+                              </article>
+                            ))}
+                          </div>
                         )}
                     </div>
                     </>
