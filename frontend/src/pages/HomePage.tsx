@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
-  Wind, Map, Activity, BookOpen, Zap,
+  Wind, Map as MapIcon, Activity, BookOpen, Zap,
   Globe, BarChart2, ChevronRight, Leaf, Database,
+  ZoomIn, ZoomOut, RotateCcw, AlertCircle,
 } from 'lucide-react';
+import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
+import apiClient from '../services/api';
 
 const AQI_BANDS = [
   { color: '#22c55e', label: 'Good', range: '0–50', desc: 'Air quality is satisfactory' },
@@ -13,6 +16,65 @@ const AQI_BANDS = [
   { color: '#a855f7', label: 'Very Unhealthy', range: '201–300', desc: 'Health alert for everyone' },
   { color: '#7c3aed', label: 'Hazardous', range: '300+', desc: 'Emergency conditions' },
 ];
+
+// ── Map types ─────────────────────────────────────────────────────────────
+interface CountryAQI { country: string; avg_aqi: number; record_count: number; aqi_category: string; }
+interface CityAQI { city: string; country: string; latitude: number; longitude: number; avg_aqi: number; record_count: number; aqi_category: string; }
+interface MapPosition { coordinates: [number, number]; zoom: number; }
+interface MapTooltip { visible: boolean; x: number; y: number; country: string; aqi: number | null; category: string; records: number; }
+
+// ── Map constants ─────────────────────────────────────────────────────────
+const GEO_URL = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-50m.json';
+const MAP_AQI_BANDS = [
+  { max: 50,       color: '#22c55e', label: 'Good',             range: '0\u201350'   },
+  { max: 100,      color: '#eab308', label: 'Moderate',         range: '51\u2013100' },
+  { max: 150,      color: '#f97316', label: 'Sensitive Groups', range: '101\u2013150'},
+  { max: 200,      color: '#ef4444', label: 'Unhealthy',        range: '151\u2013200'},
+  { max: 300,      color: '#a855f7', label: 'Very Unhealthy',   range: '201\u2013300'},
+  { max: Infinity, color: '#7c3aed', label: 'Hazardous',        range: '300+'   },
+];
+const MAP_NO_DATA_COLOR = '#334155';
+const MAP_OCEAN_COLOR   = '#0c1a2e';
+const MAP_BORDER_COLOR  = '#0f172a';
+const MAP_DEFAULT_POSITION: MapPosition = { coordinates: [10, 20], zoom: 1 };
+function aqiColor(aqi: number | null): string {
+  if (aqi === null) return MAP_NO_DATA_COLOR;
+  return MAP_AQI_BANDS.find(b => aqi <= b.max)?.color ?? '#7c3aed';
+}
+const ISO_TO_GEO_NAMES: Record<string, string[]> = {
+  AE:['United Arab Emirates'],AF:['Afghanistan'],AR:['Argentina'],AT:['Austria'],AU:['Australia'],
+  BA:['Bosnia and Herz.','Bosnia and Herzegovina'],BD:['Bangladesh'],BE:['Belgium'],BG:['Bulgaria'],BH:['Bahrain'],
+  BO:['Bolivia'],BR:['Brazil'],CA:['Canada'],CH:['Switzerland'],CI:["C\u00f4te d'Ivoire","Cote d'Ivoire",'Ivory Coast'],
+  CL:['Chile'],CN:['China'],CO:['Colombia'],CR:['Costa Rica'],CW:['Cura\u00e7ao','Curacao'],CY:['Cyprus'],
+  CZ:['Czech Rep.','Czechia','Czech Republic'],DE:['Germany'],DK:['Denmark'],DZ:['Algeria'],EC:['Ecuador'],
+  EE:['Estonia'],ES:['Spain'],ET:['Ethiopia'],FI:['Finland'],FR:['France'],GB:['United Kingdom'],
+  GE:['Georgia'],GH:['Ghana'],GN:['Guinea'],GR:['Greece'],GT:['Guatemala'],HK:['Hong Kong','Hong Kong S.A.R.'],
+  HR:['Croatia'],HU:['Hungary'],ID:['Indonesia'],IE:['Ireland'],IL:['Israel'],IN:['India'],IQ:['Iraq'],
+  IR:['Iran','Iran (Islamic Republic of)'],IS:['Iceland'],IT:['Italy'],JO:['Jordan'],JP:['Japan'],
+  KG:['Kyrgyzstan'],KR:['South Korea','Korea, Republic of'],KW:['Kuwait'],KZ:['Kazakhstan'],
+  LA:['Laos','Lao PDR'],LK:['Sri Lanka'],LT:['Lithuania'],MK:['North Macedonia','N. Macedonia','Macedonia'],
+  ML:['Mali'],MM:['Myanmar'],MN:['Mongolia'],MO:['Macao','Macao S.A.R.','Macau'],MX:['Mexico'],MY:['Malaysia'],
+  NL:['Netherlands'],NO:['Norway'],NP:['Nepal'],NZ:['New Zealand'],PE:['Peru'],PH:['Philippines'],
+  PK:['Pakistan'],PL:['Poland'],PR:['Puerto Rico'],PT:['Portugal'],RE:['R\u00e9union','Reunion'],
+  RO:['Romania'],RS:['Serbia'],RU:['Russia','Russian Federation'],SA:['Saudi Arabia'],SE:['Sweden'],
+  SG:['Singapore'],SK:['Slovakia'],SV:['El Salvador'],TH:['Thailand'],TJ:['Tajikistan'],TM:['Turkmenistan'],
+  TR:['Turkey','T\u00fcrkiye'],TW:['Taiwan','Taiwan (Province of China)'],UA:['Ukraine'],UG:['Uganda'],
+  US:['United States of America','United States'],UZ:['Uzbekistan'],VN:['Vietnam','Viet Nam'],
+  XK:['Kosovo'],ZA:['South Africa'],
+};
+const GEO_TO_ISO = new Map<string, string>();
+Object.entries(ISO_TO_GEO_NAMES).forEach(([iso, names]) => {
+  names.forEach(name => GEO_TO_ISO.set(name.toLowerCase(), iso.toLowerCase()));
+});
+function buildCountryLookup(data: CountryAQI[]): Map<string, CountryAQI> {
+  const m = new Map<string, CountryAQI>();
+  data.forEach(d => m.set(d.country.trim().toLowerCase(), d));
+  return m;
+}
+function findCountryByGeo(geoName: string, m: Map<string, CountryAQI>): CountryAQI | undefined {
+  const iso = GEO_TO_ISO.get(geoName.toLowerCase());
+  return iso ? m.get(iso) : undefined;
+}
 
 function useCountUp(target: number, duration: number, trigger: boolean) {
   const [val, setVal] = useState(0);
@@ -47,6 +109,38 @@ export const HomePage: React.FC = () => {
     );
     if (statsRef.current) observer.observe(statsRef.current);
     return () => observer.disconnect();
+  }, []);
+
+  // ── Map state ────────────────────────────────────────────────────────────
+  const [countryMap, setCountryMap] = useState<Map<string, CountryAQI>>(new Map());
+  const [citiesData, setCitiesData] = useState<CityAQI[]>([]);
+  const [mapLoading, setMapLoading] = useState(true);
+  const [mapError, setMapError] = useState<string | null>(null);
+  const [mapPosition, setMapPosition] = useState<MapPosition>(MAP_DEFAULT_POSITION);
+  const [showCityMarkers, setShowCityMarkers] = useState(false);
+  const [mapTooltip, setMapTooltip] = useState<MapTooltip>({
+    visible: false, x: 0, y: 0, country: '', aqi: null, category: '', records: 0,
+  });
+  const mapStats = React.useMemo(() => {
+    if (!countryMap.size) return null;
+    const vals = Array.from(countryMap.values());
+    const sorted = [...vals].sort((a, b) => a.avg_aqi - b.avg_aqi);
+    return {
+      count: vals.length,
+      avg: Math.round(vals.reduce((s, v) => s + v.avg_aqi, 0) / vals.length),
+      best: sorted[0],
+      worst: sorted[sorted.length - 1],
+    };
+  }, [countryMap]);
+  useEffect(() => {
+    Promise.all([apiClient.get('/data/world-aqi'), apiClient.get('/data/cities-aqi')])
+      .then(([countryRes, citiesRes]) => {
+        if (countryRes.data.success) setCountryMap(buildCountryLookup(countryRes.data.data));
+        else setMapError('No AQI data returned from server');
+        if (citiesRes.data.success) setCitiesData(citiesRes.data.data);
+      })
+      .catch(() => setMapError('Could not load AQI data \u2014 is the backend running?'))
+      .finally(() => setMapLoading(false));
   }, []);
 
   return (
@@ -158,12 +252,6 @@ export const HomePage: React.FC = () => {
               Open Story Studio
               <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
-            <Link
-              to="/live-map"
-              className="group inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white font-semibold px-8 py-4 rounded-xl backdrop-blur-sm transition-all duration-300 hover:scale-105 text-lg"
-            >
-              <Globe className="w-5 h-5" /> View Live Map
-            </Link>
           </div>
 
           {/* scroll hint */}
@@ -172,6 +260,139 @@ export const HomePage: React.FC = () => {
             <div className="w-px h-8 bg-gradient-to-b from-slate-600 to-transparent" />
           </div>
         </div>
+      </section>
+
+      {/* ── WORLDWIDE AQI ── */}
+      <section className="py-16 px-6 bg-slate-950" id="worldwide-aqi">
+        <div className="max-w-7xl mx-auto">
+          <div className="mb-6">
+            <div className="flex items-center gap-3 mb-1">
+              <Globe className="w-7 h-7 text-blue-400" />
+              <h2 className="text-3xl font-bold text-white">Worldwide AQI</h2>
+            </div>
+            <p className="text-slate-400 text-sm">
+              Average Air Quality Index per country from historical data.
+              Drag to pan &middot; scroll or use buttons to zoom.
+            </p>
+          </div>
+
+          {mapStats && (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
+              <MapStatCard label="Countries Tracked" value={String(mapStats.count)} />
+              <MapStatCard label="Global Avg AQI" value={String(mapStats.avg)} color={aqiColor(mapStats.avg)} />
+              <MapStatCard label="Cleanest Air" value={mapStats.best.country.toUpperCase()} sub={`AQI ${Math.round(mapStats.best.avg_aqi)}`} color="#22c55e" />
+              <MapStatCard label="Most Polluted" value={mapStats.worst.country.toUpperCase()} sub={`AQI ${Math.round(mapStats.worst.avg_aqi)}`} color="#ef4444" />
+            </div>
+          )}
+
+          <div className="relative bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl">
+            {mapLoading && <LoadingOverlay />}
+            {mapError && <ErrorMessage message={mapError} />}
+            <div className="absolute top-3 right-3 z-20 flex flex-col gap-1.5">
+              <MapButton icon={<ZoomIn className="w-4 h-4" />} onClick={() => setMapPosition(p => ({ ...p, zoom: Math.min(p.zoom * 1.6, 10) }))} title="Zoom in" />
+              <MapButton icon={<ZoomOut className="w-4 h-4" />} onClick={() => setMapPosition(p => ({ ...p, zoom: Math.max(p.zoom / 1.6, 1) }))} title="Zoom out" />
+              <MapButton icon={<RotateCcw className="w-4 h-4" />} onClick={() => setMapPosition(MAP_DEFAULT_POSITION)} title="Reset view" />
+              <button
+                onClick={() => setShowCityMarkers(v => !v)}
+                className={showCityMarkers ? 'p-2 rounded-lg transition bg-blue-600 hover:bg-blue-500 text-white shadow-lg' : 'p-2 rounded-lg transition bg-slate-700 hover:bg-slate-600 text-white shadow-lg'}
+                title={showCityMarkers ? 'Hide city markers' : 'Show city markers'}
+              >
+                <span className="text-xs font-bold">Cities</span>
+              </button>
+            </div>
+            <ComposableMap
+              projection="geoNaturalEarth1"
+              projectionConfig={{ scale: 155 }}
+              style={{ width: '100%', height: '560px', background: MAP_OCEAN_COLOR }}
+            >
+              <ZoomableGroup
+                zoom={mapPosition.zoom}
+                center={mapPosition.coordinates}
+                onMoveEnd={setMapPosition}
+                maxZoom={10}
+                minZoom={1}
+              >
+                <Geographies geography={GEO_URL}>
+                  {({ geographies }) =>
+                    geographies
+                      .filter(geo => geo.properties.name !== 'Antarctica')
+                      .map(geo => {
+                        const match = findCountryByGeo(geo.properties.name, countryMap);
+                        const fill = aqiColor(match?.avg_aqi ?? null);
+                        return (
+                          <Geography
+                            key={geo.rsmKey}
+                            geography={geo}
+                            fill={fill}
+                            stroke={MAP_BORDER_COLOR}
+                            strokeWidth={0.75}
+                            style={{
+                              default: { fill, stroke: MAP_BORDER_COLOR, strokeWidth: 0.75, outline: 'none', cursor: 'pointer' },
+                              hover:   { fill, stroke: MAP_BORDER_COLOR, strokeWidth: 0.75, outline: 'none', cursor: 'pointer', filter: 'brightness(1.3)' },
+                              pressed: { fill, stroke: MAP_BORDER_COLOR, strokeWidth: 0.75, outline: 'none' },
+                            }}
+                            onMouseEnter={e => {
+                              if (match) setMapTooltip({ visible: true, x: e.clientX, y: e.clientY, country: match.country, aqi: match.avg_aqi, category: match.aqi_category, records: match.record_count });
+                            }}
+                            onMouseLeave={() => setMapTooltip(t => ({ ...t, visible: false }))}
+                          />
+                        );
+                      })
+                  }
+                </Geographies>
+                {showCityMarkers && citiesData.map(city => (
+                  <Marker key={`${city.city}-${city.country}`} coordinates={[city.longitude, city.latitude]}>
+                    <circle
+                      r={3}
+                      fill={aqiColor(city.avg_aqi)}
+                      stroke="white"
+                      strokeWidth={0.5}
+                      opacity={0.8}
+                      style={{ cursor: 'pointer' }}
+                      onMouseEnter={e => setMapTooltip({ visible: true, x: e.clientX, y: e.clientY, country: `${city.city}, ${city.country}`, aqi: city.avg_aqi, category: city.aqi_category, records: city.record_count })}
+                      onMouseLeave={() => setMapTooltip(t => ({ ...t, visible: false }))}
+                    />
+                  </Marker>
+                ))}
+              </ZoomableGroup>
+            </ComposableMap>
+          </div>
+
+          <div className="mt-4 bg-slate-800 rounded-xl p-4 border border-slate-700">
+            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">AQI Color Scale</p>
+            <div className="flex flex-wrap gap-x-5 gap-y-2">
+              {MAP_AQI_BANDS.map(band => (
+                <div key={band.label} className="flex items-center gap-1.5">
+                  <div className="w-3.5 h-3.5 rounded-sm flex-shrink-0" style={{ backgroundColor: band.color }} />
+                  <span className="text-xs text-slate-200">{band.range}</span>
+                  <span className="text-xs text-slate-500">({band.label})</span>
+                </div>
+              ))}
+              <div className="flex items-center gap-1.5">
+                <div className="w-3.5 h-3.5 rounded-sm flex-shrink-0" style={{ backgroundColor: MAP_NO_DATA_COLOR }} />
+                <span className="text-xs text-slate-400">No data</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {mapTooltip.visible && (
+          <div
+            className="fixed z-50 pointer-events-none bg-slate-900/95 backdrop-blur-sm border border-slate-600 rounded-xl shadow-2xl px-3.5 py-2.5"
+            style={{ left: mapTooltip.x + 16, top: mapTooltip.y - 52 }}
+          >
+            <p className="text-sm font-semibold text-white mb-0.5">{mapTooltip.country}</p>
+            {mapTooltip.aqi !== null ? (
+              <>
+                <p className="text-xs text-slate-300">AQI: <span className="font-bold text-base" style={{ color: aqiColor(mapTooltip.aqi) }}>{Math.round(mapTooltip.aqi)}</span></p>
+                <p className="text-xs text-slate-400">{mapTooltip.category}</p>
+                <p className="text-xs text-slate-500 mt-0.5">{mapTooltip.records.toLocaleString()} records</p>
+              </>
+            ) : (
+              <p className="text-xs text-slate-400">No data available</p>
+            )}
+          </div>
+        )}
       </section>
 
       {/* ── STATS ── */}
@@ -190,7 +411,7 @@ export const HomePage: React.FC = () => {
             color="emerald"
           />
           <StatCard
-            icon={<Map className="w-6 h-6 text-violet-400" />}
+            icon={<MapIcon className="w-6 h-6 text-violet-400" />}
             value={`${cities}+`}
             label="Cities Tracked"
             color="violet"
@@ -215,7 +436,7 @@ export const HomePage: React.FC = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <FeatureCard
               to="/dashboard"
               gradient="from-blue-600/20 to-indigo-600/20"
@@ -248,17 +469,6 @@ export const HomePage: React.FC = () => {
               desc="Watch live AQI readings update dynamically. City-level granularity with instant pollutant breakdowns."
               badge="Live Data"
               badgeColor="text-orange-300 bg-orange-500/10 border-orange-500/20"
-            />
-            <FeatureCard
-              to="/live-map"
-              gradient="from-violet-600/20 to-purple-600/20"
-              border="border-violet-500/20"
-              iconBg="bg-violet-500/20"
-              icon={<Map className="w-7 h-7 text-violet-400" />}
-              title="Live AQI Map"
-              desc="An interactive world map where every country's color tells its air quality story. Drag, zoom, and explore globally."
-              badge="Interactive"
-              badgeColor="text-violet-300 bg-violet-500/10 border-violet-500/20"
             />
           </div>
         </div>
@@ -358,6 +568,43 @@ export const HomePage: React.FC = () => {
     </div>
   );
 };
+
+function MapStatCard({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
+  return (
+    <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
+      <p className="text-xs text-slate-400 uppercase tracking-wide mb-1">{label}</p>
+      <p className="text-xl font-bold truncate" style={{ color: color ?? 'white' }}>{value}</p>
+      {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+    </div>
+  );
+}
+function MapButton({ icon, onClick, title }: { icon: React.ReactNode; onClick: () => void; title: string }) {
+  return (
+    <button onClick={onClick} title={title} className="bg-slate-700/90 hover:bg-slate-600 text-white p-2 rounded-lg shadow transition-colors">
+      {icon}
+    </button>
+  );
+}
+function LoadingOverlay() {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center bg-slate-900/70 z-10">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-400 border-t-transparent mx-auto mb-3" />
+        <p className="text-slate-300 text-sm">Loading AQI data...</p>
+      </div>
+    </div>
+  );
+}
+function ErrorMessage({ message }: { message: string }) {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center bg-slate-900/70 z-10">
+      <div className="text-center">
+        <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
+        <p className="text-red-300 text-sm">{message}</p>
+      </div>
+    </div>
+  );
+}
 
 function StatCard({
   icon, value, label, color,

@@ -1266,11 +1266,11 @@ export const DashboardPage: React.FC = () => {
                       {selectedTheme.id === 'pollution-and-health' && section.label === 'live-map' && (
                         <div className="mt-5">
                           <Link
-                            to="/live-map"
+                            to="/#worldwide-aqi"
                             className="inline-flex items-center gap-2 rounded-full bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-500"
                           >
                             <Globe className="h-4 w-4" />
-                            View live air quality map
+                            View worldwide AQI map
                           </Link>
                         </div>
                       )}

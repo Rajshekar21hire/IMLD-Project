@@ -8,7 +8,6 @@ const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.H
 const DashboardPage = lazy(() => import('./pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage').then(m => ({ default: m.AnalyticsPage })));
 const RealtimePollutionPage = lazy(() => import('./pages/RealtimePollutionPage').then(m => ({ default: m.RealtimePollutionPage })));
-const LiveMapPage = lazy(() => import('./pages/LiveMapPage').then(m => ({ default: m.LiveMapPage })));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[60vh]">
@@ -53,12 +52,6 @@ function App() {
                 >
                   Real-Time
                 </Link>
-                <Link
-                  to="/live-map"
-                  className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
-                >
-                  Live Map
-                </Link>
               </div>
             </div>
           </nav>
@@ -70,7 +63,6 @@ function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/realtime" element={<RealtimePollutionPage />} />
-              <Route path="/live-map" element={<LiveMapPage />} />
             </Routes>
           </Suspense>
 
@@ -91,7 +83,6 @@ function App() {
                     <li><Link to="/dashboard" className="hover:text-white transition-colors">Story Studio</Link></li>
                     <li><Link to="/analytics" className="hover:text-white transition-colors">Analytics</Link></li>
                     <li><Link to="/realtime" className="hover:text-white transition-colors">Real-Time</Link></li>
-                    <li><Link to="/live-map" className="hover:text-white transition-colors">Live Map</Link></li>
                   </ul>
                 </div>
                 <div>
