@@ -209,6 +209,8 @@ class LiveAirQualityService:
         If Open-Meteo cannot resolve a location or returns an error, the
         service falls back to the latest stored database value for that city.
         """
+        MAX_LOCATIONS = 25
+
         if cities:
             locations = []
             for city in cities:
@@ -222,12 +224,12 @@ class LiveAirQualityService:
             if not locations and country:
                 query = db.session.query(AirQualityData.city, AirQualityData.country).distinct()
                 query = query.filter_by(country=country)
-                locations = [{'city': row[0], 'country': row[1]} for row in query.all()]
+                locations = [{'city': row[0], 'country': row[1]} for row in query.limit(MAX_LOCATIONS).all()]
         else:
             query = db.session.query(AirQualityData.city, AirQualityData.country).distinct()
             if country:
                 query = query.filter_by(country=country)
-            locations = [{'city': row[0], 'country': row[1]} for row in query.all()]
+            locations = [{'city': row[0], 'country': row[1]} for row in query.limit(MAX_LOCATIONS).all()]
 
         readings = []
         warnings = []

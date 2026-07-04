@@ -324,7 +324,7 @@ export const HomePage: React.FC = () => {
           }}
         />
 
-        <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
+        <div className="relative z-10 max-w-screen-2xl mx-auto px-6 text-center">
           {/* glowing logo */}
           <div className="fu1 flex justify-center mb-8">
             <div className="glow-logo w-24 h-24 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-2xl">
@@ -340,28 +340,39 @@ export const HomePage: React.FC = () => {
           </div>
 
           {/* headline */}
-          <h1 className="fu3 text-6xl md:text-7xl font-extrabold mb-6 leading-tight tracking-tight">
+          <h1 className="fu3 text-7xl md:text-8xl font-extrabold mb-6 leading-tight tracking-tight">
             <span className="text-slate-900">Breathe Smarter.</span>
             <br />
             <span className="shimmer-text">Understand Air.</span>
           </h1>
 
-          <p className="fu4 text-3xl font-bold leading-snug tracking-tight shimmer-text mb-10 max-w-4xl mx-auto">
+          <p className="fu4 text-4xl font-bold leading-snug tracking-tight shimmer-text mb-10 max-w-6xl mx-auto">
             Air is the invisible, odorless, and tasteless mixture of gases surrounding the Earth that forms our atmosphere.
             It is the fundamental baseline for almost all terrestrial life, providing the vital oxygen required for respiration.
           </p>
 
-          {/* scroll hint */}
-          <div className="mt-20 flex flex-col items-center gap-2 text-slate-600 text-xs animate-bounce">
-            <span>Scroll to explore</span>
-            <div className="w-px h-8 bg-gradient-to-b from-slate-400 to-transparent" />
-          </div>
+
+        </div>
+      </section>
+
+      {/* ── CTA ── */}
+      <section className="py-16 px-6">
+        <div className="max-w-screen-2xl mx-auto flex flex-col items-center gap-5 text-center">
+          <p className="text-4xl font-bold text-slate-900">Interested in how we can improve air quality?</p>
+          <Link
+            to="/dashboard"
+            className="group inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold px-10 py-4 rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-300 hover:shadow-blue-500/40 hover:scale-105 text-lg"
+          >
+            Explore
+            <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+          </Link>
+          <p className="text-4xl font-bold text-slate-900 mt-1">Scroll down to know more specifically on what is air quality and data analytics!</p>
         </div>
       </section>
 
       {/* ── STATS ── */}
       <section ref={statsRef} className="py-20 px-6 border-t border-white/40">
-        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
+        <div className="max-w-screen-2xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
           <StatCard
             icon={<Globe className="w-6 h-6 text-blue-400" />}
             value={`${countries}+`}
@@ -387,20 +398,20 @@ export const HomePage: React.FC = () => {
             color="amber"
           />
         </div>
-        <p className="mt-8 text-center text-slate-500 text-sm max-w-2xl mx-auto">
+        <p className="mt-8 text-center text-slate-500 text-2xl max-w-4xl mx-auto">
           Data sourced from the World Air Quality Index (WAQI) project — a global network of over 12,000 air quality monitoring stations across 1,000+ cities, covering PM2.5, PM10, NO₂, O₃, SO₂, and CO pollutants.
         </p>
       </section>
 
       {/* ── WORLDWIDE AQI ── */}
       <section className="py-16 px-6" id="worldwide-aqi">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-screen-2xl mx-auto">
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-1">
               <Globe className="w-7 h-7 text-blue-400" />
-              <h2 className="text-4xl font-bold text-slate-900">Worldwide Air Quality</h2>
+              <h2 className="text-5xl font-bold text-slate-900">Worldwide Air Quality</h2>
             </div>
-            <p className="text-slate-600 text-lg mt-2">
+            <p className="text-slate-600 text-2xl mt-2">
               Explore the average Air Quality Index (AQI) for each country based on historical data. Drag to pan, and scroll or use the buttons to zoom.
             </p>
           </div>
@@ -529,16 +540,16 @@ export const HomePage: React.FC = () => {
 
       {/* ── WHAT ARE WE BREATHING ── */}
       <section className="py-20 px-6">
-        <div className="max-w-7xl mx-auto">
+        <div className="max-w-screen-2xl mx-auto">
           <div className="text-center mb-12">
-            <h3 className="text-4xl font-bold text-slate-900 mb-6">What exactly are we breathing?</h3>
+            <h3 className="text-5xl font-bold text-slate-900 mb-6">What exactly are we breathing?</h3>
           </div>
 
           {/* Pollutant flip cards */}
-          <p className="text-slate-600 text-lg leading-relaxed mb-4 text-center">
+          <p className="text-slate-600 text-2xl leading-relaxed mb-4 text-center">
             Air can be polluted in two major ways: Human-made air pollution and Nature released pollution.
           </p>
-          <p className="text-slate-600 text-lg leading-relaxed mb-10 text-center">
+          <p className="text-slate-600 text-2xl leading-relaxed mb-10 text-center">
             So air quality is determined by six key pollutants tracked by the WHO and national agencies. Each has different sources, different behaviour in the atmosphere, and different health effects. Hover any card to explore.
           </p>
 
@@ -548,13 +559,13 @@ export const HomePage: React.FC = () => {
 
       {/* ── AQI SCALE ── */}
       <section className="py-28 px-6 border-y border-white/40">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-screen-2xl mx-auto">
           <div className="text-center mb-12">
-            <p className="text-blue-600 text-sm font-semibold uppercase tracking-widest mb-3">
+            <p className="text-blue-600 text-base font-semibold uppercase tracking-widest mb-3">
               Understanding AQI
             </p>
-            <h2 className="text-4xl font-bold text-slate-900 mb-4">The Air Quality Index Scale</h2>
-            <p className="text-slate-600 max-w-3xl mx-auto text-lg">
+            <h2 className="text-5xl font-bold text-slate-900 mb-4">The Air Quality Index Scale</h2>
+            <p className="text-slate-600 max-w-5xl mx-auto text-2xl">
               Clean air is essential for healthy living, but according to the World Health Organization, almost 99% of the global population breathes air exceeding their guideline limits of air pollution.
               AQI translates complex pollution measurements into one number that tells you how clean
               or polluted the air is — and what health effects might be a concern.
@@ -653,12 +664,11 @@ export const HomePage: React.FC = () => {
 
       {/* ── FEATURES ── */}
       <section className="py-28 px-6">
-          <div className="max-w-7xl mx-auto">
+        <div className="max-w-screen-2xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-blue-600 text-sm font-semibold uppercase tracking-widest mb-3">What's Inside</p>
-            <h2 className="text-4xl font-bold text-slate-900 mb-4">Everything You Need</h2>
+            <p className="text-blue-600 text-base font-semibold uppercase tracking-widest mb-3">What's Inside</p>
+            <h2 className="text-5xl font-bold text-slate-900 mb-4">Data Analytics and More</h2>
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FeatureCard
               to="/analytics"
@@ -683,18 +693,9 @@ export const HomePage: React.FC = () => {
               badgeColor="text-orange-300 bg-orange-500/10 border-orange-500/20"
             />
           </div>
-          <div className="mt-10 flex flex-col items-center gap-5">
-            <p className="text-2xl font-bold text-slate-900">Interested in how we can improve air quality?</p>
-            <Link
-              to="/dashboard"
-              className="group inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold px-10 py-4 rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-300 hover:shadow-blue-500/40 hover:scale-105 text-lg"
-            >
-              Explore
-              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
         </div>
       </section>
+
     </div>
   );
 };
@@ -702,9 +703,9 @@ export const HomePage: React.FC = () => {
 function MapStatCard({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
   return (
     <div className="bg-white rounded-xl p-4 border border-[#CBD5E1] shadow-sm">
-      <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">{label}</p>
-      <p className="text-xl font-bold truncate" style={{ color: color ?? '#1e293b' }}>{value}</p>
-      {sub && <p className="text-xs text-slate-500 mt-0.5">{sub}</p>}
+      <p className="text-sm text-slate-500 uppercase tracking-wide mb-1">{label}</p>
+      <p className="text-2xl font-bold truncate" style={{ color: color ?? '#1e293b' }}>{value}</p>
+      {sub && <p className="text-sm text-slate-500 mt-0.5">{sub}</p>}
     </div>
   );
 }
@@ -750,8 +751,8 @@ function StatCard({
   return (
     <div className={`card-lift rounded-2xl border p-6 text-center bg-white shadow-sm ${borders[color]}`}>
       <div className="flex justify-center mb-3">{icon}</div>
-      <p className="text-3xl font-extrabold text-slate-900 mb-1">{value}</p>
-      <p className="text-sm text-slate-500">{label}</p>
+      <p className="text-4xl font-extrabold text-slate-900 mb-1">{value}</p>
+      <p className="text-base text-slate-500">{label}</p>
     </div>
   );
 }
@@ -769,9 +770,9 @@ function FeatureCard({
           <div className={`${iconBg} p-3 rounded-xl`}>{icon}</div>
           <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${badgeColor}`}>{badge}</span>
         </div>
-        <h3 className="text-xl font-bold text-slate-900 mb-2">{title}</h3>
-        <p className="text-slate-600 text-sm leading-relaxed mb-5">{desc}</p>
-        <div className="flex items-center gap-1 text-sm font-medium text-slate-500 group-hover:text-slate-900 transition-colors">
+        <h3 className="text-2xl font-bold text-slate-900 mb-2">{title}</h3>
+        <p className="text-slate-600 text-base leading-relaxed mb-5">{desc}</p>
+        <div className="flex items-center gap-1 text-base font-medium text-slate-500 group-hover:text-slate-900 transition-colors">
           Open {title} <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </div>
       </div>

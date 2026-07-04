@@ -27,6 +27,7 @@ import {
 } from 'recharts';
 
 import { dataAPI } from '../services/api';
+import AirParticlesBackground from '../components/AirParticlesBackground';
 
 interface AnalyticsPageProps {}
 
@@ -323,7 +324,8 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-transparent">
+      <AirParticlesBackground />
       <div className="border-b border-blue-700 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
         <div className="max-w-7xl mx-auto px-4 py-7">
           <div className="flex items-center gap-3">
