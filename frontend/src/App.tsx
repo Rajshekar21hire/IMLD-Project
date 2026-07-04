@@ -20,7 +20,7 @@ function App() {
   return (
     <FilterProvider>
       <Router>
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-transparent">
           {/* Navigation */}
           <nav className="bg-white shadow">
             <div className="max-w-7xl mx-auto px-4 py-4 flex items-center justify-between">

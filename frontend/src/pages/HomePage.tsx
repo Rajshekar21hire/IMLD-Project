@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
 import apiClient from '../services/api';
+import CloudBackground from '../components/CloudBackground';
 
 const AQI_BANDS = [
   { color: '#22c55e', label: 'Good', range: '0–50', desc: 'Air quality is satisfactory' },
@@ -250,7 +251,8 @@ export const HomePage: React.FC = () => {
   }, []);
 
   return (
-    <div className="bg-[#FBFAFC] text-slate-900 overflow-x-hidden">
+    <div className="bg-transparent text-slate-900 overflow-x-hidden">
+      <CloudBackground />
       <style>{`
         @keyframes float1 {
           0%,100%{transform:translate(0,0) scale(1)}
@@ -358,7 +360,7 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* ── STATS ── */}
-      <section ref={statsRef} className="py-20 px-6 bg-[#EEF3F8] border-t border-[#CBD5E1]">
+      <section ref={statsRef} className="py-20 px-6 border-t border-white/40">
         <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
           <StatCard
             icon={<Globe className="w-6 h-6 text-blue-400" />}
@@ -391,7 +393,7 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* ── WORLDWIDE AQI ── */}
-      <section className="py-16 px-6 bg-[#EEF3F8]" id="worldwide-aqi">
+      <section className="py-16 px-6" id="worldwide-aqi">
         <div className="max-w-7xl mx-auto">
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-1">
@@ -523,10 +525,10 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* ── DIVIDER ── */}
-      <div className="border-t border-[#CBD5E1] mx-6" />
+      <div className="border-t border-white/40 mx-6" />
 
       {/* ── WHAT ARE WE BREATHING ── */}
-      <section className="py-20 px-6 bg-[#FBFAFC]">
+      <section className="py-20 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-12">
             <h3 className="text-4xl font-bold text-slate-900 mb-6">What exactly are we breathing?</h3>
@@ -545,7 +547,7 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* ── AQI SCALE ── */}
-      <section className="py-28 px-6 bg-[#EEF3F8] border-y border-[#CBD5E1]">
+      <section className="py-28 px-6 border-y border-white/40">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <p className="text-blue-600 text-sm font-semibold uppercase tracking-widest mb-3">
@@ -650,7 +652,7 @@ export const HomePage: React.FC = () => {
       </section>
 
       {/* ── FEATURES ── */}
-      <section className="py-28 px-6 bg-white">
+      <section className="py-28 px-6">
           <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-blue-600 text-sm font-semibold uppercase tracking-widest mb-3">What's Inside</p>
@@ -682,7 +684,7 @@ export const HomePage: React.FC = () => {
             />
           </div>
           <div className="mt-10 flex flex-col items-center gap-5">
-            <p className="text-2xl font-bold text-white">Interested in how we can improve air quality?</p>
+            <p className="text-2xl font-bold text-slate-900">Interested in how we can improve air quality?</p>
             <Link
               to="/dashboard"
               className="group inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold px-10 py-4 rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-300 hover:shadow-blue-500/40 hover:scale-105 text-lg"
