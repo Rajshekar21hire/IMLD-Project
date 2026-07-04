@@ -8,6 +8,7 @@ const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.H
 const DashboardPage = lazy(() => import('./pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
 const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage').then(m => ({ default: m.AnalyticsPage })));
 const RealtimePollutionPage = lazy(() => import('./pages/RealtimePollutionPage').then(m => ({ default: m.RealtimePollutionPage })));
+const AboutPage = lazy(() => import('./pages/AboutPage').then(m => ({ default: m.AboutPage })));
 
 const PageLoader = () => (
   <div className="flex items-center justify-center min-h-[60vh]">
@@ -63,11 +64,12 @@ function App() {
               <Route path="/dashboard" element={<DashboardPage />} />
               <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/realtime" element={<RealtimePollutionPage />} />
+              <Route path="/about" element={<AboutPage />} />
             </Routes>
           </Suspense>
 
           {/* Footer */}
-          <footer className="bg-gray-900 text-white py-12 mt-16">
+          <footer className="bg-slate-600 text-white py-12 mt-16">
             <div className="max-w-7xl mx-auto px-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-8">
                 <div>
@@ -88,7 +90,7 @@ function App() {
                 <div>
                   <h4 className="text-lg font-semibold mb-4">Information</h4>
                   <ul className="space-y-2 text-gray-400">
-                    <li><a href="mailto:hello@airstory.local" className="hover:text-white transition-colors">About</a></li>
+                    <li><Link to="/about" className="hover:text-white transition-colors">About</Link></li>
                     <li><a href="mailto:support@airstory.local" className="hover:text-white transition-colors">Contact</a></li>
                   </ul>
                 </div>

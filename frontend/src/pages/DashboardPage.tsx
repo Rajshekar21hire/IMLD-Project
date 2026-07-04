@@ -18,9 +18,8 @@ import {
   Line,
   LineChart,
 } from 'recharts';
-import { storyAPI, dataAPI } from '../services/api';
+import { storyAPI } from '../services/api';
 import { storyModes, storyThemes, StoryMode, StoryTheme, StorySection, StoryCategoryBlock } from '../data/storyThemes';
-import { pollutantTrendData, pollutantColors, pollutantLabels } from '../data/pollutantTrendsData';
 
 interface CityRankingRecord {
   rank: number;
@@ -213,9 +212,6 @@ export const DashboardPage: React.FC = () => {
   const [cityDetails, setCityDetails] = useState<CityDetailsResult | null>(null);
   const [cityDetailsLoading, setCityDetailsLoading] = useState(false);
   const [cityDetailsError, setCityDetailsError] = useState('');
-  const [yearlyTrends, setYearlyTrends] = useState<any | null>(null);
-  const [selectedTrendPollutant, setSelectedTrendPollutant] = useState<'pm25' | 'pm10' | 'o3' | 'no2' | 'so2' | 'co'>('pm25');
-  const [inequalityLens, setInequalityLens] = useState<'geography' | 'exposure'>('geography');
   const [storyFourAiCategory, setStoryFourAiCategory] = useState('Personal');
   const [storyFourAiVoiceIndex, setStoryFourAiVoiceIndex] = useState(0);
   const [storyFourOutcomeFilter, setStoryFourOutcomeFilter] = useState<'All' | 'Health' | 'Economy' | 'Environment' | 'Technology'>('All');
@@ -255,10 +251,6 @@ export const DashboardPage: React.FC = () => {
       if (isStoryThreeAiView && !canShowStoryThreeAiSections) {
         return [];
       }
-      if (selectedTheme.id === 'pollution-and-health') {
-        // Story 2 AI view intentionally shows only subtopics 1 and 2.
-        return normalizedAiSections.slice(0, 2);
-      }
       if (selectedTheme.id === 'aqi-and-decisions') {
         // Story 3 AI view shows only the first 2 subtopics.
         return normalizedAiSections.slice(0, 2);
@@ -289,9 +281,6 @@ export const DashboardPage: React.FC = () => {
     [selectedTheme, selectedMode, normalizedAiSections, isStoryThreeAiView, canShowStoryThreeAiSections, shouldHideAiSectionsUntilGenerated]
   );
   const aiGenerationSections = useMemo(() => {
-    if (selectedTheme.id === 'pollution-and-health') {
-      return selectedTheme.humanSections.filter((section) => section.label !== 'live-map');
-    }
     return selectedTheme.humanSections;
   }, [selectedTheme]);
 
@@ -325,7 +314,6 @@ export const DashboardPage: React.FC = () => {
       return Boolean(section.body?.trim());
     });
   }, [isStoryThreeHumanView, selectedTheme, storyThreeTestimonialIntroIndex]);
-  const isPollutionHealthAiView = selectedTheme.id === 'pollution-and-health' && isAiLikeMode;
   const isStoryFourHumanView = selectedTheme.id === 'measurement-and-governance' && selectedMode === 'human';
   const isStoryFourAiView = selectedTheme.id === 'measurement-and-governance' && isAiLikeMode;
   const storyFourCategoryStyles: Record<string, { labelClass: string; headerClass: string; cardClass: string; footerClass: string }> = {
@@ -576,51 +564,6 @@ export const DashboardPage: React.FC = () => {
   }, []);
 
   const selectedStoryFourCaseStudy = storyFourCaseStudies.find((caseStudy) => caseStudy.id === storyFourCaseStudyId) || storyFourCaseStudies[0];
-
-  const trendOptions = [
-    { key: 'pm25', label: 'PM2.5' },
-    { key: 'pm10', label: 'PM10' },
-    { key: 'o3', label: 'Ozone' },
-    { key: 'no2', label: 'NO2' },
-    { key: 'so2', label: 'SO2' },
-    { key: 'co', label: 'CO' },
-  ] as const;
-
-  const trendChartData = useMemo(() => {
-    if (!yearlyTrends?.years) return [];
-    return yearlyTrends.years.map((year:any, index:number) => ({
-      year,
-      pm25: yearlyTrends.pm25[index],
-      pm10: yearlyTrends.pm10[index],
-      o3: yearlyTrends.o3[index],
-      no2: yearlyTrends.no2[index],
-      so2: yearlyTrends.so2[index],
-      co: yearlyTrends.co[index],
-    }));
-  }, [yearlyTrends]);
-
-  const inequalityBarData = useMemo(() => {
-    return [
-      { name: 'Geography gap', value: 70 },
-      { name: 'Exposure gap', value: 30 },
-    ];
-  }, []);
-
-  const inequalityTable = useMemo(() => {
-    if (inequalityLens === 'geography') {
-      return [
-        { label: 'Primary driver', value: 'Between-country gap (~70% of global inequality)' },
-        { label: 'Highest exposure zone', value: 'Central & South Asia + Sub-Saharan Africa' },
-        { label: 'Lowest exposure zone', value: 'Iceland, Australia, Estonia, New Zealand' },
-      ];
-    }
-
-    return [
-      { label: 'Primary driver', value: 'Income, neighbourhood siting, and local sources' },
-      { label: 'Highest exposure zone', value: 'Low-income/minority neighbourhoods near roads and industry' },
-      { label: 'Lowest exposure zone', value: 'High-income, majority-white suburban/rural areas' },
-    ];
-  }, [inequalityLens]);
 
   const activeRankingRows = useMemo(() => {
     if (!rankingResult) {
@@ -923,21 +866,6 @@ export const DashboardPage: React.FC = () => {
     setStoryThreeHumanTestimonialsRequested(false);
   }, [selectedThemeId, selectedMode]);
 
-  useEffect(() => {
-    // Fetch analytics only for the pollution-and-health theme
-    const fetchAnalytics = async () => {
-      if (selectedTheme.id !== 'pollution-and-health') return;
-      try {
-        const trendsResp = await dataAPI.getYearlyTrends({ start_year: 2015, end_year: 2026 });
-        setYearlyTrends(trendsResp.data?.data || trendsResp.data || null);
-      } catch (e) {
-        console.error('Analytics fetch failed', e);
-      }
-    };
-
-    fetchAnalytics();
-  }, [selectedTheme.id]);
-
   const handleCopyPrompt = async () => {
     try {
       await navigator.clipboard.writeText(promptText);
@@ -1117,7 +1045,7 @@ export const DashboardPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className={`grid grid-cols-1 gap-5 ${isPollutionHealthAiView || isStoryFourHumanView || isStoryFourAiView || isStoryThreeHumanView ? 'md:grid-cols-1' : 'md:grid-cols-2'}`}>
+                <div className={`grid grid-cols-1 gap-5 ${isStoryFourHumanView || isStoryFourAiView || isStoryThreeHumanView ? 'md:grid-cols-1' : 'md:grid-cols-2'}`}>
                   {activeSections
                     .filter((section, sectionIndex) =>
                       !isStoryThreeHumanView ||
@@ -1126,9 +1054,7 @@ export const DashboardPage: React.FC = () => {
                     .map((section, index) => (
                     <article
                       key={`${selectedTheme.id}-${selectedMode}-${section.title}`}
-                      className={`rounded-3xl bg-white border border-slate-200 shadow-sm p-6 hover:shadow-md transition-shadow ${
-                        selectedTheme.id === 'pollution-and-health' && activeSections.length === 3 && index === 2 ? 'md:col-span-2' : ''
-                      }`}
+                      className={`rounded-3xl bg-white border border-slate-200 shadow-sm p-6 hover:shadow-md transition-shadow`}
                     >
                       <div className="flex items-start justify-between gap-4">
                         <div>
@@ -1181,268 +1107,6 @@ export const DashboardPage: React.FC = () => {
                               ))}
                             </tbody>
                           </table>
-                        </div>
-                      )}
-
-                      {section.chart && section.chart.dataSourceKey === 'pollutantTrends' && (
-                        <div className="mt-6 rounded-2xl bg-gradient-to-br from-blue-50 to-indigo-50 p-4 border border-slate-200">
-                          <h4 className="mb-4 text-sm font-semibold text-slate-700">Global Pollutant Trends (2015–2026)</h4>
-                          <ResponsiveContainer width="100%" height={350}>
-                            <LineChart data={pollutantTrendData}>
-                              <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.05)" />
-                              <XAxis 
-                                dataKey="year" 
-                                stroke="rgba(0,0,0,0.4)"
-                                style={{ fontSize: '12px' }}
-                              />
-                              <YAxis 
-                                stroke="rgba(0,0,0,0.4)"
-                                style={{ fontSize: '12px' }}
-                              />
-                              <Tooltip 
-                                contentStyle={{ 
-                                  backgroundColor: 'white', 
-                                  border: '1px solid #e5e7eb',
-                                  borderRadius: '8px'
-                                }}
-                              />
-                              <Legend />
-                              <Line 
-                                type="monotone" 
-                                dataKey="pm25" 
-                                stroke={pollutantColors.pm25}
-                                name={pollutantLabels.pm25}
-                                strokeWidth={2}
-                                dot={{ r: 3 }}
-                              />
-                              <Line 
-                                type="monotone" 
-                                dataKey="pm10" 
-                                stroke={pollutantColors.pm10}
-                                name={pollutantLabels.pm10}
-                                strokeWidth={2}
-                                dot={{ r: 3 }}
-                              />
-                              <Line 
-                                type="monotone" 
-                                dataKey="no2" 
-                                stroke={pollutantColors.no2}
-                                name={pollutantLabels.no2}
-                                strokeWidth={2}
-                                dot={{ r: 3 }}
-                              />
-                              <Line 
-                                type="monotone" 
-                                dataKey="o3" 
-                                stroke={pollutantColors.o3}
-                                name={pollutantLabels.o3}
-                                strokeWidth={2}
-                                dot={{ r: 3 }}
-                              />
-                              <Line 
-                                type="monotone" 
-                                dataKey="so2" 
-                                stroke={pollutantColors.so2}
-                                name={pollutantLabels.so2}
-                                strokeWidth={2}
-                                dot={{ r: 3 }}
-                              />
-                              <Line 
-                                type="monotone" 
-                                dataKey="co" 
-                                stroke={pollutantColors.co}
-                                name={pollutantLabels.co}
-                                strokeWidth={2}
-                                dot={{ r: 3 }}
-                              />
-                            </LineChart>
-                          </ResponsiveContainer>
-                          <p className="mt-3 text-xs text-slate-600 text-center">
-                            Average concentration in µg/m³ globally (2015–2026)
-                          </p>
-                        </div>
-                      )}
-
-                      {selectedTheme.id === 'pollution-and-health' && section.label === 'live-map' && (
-                        <div className="mt-5">
-                          <Link
-                            to="/#worldwide-aqi"
-                            className="inline-flex items-center gap-2 rounded-full bg-sky-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-sky-500"
-                          >
-                            <Globe className="h-4 w-4" />
-                            View worldwide AQI map
-                          </Link>
-                        </div>
-                      )}
-
-                      {isPollutionHealthAiView && index === 0 && yearlyTrends && (
-                        <div className="mt-6 space-y-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                            <div>
-                              <h6 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">Trends over time</h6>
-                              <p className="mt-1 text-sm text-slate-600">
-                                Explore 2015–2026 pollutant trends and compare which emissions are improving or worsening.
-                              </p>
-                            </div>
-                            <div className="flex flex-wrap gap-2">
-                              {trendOptions.map((option) => (
-                                <button
-                                  key={option.key}
-                                  type="button"
-                                  onClick={() => setSelectedTrendPollutant(option.key)}
-                                  className={`rounded-full border px-3 py-1 text-sm font-semibold transition ${
-                                    selectedTrendPollutant === option.key
-                                      ? 'bg-slate-950 text-white border-slate-950'
-                                      : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-                                  }`}
-                                >
-                                  {option.label}
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="grid grid-cols-1 gap-4 lg:grid-cols-[1.2fr_0.8fr]">
-                            <div className="rounded-3xl bg-white p-4 shadow-sm">
-                              <div className="flex items-start justify-between gap-4">
-                                <div>
-                                  <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Trend chart</div>
-                                  <h5 className="mt-2 text-lg font-bold text-slate-950">{trendOptions.find((opt) => opt.key === selectedTrendPollutant)?.label}</h5>
-                                </div>
-                                <div className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                                  2015–2026
-                                </div>
-                              </div>
-                              <div className="mt-4 h-64">
-                                <ResponsiveContainer width="100%" height="100%">
-                                  <LineChart data={trendChartData} margin={{ top: 8, right: 24, left: 0, bottom: 0 }}>
-                                    <CartesianGrid strokeDasharray="3 3" />
-                                    <XAxis dataKey="year" tick={{ fontSize: 12 }} />
-                                    <YAxis tickFormatter={(value) => value.toFixed(2)} width={48} />
-                                    <Tooltip formatter={(value:any) => (typeof value === 'number' ? value.toFixed(2) : value)} />
-                                    <Line type="monotone" dataKey={selectedTrendPollutant} stroke="#2563eb" strokeWidth={3} dot={false} />
-                                  </LineChart>
-                                </ResponsiveContainer>
-                              </div>
-                            </div>
-
-                            <div className="rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-4 text-white shadow-sm">
-                              <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Trend insight</div>
-                              <h5 className="mt-3 text-xl font-bold">Regional patterns</h5>
-                              <p className="mt-3 text-sm leading-relaxed text-slate-200">
-                                Focus on the selected pollutant and observe whether key regions are moving toward cleaner air or farther from the WHO guideline.
-                              </p>
-                              <div className="mt-4 space-y-3">
-                                <div className="rounded-2xl bg-slate-900 p-3">
-                                  <div className="text-xs uppercase tracking-[0.18em] text-slate-500">What to look for</div>
-                                  <p className="mt-2 text-sm text-slate-200">A rising line signals worsening exposure, while a downward slope means progress in reducing concentrations.</p>
-                                </div>
-                                <div className="rounded-2xl bg-slate-900 p-3">
-                                  <div className="text-xs uppercase tracking-[0.18em] text-slate-500">Why this matters</div>
-                                  <p className="mt-2 text-sm text-slate-200">This visualization helps connect the data story to policy and health outcomes by making trends visible at a glance.</p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
-
-                      {isPollutionHealthAiView && index === 1 && (
-                        <div className="mt-6 space-y-4 rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                            <div>
-                              <h6 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">Inequality lens</h6>
-                              <p className="mt-1 text-sm text-slate-600">
-                                Switch between geography and exposure level to reveal how inequality shows up at different scales.
-                              </p>
-                            </div>
-                            <div className="flex gap-2">
-                              <button
-                                type="button"
-                                onClick={() => setInequalityLens('geography')}
-                                className={`rounded-full border px-3 py-1 text-sm font-semibold transition ${
-                                  inequalityLens === 'geography'
-                                    ? 'bg-slate-950 text-white border-slate-950'
-                                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-                                }`}
-                              >
-                                Geography
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setInequalityLens('exposure')}
-                                className={`rounded-full border px-3 py-1 text-sm font-semibold transition ${
-                                  inequalityLens === 'exposure'
-                                    ? 'bg-slate-950 text-white border-slate-950'
-                                    : 'bg-white text-slate-700 border-slate-300 hover:bg-slate-100'
-                                }`}
-                              >
-                                Exposure level
-                              </button>
-                            </div>
-                          </div>
-
-                          <div className="grid gap-4 lg:grid-cols-[1.1fr_0.9fr]">
-                            <div className="rounded-3xl bg-white p-4 shadow-sm">
-                              <div className="flex items-center justify-between gap-3">
-                                <h5 className="text-lg font-bold text-slate-950">Current lens</h5>
-                                <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-                                  {inequalityLens === 'geography' ? 'Geography' : 'Exposure'}
-                                </span>
-                              </div>
-                              <div className="mt-4 space-y-3">
-                                {inequalityTable.map((row) => (
-                                  <div key={row.label} className="rounded-2xl border border-slate-200 bg-slate-50 p-3">
-                                    <div className="text-xs uppercase tracking-[0.16em] text-slate-500">{row.label}</div>
-                                    <p className="mt-2 text-sm text-slate-700">{row.value}</p>
-                                  </div>
-                                ))}
-                              </div>
-                              <div className="mt-6 rounded-3xl border border-slate-200 bg-slate-50 p-4">
-                                <div className="flex items-center justify-between gap-3">
-                                  <div>
-                                    <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Inequality chart</div>
-                                    <h5 className="mt-2 text-lg font-bold text-slate-950">Relative gap mix</h5>
-                                  </div>
-                                  <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">{inequalityLens === 'geography' ? 'Country gap' : 'Community gap'}</span>
-                                </div>
-                                <div className="mt-4 h-56">
-                                  <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={inequalityBarData} margin={{ top: 4, right: 0, left: 0, bottom: 0 }}>
-                                      <CartesianGrid strokeDasharray="3 3" />
-                                      <XAxis dataKey="name" tick={{ fontSize: 12 }} />
-                                      <YAxis tickFormatter={(value) => `${value}%`} width={48} />
-                                      <Tooltip formatter={(value:any) => `${value}%`} />
-                                      <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                                        {inequalityBarData.map((entry) => (
-                                          <Cell key={entry.name} fill={entry.name === 'Geography gap' ? '#2563eb' : '#f59e0b'} />
-                                        ))}
-                                      </Bar>
-                                    </BarChart>
-                                  </ResponsiveContainer>
-                                </div>
-                              </div>
-                            </div>
-
-                            <div className="rounded-3xl bg-white p-4 shadow-sm">
-                              <div className="text-xs uppercase tracking-[0.2em] text-slate-500">What this means</div>
-                              <p className="mt-3 text-sm leading-relaxed text-slate-700">
-                                The selected lens highlights whether the biggest inequality is driven by cross-country gaps or by local exposure differences within the same place.
-                              </p>
-                              <div className="mt-4 space-y-3">
-                                <div className="rounded-2xl bg-slate-50 p-3">
-                                  <p className="text-sm text-slate-700">
-                                    Geography helps identify the regions with the worst national averages, while exposure shows the communities within countries that face the greatest pollution burden.
-                                  </p>
-                                </div>
-                                <div className="rounded-2xl bg-slate-50 p-3">
-                                  <p className="text-sm text-slate-700">
-                                    Use these two views together to make the story more actionable for both global policy and local justice efforts.
-                                  </p>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
                         </div>
                       )}
 
@@ -1823,7 +1487,7 @@ export const DashboardPage: React.FC = () => {
                             </div>
                           </div>
                         ) : null
-                      ) : section.bullets && section.bullets.length > 0 && !isAiLikeMode && !(isPollutionHealthAiView && (index === 0 || index === 1)) && (
+                      ) : section.bullets && section.bullets.length > 0 && !isAiLikeMode && (
                         isStoryFourHumanView && index === 1 ? (
                           <div className="mt-4 overflow-hidden rounded-2xl border border-slate-300 bg-white">
                             <div className="grid grid-cols-[0.34fr_0.66fr] border-b border-slate-300 bg-slate-50 text-sm font-bold text-slate-900">
@@ -1848,22 +1512,6 @@ export const DashboardPage: React.FC = () => {
                                     <div className="bg-white px-4 py-4 text-sm leading-relaxed text-slate-800">
                                       <p>{body}</p>
                                     </div>
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        ) : isPollutionHealthAiView && index === 2 ? (
-                          <div className="mt-4 overflow-hidden rounded-2xl border border-slate-200 bg-white">
-                            <div className="grid grid-cols-1 gap-px bg-slate-200 md:grid-cols-2 xl:grid-cols-4">
-                              {section.bullets.map((bullet) => {
-                                const [headline, ...rest] = bullet.split(':');
-                                const detail = rest.join(':').trim();
-
-                                return (
-                                  <div key={bullet} className="min-h-full bg-white p-4 text-sm text-slate-700">
-                                    <div className="text-base font-bold text-slate-950">{headline.trim()}</div>
-                                    <p className="mt-3 leading-relaxed text-slate-600">{detail || headline.trim()}</p>
                                   </div>
                                 );
                               })}

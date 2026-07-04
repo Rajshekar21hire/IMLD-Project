@@ -93,10 +93,116 @@ function useCountUp(target: number, duration: number, trigger: boolean) {
   return val;
 }
 
+// ── Pollutant data ────────────────────────────────────────────────────────
+const POLLUTANTS = [
+  {
+    key: 'pm25', label: 'PM2.5', color: '#b91c1c', bg: 'bg-red-800',
+    guideline: '5 µg/m³ annual mean (WHO 2021)',
+    description: 'Fine particulate matter — particles under 2.5 micrometres in diameter. The single most lethal air pollutant tracked globally.',
+    sources: 'Vehicle exhaust, coal combustion, wildfires, agricultural burning, industrial processes.',
+    health: 'Penetrates deep into lung tissue and enters the bloodstream, driving cardiovascular disease, stroke, lung cancer, diabetes, and cognitive decline — no safe level has been identified.',
+    hazard: 'Very high',
+    hazardColor: '#b91c1c',
+  },
+  {
+    key: 'pm10', label: 'PM10', color: '#c2410c', bg: 'bg-orange-700',
+    guideline: '15 µg/m³ annual mean (WHO 2021)',
+    description: 'Coarse particles between 2.5 and 10 micrometres, trapped in the nose and upper airways.',
+    sources: 'Road dust, construction, pollen, sea salt, agricultural operations.',
+    health: 'Nasal and throat irritation, bronchitis, and aggravated asthma — largely filtered before reaching the lungs, unlike PM2.5.',
+    hazard: 'Moderate',
+    hazardColor: '#c2410c',
+  },
+  {
+    key: 'no2', label: 'NO₂', color: '#a16207', bg: 'bg-yellow-700',
+    guideline: '10 µg/m³ annual mean (WHO 2021)',
+    description: 'Nitrogen dioxide, a reddish-brown gas formed when fuel burns at high temperatures — a major marker of traffic pollution.',
+    sources: 'Vehicle engines, power plants, industrial boilers, gas appliances.',
+    health: 'Inflames the lining of the airways, reducing lung function and worsening asthma; long-term exposure is linked to development of asthma in children.',
+    hazard: 'High near roads',
+    hazardColor: '#a16207',
+  },
+  {
+    key: 'o3', label: 'O₃', color: '#15803d', bg: 'bg-green-700',
+    guideline: '100 µg/m³ peak season daily max (WHO 2021)',
+    description: 'Ground-level ozone, formed when NO₂ and volatile organic compounds react in sunlight — not emitted directly, peaks on hot, sunny, stagnant days.',
+    sources: 'Vehicle exhaust + industrial VOCs + sunlight.',
+    health: 'Irritates the respiratory system, triggers asthma attacks, reduces lung capacity, and damages crops and ecosystems as well as human health.',
+    hazard: 'High in summer heat',
+    hazardColor: '#15803d',
+  },
+  {
+    key: 'so2', label: 'SO₂', color: '#0f766e', bg: 'bg-teal-700',
+    guideline: '40 µg/m³ 24-hour mean (WHO 2021)',
+    description: 'Sulphur dioxide, a sharp-smelling gas released primarily by burning high-sulphur coal and heavy oil — a major cause of acid rain.',
+    sources: 'Coal-fired power plants, oil refineries, metal smelters, volcanoes.',
+    health: 'Constricts airways immediately on inhalation, is a major driver of COPD near industrial zones, and combines with water vapour to form sulphuric acid in the lungs.',
+    hazard: 'High near industry',
+    hazardColor: '#0f766e',
+  },
+  {
+    key: 'co', label: 'CO', color: '#1d4ed8', bg: 'bg-blue-700',
+    guideline: '4 mg/m³ 24-hour mean (WHO 2021)',
+    description: 'Carbon monoxide, a colourless, odourless gas produced by incomplete combustion, binding to haemoglobin 200× more readily than oxygen.',
+    sources: 'Vehicle exhaust, gas appliances, open fires, industrial combustion.',
+    health: 'At high concentrations causes headache, confusion, and death by oxygen deprivation; chronic low-level exposure impairs neurological function.',
+    hazard: 'High indoors/traffic',
+    hazardColor: '#1d4ed8',
+  },
+];
+
+const PollutantExplorer: React.FC = () => {
+  return (
+    <div>
+      <style>{`
+        .flip-card { perspective: 1000px; }
+        .flip-card-inner { position: relative; width: 100%; height: 400px; transform-style: preserve-3d; transition: transform 0.6s cubic-bezier(0.4,0.2,0.2,1); }
+        .flip-card:hover .flip-card-inner { transform: rotateY(180deg); }
+        .flip-card-front, .flip-card-back { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 16px; }
+        .flip-card-back { transform: rotateY(180deg); }
+      `}</style>
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+        {POLLUTANTS.map((p) => (
+          <div key={p.key} className="flip-card cursor-pointer">
+            <div className="flip-card-inner">
+              {/* FRONT */}
+              <div className="flip-card-front flex flex-col items-center justify-center border"
+                style={{ backgroundColor: p.color + '15', borderColor: p.color + '55' }}
+              >
+                <div className="text-3xl font-black text-slate-900 mb-2" dangerouslySetInnerHTML={{ __html: p.label }} />
+                <div className="text-xs uppercase tracking-widest text-slate-500 mt-1">Hover to explore</div>
+                <div className="mt-4 w-10 h-1 rounded-full" style={{ backgroundColor: p.color }} />
+              </div>
+              <div
+                className="flip-card-back flex flex-col justify-between p-6 border"
+                style={{ backgroundColor: p.color + '18', borderColor: p.color + '70' }}
+              >
+                <div>
+                  <div className="text-xl font-black text-slate-900 mb-3" dangerouslySetInnerHTML={{ __html: p.label }} />
+                  <p className="text-base text-slate-700 leading-relaxed mb-4">{p.description}</p>
+                  <div className="text-base text-slate-600 mb-3"><span className="font-bold text-slate-900">Sources: </span>{p.sources}</div>
+                  <div className="text-base text-slate-600"><span className="font-bold text-slate-900">Effects: </span>{p.health}</div>
+                </div>
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-sm text-slate-500">{p.guideline}</span>
+                  <span className="rounded px-3 py-1.5 text-sm font-bold text-white" style={{ backgroundColor: p.color }}>{p.hazard}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export const HomePage: React.FC = () => {
   const [statsVisible, setStatsVisible] = useState(false);
   const statsRef = useRef<HTMLDivElement>(null);
   const [hoveredAqi, setHoveredAqi] = useState<number | null>(null);
+  const [sliderAqi, setSliderAqi] = useState(0);
+  const sliderBandIndex = sliderAqi <= 50 ? 0 : sliderAqi <= 100 ? 1 : sliderAqi <= 150 ? 2 : sliderAqi <= 200 ? 3 : sliderAqi <= 300 ? 4 : 5;
+  const activeBandIndex = hoveredAqi !== null ? hoveredAqi : sliderBandIndex;
 
   const countries = useCountUp(55, 1500, statsVisible);
   const readings = useCountUp(100, 2000, statsVisible);
@@ -144,7 +250,7 @@ export const HomePage: React.FC = () => {
   }, []);
 
   return (
-    <div className="bg-slate-950 text-white overflow-x-hidden">
+    <div className="bg-[#FBFAFC] text-slate-900 overflow-x-hidden">
       <style>{`
         @keyframes float1 {
           0%,100%{transform:translate(0,0) scale(1)}
@@ -197,13 +303,13 @@ export const HomePage: React.FC = () => {
       `}</style>
 
       {/* ── HERO ── */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
+      <section className="relative flex items-center justify-center overflow-hidden py-14 md:py-20">
         {/* animated blobs */}
         <div className="absolute inset-0 pointer-events-none">
-          <div className="blob1 absolute top-20 left-10 w-80 h-80 bg-blue-600/20 rounded-full blur-3xl" />
-          <div className="blob2 absolute bottom-20 right-10 w-96 h-96 bg-indigo-600/20 rounded-full blur-3xl" />
-          <div className="blob3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-purple-600/15 rounded-full blur-3xl" />
-          <div className="blob4 absolute top-40 right-1/4 w-52 h-52 bg-cyan-500/15 rounded-full blur-2xl" />
+          <div className="blob1 absolute top-20 left-10 w-80 h-80 bg-[#CBD5E1]/50 rounded-full blur-3xl" />
+          <div className="blob2 absolute bottom-20 right-10 w-96 h-96 bg-[#A3B1C6]/40 rounded-full blur-3xl" />
+          <div className="blob3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-[#EEF3F8]/80 rounded-full blur-3xl" />
+          <div className="blob4 absolute top-40 right-1/4 w-52 h-52 bg-[#E2E8F0]/60 rounded-full blur-2xl" />
         </div>
 
         {/* grid overlay */}
@@ -211,12 +317,12 @@ export const HomePage: React.FC = () => {
           className="absolute inset-0 opacity-[0.04]"
           style={{
             backgroundImage:
-              'linear-gradient(rgba(255,255,255,0.6) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.6) 1px,transparent 1px)',
+              'linear-gradient(rgba(0,0,0,0.07) 1px,transparent 1px),linear-gradient(90deg,rgba(0,0,0,0.07) 1px,transparent 1px)',
             backgroundSize: '52px 52px',
           }}
         />
 
-        <div className="relative z-10 max-w-5xl mx-auto px-6 text-center">
+        <div className="relative z-10 max-w-7xl mx-auto px-6 text-center">
           {/* glowing logo */}
           <div className="fu1 flex justify-center mb-8">
             <div className="glow-logo w-24 h-24 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-2xl">
@@ -226,53 +332,74 @@ export const HomePage: React.FC = () => {
 
           {/* badge */}
           <div className="fu2 flex justify-center mb-6">
-            <span className="inline-flex items-center gap-1.5 bg-blue-500/15 border border-blue-500/30 text-blue-300 text-xs font-semibold px-4 py-1.5 rounded-full uppercase tracking-widest">
+            <span className="inline-flex items-center gap-1.5 bg-blue-500/10 border border-blue-600/30 text-blue-700 text-xs font-semibold px-4 py-1.5 rounded-full uppercase tracking-widest">
               <Zap className="w-3 h-3" /> AI-Powered Air Quality Platform
             </span>
           </div>
 
           {/* headline */}
           <h1 className="fu3 text-6xl md:text-7xl font-extrabold mb-6 leading-tight tracking-tight">
-            <span className="text-white">Breathe Smarter.</span>
+            <span className="text-slate-900">Breathe Smarter.</span>
             <br />
             <span className="shimmer-text">Understand Air.</span>
           </h1>
 
-          <p className="fu4 text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
-            AirStory transforms raw pollution data into compelling stories. Explore global AQI trends,
-            generate AI narratives, and visualize air quality worldwide.
+          <p className="fu4 text-3xl font-bold leading-snug tracking-tight shimmer-text mb-10 max-w-4xl mx-auto">
+            Air is the invisible, odorless, and tasteless mixture of gases surrounding the Earth that forms our atmosphere.
+            It is the fundamental baseline for almost all terrestrial life, providing the vital oxygen required for respiration.
           </p>
-
-          {/* CTA buttons */}
-          <div className="fu5 flex flex-wrap justify-center gap-4">
-            <Link
-              to="/dashboard"
-              className="group inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold px-8 py-4 rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-300 hover:shadow-blue-500/40 hover:scale-105 text-lg"
-            >
-              Open Story Studio
-              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-          </div>
 
           {/* scroll hint */}
           <div className="mt-20 flex flex-col items-center gap-2 text-slate-600 text-xs animate-bounce">
             <span>Scroll to explore</span>
-            <div className="w-px h-8 bg-gradient-to-b from-slate-600 to-transparent" />
+            <div className="w-px h-8 bg-gradient-to-b from-slate-400 to-transparent" />
           </div>
         </div>
       </section>
 
+      {/* ── STATS ── */}
+      <section ref={statsRef} className="py-20 px-6 bg-[#EEF3F8] border-t border-[#CBD5E1]">
+        <div className="max-w-7xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
+          <StatCard
+            icon={<Globe className="w-6 h-6 text-blue-400" />}
+            value={`${countries}+`}
+            label="Countries"
+            color="blue"
+          />
+          <StatCard
+            icon={<Database className="w-6 h-6 text-emerald-400" />}
+            value={`${readings}K+`}
+            label="Data Readings"
+            color="emerald"
+          />
+          <StatCard
+            icon={<MapIcon className="w-6 h-6 text-violet-400" />}
+            value={`${cities}+`}
+            label="Cities Tracked"
+            color="violet"
+          />
+          <StatCard
+            icon={<Zap className="w-6 h-6 text-amber-400" />}
+            value="Live"
+            label="AQI Updates"
+            color="amber"
+          />
+        </div>
+        <p className="mt-8 text-center text-slate-500 text-sm max-w-2xl mx-auto">
+          Data sourced from the World Air Quality Index (WAQI) project — a global network of over 12,000 air quality monitoring stations across 1,000+ cities, covering PM2.5, PM10, NO₂, O₃, SO₂, and CO pollutants.
+        </p>
+      </section>
+
       {/* ── WORLDWIDE AQI ── */}
-      <section className="py-16 px-6 bg-slate-950" id="worldwide-aqi">
+      <section className="py-16 px-6 bg-[#EEF3F8]" id="worldwide-aqi">
         <div className="max-w-7xl mx-auto">
           <div className="mb-6">
             <div className="flex items-center gap-3 mb-1">
               <Globe className="w-7 h-7 text-blue-400" />
-              <h2 className="text-3xl font-bold text-white">Worldwide AQI</h2>
+              <h2 className="text-4xl font-bold text-slate-900">Worldwide Air Quality</h2>
             </div>
-            <p className="text-slate-400 text-sm">
-              Average Air Quality Index per country from historical data.
-              Drag to pan &middot; scroll or use buttons to zoom.
+            <p className="text-slate-600 text-lg mt-2">
+              Explore the average Air Quality Index (AQI) for each country based on historical data. Drag to pan, and scroll or use the buttons to zoom.
             </p>
           </div>
 
@@ -285,7 +412,7 @@ export const HomePage: React.FC = () => {
             </div>
           )}
 
-          <div className="relative bg-slate-800 rounded-2xl overflow-hidden border border-slate-700 shadow-2xl">
+          <div className="relative bg-white rounded-2xl overflow-hidden border border-[#CBD5E1] shadow-lg">
             {mapLoading && <LoadingOverlay />}
             {mapError && <ErrorMessage message={mapError} />}
             <div className="absolute top-3 right-3 z-20 flex flex-col gap-1.5">
@@ -358,13 +485,13 @@ export const HomePage: React.FC = () => {
             </ComposableMap>
           </div>
 
-          <div className="mt-4 bg-slate-800 rounded-xl p-4 border border-slate-700">
-            <p className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-3">AQI Color Scale</p>
+          <div className="mt-4 bg-white rounded-xl p-4 border border-[#CBD5E1] shadow-sm">
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-3">AQI Color Scale</p>
             <div className="flex flex-wrap gap-x-5 gap-y-2">
               {MAP_AQI_BANDS.map(band => (
                 <div key={band.label} className="flex items-center gap-1.5">
                   <div className="w-3.5 h-3.5 rounded-sm flex-shrink-0" style={{ backgroundColor: band.color }} />
-                  <span className="text-xs text-slate-200">{band.range}</span>
+                  <span className="text-xs text-slate-700">{band.range}</span>
                   <span className="text-xs text-slate-500">({band.label})</span>
                 </div>
               ))}
@@ -378,76 +505,159 @@ export const HomePage: React.FC = () => {
 
         {mapTooltip.visible && (
           <div
-            className="fixed z-50 pointer-events-none bg-slate-900/95 backdrop-blur-sm border border-slate-600 rounded-xl shadow-2xl px-3.5 py-2.5"
+            className="fixed z-50 pointer-events-none bg-white/95 backdrop-blur-sm border border-[#CBD5E1] rounded-xl shadow-2xl px-3.5 py-2.5"
             style={{ left: mapTooltip.x + 16, top: mapTooltip.y - 52 }}
           >
-            <p className="text-sm font-semibold text-white mb-0.5">{mapTooltip.country}</p>
+            <p className="text-sm font-semibold text-slate-900 mb-0.5">{mapTooltip.country}</p>
             {mapTooltip.aqi !== null ? (
               <>
-                <p className="text-xs text-slate-300">AQI: <span className="font-bold text-base" style={{ color: aqiColor(mapTooltip.aqi) }}>{Math.round(mapTooltip.aqi)}</span></p>
-                <p className="text-xs text-slate-400">{mapTooltip.category}</p>
-                <p className="text-xs text-slate-500 mt-0.5">{mapTooltip.records.toLocaleString()} records</p>
+                <p className="text-xs text-slate-600">AQI: <span className="font-bold text-base" style={{ color: aqiColor(mapTooltip.aqi) }}>{Math.round(mapTooltip.aqi)}</span></p>
+                <p className="text-xs text-slate-500">{mapTooltip.category}</p>
+                <p className="text-xs text-slate-400 mt-0.5">{mapTooltip.records.toLocaleString()} records</p>
               </>
             ) : (
-              <p className="text-xs text-slate-400">No data available</p>
+              <p className="text-xs text-slate-500">No data available</p>
             )}
           </div>
         )}
       </section>
 
-      {/* ── STATS ── */}
-      <section ref={statsRef} className="py-20 px-6 bg-slate-900/60 border-y border-slate-800">
-        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
-          <StatCard
-            icon={<Globe className="w-6 h-6 text-blue-400" />}
-            value={`${countries}+`}
-            label="Countries"
-            color="blue"
-          />
-          <StatCard
-            icon={<Database className="w-6 h-6 text-emerald-400" />}
-            value={`${readings}K+`}
-            label="Data Readings"
-            color="emerald"
-          />
-          <StatCard
-            icon={<MapIcon className="w-6 h-6 text-violet-400" />}
-            value={`${cities}+`}
-            label="Cities Tracked"
-            color="violet"
-          />
-          <StatCard
-            icon={<Zap className="w-6 h-6 text-amber-400" />}
-            value="Live"
-            label="AQI Updates"
-            color="amber"
-          />
+      {/* ── DIVIDER ── */}
+      <div className="border-t border-[#CBD5E1] mx-6" />
+
+      {/* ── WHAT ARE WE BREATHING ── */}
+      <section className="py-20 px-6 bg-[#FBFAFC]">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12">
+            <h3 className="text-4xl font-bold text-slate-900 mb-6">What exactly are we breathing?</h3>
+          </div>
+
+          {/* Pollutant flip cards */}
+          <p className="text-slate-600 text-lg leading-relaxed mb-4 text-center">
+            Air can be polluted in two major ways: Human-made air pollution and Nature released pollution.
+          </p>
+          <p className="text-slate-600 text-lg leading-relaxed mb-10 text-center">
+            So air quality is determined by six key pollutants tracked by the WHO and national agencies. Each has different sources, different behaviour in the atmosphere, and different health effects. Hover any card to explore.
+          </p>
+
+          <PollutantExplorer />
+        </div>
+      </section>
+
+      {/* ── AQI SCALE ── */}
+      <section className="py-28 px-6 bg-[#EEF3F8] border-y border-[#CBD5E1]">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <p className="text-blue-600 text-sm font-semibold uppercase tracking-widest mb-3">
+              Understanding AQI
+            </p>
+            <h2 className="text-4xl font-bold text-slate-900 mb-4">The Air Quality Index Scale</h2>
+            <p className="text-slate-600 max-w-3xl mx-auto text-lg">
+              Clean air is essential for healthy living, but according to the World Health Organization, almost 99% of the global population breathes air exceeding their guideline limits of air pollution.
+              AQI translates complex pollution measurements into one number that tells you how clean
+              or polluted the air is — and what health effects might be a concern.
+            </p>
+          </div>
+
+          {/* color bar with live position marker */}
+          <div className="relative mb-1">
+            <div className="flex h-16 rounded-2xl overflow-hidden shadow-2xl">
+              {AQI_BANDS.map((band, i) => (
+                <div
+                  key={band.label}
+                  className="aqi-seg flex-1 transition-opacity duration-300"
+                  style={{
+                    backgroundColor: band.color,
+                    opacity: activeBandIndex === i ? 1 : 0.45,
+                  }}
+                  onMouseEnter={() => setHoveredAqi(i)}
+                  onMouseLeave={() => setHoveredAqi(null)}
+                />
+              ))}
+            </div>
+
+          </div>
+
+          {/* AQI slider */}
+          <div className="mb-8 px-0.5">
+            <style>{`
+              .aqi-slider { -webkit-appearance: none; appearance: none; width: 100%; height: 6px; border-radius: 9999px; outline: none; cursor: pointer;
+                background: linear-gradient(to right,#22c55e 0%,#22c55e 10%,#eab308 10%,#eab308 20%,#f97316 20%,#f97316 30%,#ef4444 30%,#ef4444 40%,#a855f7 40%,#a855f7 60%,#7c3aed 60%,#7c3aed 100%); }
+              .aqi-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 3px solid ${AQI_BANDS[sliderBandIndex].color}; box-shadow: 0 0 8px ${AQI_BANDS[sliderBandIndex].color}80; cursor: pointer; transition: border-color 0.2s, box-shadow 0.2s; }
+              .aqi-slider::-moz-range-thumb { width: 22px; height: 22px; border-radius: 50%; background: #fff; border: 3px solid ${AQI_BANDS[sliderBandIndex].color}; box-shadow: 0 0 8px ${AQI_BANDS[sliderBandIndex].color}80; cursor: pointer; }
+            `}</style>
+            <input
+              type="range"
+              min={0}
+              max={500}
+              value={sliderAqi}
+              onChange={(e) => { setSliderAqi(Number(e.target.value)); setHoveredAqi(null); }}
+              className="aqi-slider"
+            />
+            <div className="flex justify-between text-xs text-slate-500 mt-1 px-0.5">
+              {['0','50','100','150','200','300','500'].map((v) => <span key={v}>{v}</span>)}
+            </div>
+          </div>
+
+          {/* band detail cards */}
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-5">
+            {AQI_BANDS.map((band, i) => {
+              const isActive = activeBandIndex === i;
+              const isSliderActive = sliderBandIndex === i;
+              return (
+                <div
+                  key={band.label}
+                  className="rounded-2xl border transition-all duration-300 cursor-default select-none flex flex-col justify-between"
+                  style={
+                    isActive
+                      ? {
+                          borderColor: band.color + '80',
+                          backgroundColor: band.color + '22',
+                          boxShadow: `0 0 32px ${band.color}55`,
+                          transform: 'scale(1.05)',
+                          padding: '32px',
+                          minHeight: '220px',
+                        }
+                      : { borderColor: 'rgba(203,213,225,0.8)', backgroundColor: 'rgba(255,255,255,0.9)', padding: '28px', minHeight: '220px' }
+                  }
+                  onMouseEnter={() => setHoveredAqi(i)}
+                  onMouseLeave={() => setHoveredAqi(null)}
+                >
+                  <div>
+                    <div className="flex items-center gap-2 mb-3">
+                      <div
+                        className="rounded-sm flex-shrink-0 transition-all duration-300"
+                        style={{ backgroundColor: band.color, width: isActive ? '18px' : '16px', height: isActive ? '18px' : '16px' }}
+                      />
+                    <span className={`font-bold text-slate-900 transition-all duration-300 ${isActive ? 'text-xl' : 'text-lg'}`}>{band.label}</span>
+                  </div>
+                  <p className={`text-slate-600 mb-2 transition-all duration-300 ${isActive ? 'text-lg' : 'text-base'}`}>{band.range}</p>
+                  <p className={`text-slate-600 leading-relaxed transition-all duration-300 ${isActive ? 'text-base' : 'text-sm'}`}>{band.desc}</p>
+                  </div>
+                  {isSliderActive && (
+                    <div
+                      className="mt-5 rounded-lg px-3 py-2 text-sm font-semibold text-center"
+                      style={{ backgroundColor: band.color + '30', color: band.color }}
+                    >
+                      AQI {sliderAqi} falls here
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </section>
 
       {/* ── FEATURES ── */}
-      <section className="py-28 px-6">
-        <div className="max-w-6xl mx-auto">
+      <section className="py-28 px-6 bg-white">
+          <div className="max-w-7xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-blue-400 text-sm font-semibold uppercase tracking-widest mb-3">What's Inside</p>
-            <h2 className="text-4xl font-bold text-white mb-4">Everything You Need</h2>
-            <p className="text-slate-400 max-w-xl mx-auto text-lg">
-              A complete toolkit for exploring, analyzing, and narrating air quality data.
-            </p>
+            <p className="text-blue-600 text-sm font-semibold uppercase tracking-widest mb-3">What's Inside</p>
+            <h2 className="text-4xl font-bold text-slate-900 mb-4">Everything You Need</h2>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <FeatureCard
-              to="/dashboard"
-              gradient="from-blue-600/20 to-indigo-600/20"
-              border="border-blue-500/20"
-              iconBg="bg-blue-500/20"
-              icon={<BookOpen className="w-7 h-7 text-blue-400" />}
-              title="Story Studio"
-              desc="Let AI craft compelling narratives from pollution data. Customize by country, city, or pollutant and share insights in seconds."
-              badge="AI Powered"
-              badgeColor="text-blue-300 bg-blue-500/10 border-blue-500/20"
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <FeatureCard
               to="/analytics"
               gradient="from-emerald-600/20 to-teal-600/20"
@@ -471,96 +681,14 @@ export const HomePage: React.FC = () => {
               badgeColor="text-orange-300 bg-orange-500/10 border-orange-500/20"
             />
           </div>
-        </div>
-      </section>
-
-      {/* ── AQI SCALE ── */}
-      <section className="py-28 px-6 bg-slate-900/60 border-y border-slate-800">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-12">
-            <p className="text-blue-400 text-sm font-semibold uppercase tracking-widest mb-3">
-              Understanding AQI
-            </p>
-            <h2 className="text-4xl font-bold text-white mb-4">The Air Quality Index Scale</h2>
-            <p className="text-slate-400 max-w-xl mx-auto text-lg">
-              AQI translates complex pollution measurements into one number that tells you how clean
-              or polluted the air is — and what health effects might be a concern.
-            </p>
-          </div>
-
-          {/* interactive color bar */}
-          <div className="flex h-16 rounded-2xl overflow-hidden mb-8 shadow-2xl">
-            {AQI_BANDS.map((band, i) => (
-              <div
-                key={band.label}
-                className="aqi-seg flex-1"
-                style={{ backgroundColor: band.color }}
-                onMouseEnter={() => setHoveredAqi(i)}
-                onMouseLeave={() => setHoveredAqi(null)}
-              />
-            ))}
-          </div>
-
-          {/* band detail cards */}
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-            {AQI_BANDS.map((band, i) => (
-              <div
-                key={band.label}
-                className="p-4 rounded-xl border transition-all duration-300 cursor-default select-none"
-                style={
-                  hoveredAqi === i
-                    ? {
-                        borderColor: band.color + '60',
-                        backgroundColor: band.color + '18',
-                        boxShadow: `0 0 24px ${band.color}28`,
-                        transform: 'scale(1.04)',
-                      }
-                    : { borderColor: 'rgba(71,85,105,0.4)', backgroundColor: 'rgba(30,41,59,0.5)' }
-                }
-                onMouseEnter={() => setHoveredAqi(i)}
-                onMouseLeave={() => setHoveredAqi(null)}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <div className="w-3 h-3 rounded-sm flex-shrink-0" style={{ backgroundColor: band.color }} />
-                  <span className="text-xs font-bold text-white">{band.label}</span>
-                </div>
-                <p className="text-xs text-slate-400 mb-1">{band.range}</p>
-                <p className="text-xs text-slate-500">{band.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── CTA ── */}
-      <section className="py-28 px-6 relative overflow-hidden">
-        <div className="absolute inset-0 pointer-events-none">
-          <div className="blob1 absolute top-0 left-1/4 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl" />
-          <div className="blob2 absolute bottom-0 right-1/4 w-64 h-64 bg-indigo-600/20 rounded-full blur-3xl" />
-        </div>
-        <div className="relative z-10 max-w-3xl mx-auto text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl mb-6 shadow-xl shadow-blue-500/30">
-            <Leaf className="w-8 h-8 text-white" />
-          </div>
-          <h2 className="text-4xl md:text-5xl font-extrabold text-white mb-5 leading-tight">
-            Start Understanding<br />the Air You Breathe
-          </h2>
-          <p className="text-slate-400 text-xl mb-10 max-w-xl mx-auto">
-            Every data point is a story. Let AI help you tell it — for awareness, research, or change.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4">
+          <div className="mt-10 flex flex-col items-center gap-5">
+            <p className="text-2xl font-bold text-white">Interested in how we can improve air quality?</p>
             <Link
               to="/dashboard"
               className="group inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold px-10 py-4 rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-300 hover:shadow-blue-500/40 hover:scale-105 text-lg"
             >
-              Get Started
+              Explore
               <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </Link>
-            <Link
-              to="/analytics"
-              className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/15 border border-white/20 text-white font-semibold px-10 py-4 rounded-xl backdrop-blur-sm transition-all duration-300 hover:scale-105 text-lg"
-            >
-              <BarChart2 className="w-5 h-5" /> Explore Analytics
             </Link>
           </div>
         </div>
@@ -571,36 +699,36 @@ export const HomePage: React.FC = () => {
 
 function MapStatCard({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
   return (
-    <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
-      <p className="text-xs text-slate-400 uppercase tracking-wide mb-1">{label}</p>
-      <p className="text-xl font-bold truncate" style={{ color: color ?? 'white' }}>{value}</p>
-      {sub && <p className="text-xs text-slate-400 mt-0.5">{sub}</p>}
+    <div className="bg-white rounded-xl p-4 border border-[#CBD5E1] shadow-sm">
+      <p className="text-xs text-slate-500 uppercase tracking-wide mb-1">{label}</p>
+      <p className="text-xl font-bold truncate" style={{ color: color ?? '#1e293b' }}>{value}</p>
+      {sub && <p className="text-xs text-slate-500 mt-0.5">{sub}</p>}
     </div>
   );
 }
 function MapButton({ icon, onClick, title }: { icon: React.ReactNode; onClick: () => void; title: string }) {
   return (
-    <button onClick={onClick} title={title} className="bg-slate-700/90 hover:bg-slate-600 text-white p-2 rounded-lg shadow transition-colors">
+    <button onClick={onClick} title={title} className="bg-white/90 hover:bg-[#EEF3F8] text-slate-700 p-2 rounded-lg shadow border border-[#CBD5E1] transition-colors">
       {icon}
     </button>
   );
 }
 function LoadingOverlay() {
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-slate-900/70 z-10">
+    <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-10">
       <div className="text-center">
-        <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-400 border-t-transparent mx-auto mb-3" />
-        <p className="text-slate-300 text-sm">Loading AQI data...</p>
+        <div className="animate-spin rounded-full h-10 w-10 border-4 border-blue-500 border-t-transparent mx-auto mb-3" />
+        <p className="text-slate-600 text-sm">Loading AQI data...</p>
       </div>
     </div>
   );
 }
 function ErrorMessage({ message }: { message: string }) {
   return (
-    <div className="absolute inset-0 flex items-center justify-center bg-slate-900/70 z-10">
+    <div className="absolute inset-0 flex items-center justify-center bg-white/70 z-10">
       <div className="text-center">
-        <AlertCircle className="w-10 h-10 text-red-400 mx-auto mb-3" />
-        <p className="text-red-300 text-sm">{message}</p>
+        <AlertCircle className="w-10 h-10 text-red-500 mx-auto mb-3" />
+        <p className="text-red-600 text-sm">{message}</p>
       </div>
     </div>
   );
@@ -618,10 +746,10 @@ function StatCard({
     amber: 'border-amber-500/20 bg-amber-500/5',
   };
   return (
-    <div className={`card-lift rounded-2xl border p-6 text-center ${borders[color]}`}>
+    <div className={`card-lift rounded-2xl border p-6 text-center bg-white shadow-sm ${borders[color]}`}>
       <div className="flex justify-center mb-3">{icon}</div>
-      <p className="text-3xl font-extrabold text-white mb-1">{value}</p>
-      <p className="text-sm text-slate-400">{label}</p>
+      <p className="text-3xl font-extrabold text-slate-900 mb-1">{value}</p>
+      <p className="text-sm text-slate-500">{label}</p>
     </div>
   );
 }
@@ -639,9 +767,9 @@ function FeatureCard({
           <div className={`${iconBg} p-3 rounded-xl`}>{icon}</div>
           <span className={`text-xs font-semibold px-3 py-1 rounded-full border ${badgeColor}`}>{badge}</span>
         </div>
-        <h3 className="text-xl font-bold text-white mb-2">{title}</h3>
-        <p className="text-slate-400 text-sm leading-relaxed mb-5">{desc}</p>
-        <div className="flex items-center gap-1 text-sm font-medium text-white/50 group-hover:text-white/90 transition-colors">
+        <h3 className="text-xl font-bold text-slate-900 mb-2">{title}</h3>
+        <p className="text-slate-600 text-sm leading-relaxed mb-5">{desc}</p>
+        <div className="flex items-center gap-1 text-sm font-medium text-slate-500 group-hover:text-slate-900 transition-colors">
           Open {title} <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
         </div>
       </div>

@@ -1,4 +1,4 @@
-export type StoryMode = 'human' | 'ai' | 'agentic';
+﻿export type StoryMode = 'human' | 'ai' | 'agentic';
 
 export interface StorySection {
   title: string;
@@ -44,170 +44,7 @@ export interface StoryTheme {
   aiSections: StorySection[];
 }
 
-const firstStoryPromptFocus =
-  'Explain how invisible air connects human breathing, ecosystems, air quality, AQI, monitoring, and the WHO 2021 guideline revision in a story format with clear subtopics and a distinct AI-written companion version.';
-
 export const storyThemes: StoryTheme[] = [
-  {
-    id: 'invisible-bridge',
-    badge: 'Story 1',
-    title: 'The Invisible Bridge: Humans, Air, and Ecosystems',
-    shortDescription: 'A foundational story about how air ties human life to planetary systems.',
-    overview:
-      'This story follows the pasted source text exactly as the human version, then provides a separate AI/Ollama companion story for comparison.',
-    promptFocus: firstStoryPromptFocus,
-    status: 'ready',
-    humanSections: [
-      {
-        title: 'Air as the invisible baseline for life',
-        body:
-          'Air is the invisible, odorless, and tasteless mixture of gases surrounding the Earth that forms our atmosphere. It is the fundamental baseline for almost all terrestrial life, providing the vital oxygen required for respiration.',
-      },
-      {
-        title: 'The 11,000-liter daily connection',
-        body:
-          'Every single day, an average adult inhales roughly 11,000 liters of air. This immense, invisible volume serves as an immediate, life-sustaining bridge between human biology and the global environment.',
-        bullets: [
-          'Humans and animals inhale oxygen and exhale carbon dioxide.',
-          'Plants absorb carbon dioxide for photosynthesis and release fresh oxygen back into the atmosphere.',
-          'Because air moves across geographic boundaries, human health depends on the stability of local and global climate systems.',
-        ],
-      },
-      {
-        title: 'What is air quality and why does it matter?',
-        body:
-          'Clean air is essential for healthy living, but according to the World Health Organization, almost 99% of the global population breathes air exceeding their guideline limits of air pollution. Air quality matters because the air we breathe carries invisible risks that influence health, daily life, and the health of ecosystems.',
-      },
-      {
-        title: 'What exactly are we breathing?',
-        body:
-          'Air can be polluted in two major ways, and understanding those forms of pollution helps explain why clean air is not just a background condition but a public health issue.',
-      },
-      {
-        title: 'Six key pollutants',
-        body:
-          'Air quality is determined by six key pollutants tracked by the WHO and national agencies. Each has different sources, different behavior in the atmosphere, and different health effects. Select any to explore.',
-        bullets: [
-          'PM2.5 (WHO guideline 5 µg/m³ annual mean, 2021): Fine particulate matter under 2.5 micrometres in diameter, the single most lethal air pollutant tracked globally. Sources: vehicle exhaust, coal combustion, wildfires, agricultural burning, industrial processes. Health effects: penetrates deep into lung tissue and enters the bloodstream, driving cardiovascular disease, stroke, lung cancer, diabetes, and cognitive decline — no safe level has been identified. Hazard level: very high.',
-          'PM10 (WHO guideline 15 µg/m³ annual mean, 2021): Coarse particles between 2.5 and 10 micrometres, trapped in the nose and upper airways. Sources: road dust, construction, pollen, sea salt, agricultural operations. Health effects: nasal and throat irritation, bronchitis, and aggravated asthma — largely filtered before reaching the lungs, unlike PM2.5. Hazard level: moderate.',
-          'NO2 (WHO guideline 10 µg/m³ annual mean, 2021): Nitrogen dioxide, a reddish-brown gas formed when fuel burns at high temperatures — a major marker of traffic pollution. Sources: vehicle engines, power plants, industrial boilers, gas appliances. Health effects: inflames the lining of the airways, reducing lung function and worsening asthma; long-term exposure is linked to development of asthma in children. Hazard level: high near roads.',
-          'O3 (WHO guideline 100 µg/m³ peak season daily max, 2021): Ground-level ozone, formed when NO2 and volatile organic compounds react in sunlight — not emitted directly, peaks on hot, sunny, stagnant days. Sources: vehicle exhaust + industrial VOCs + sunlight. Health effects: irritates the respiratory system, triggers asthma attacks, reduces lung capacity, and damages crops and ecosystems as well as human health. Hazard level: high in summer heat.',
-          'SO2 (WHO guideline 40 µg/m³ 24-hour mean, 2021): Sulphur dioxide, a sharp-smelling gas released primarily by burning high-sulphur coal and heavy oil — a major cause of acid rain. Sources: coal-fired power plants, oil refineries, metal smelters, volcanoes. Health effects: constricts airways immediately on inhalation, is a major driver of COPD near industrial zones, and combines with water vapour to form sulphuric acid in the lungs. Hazard level: high near industry.',
-          'CO (WHO guideline 4 mg/m³ 24-hour mean, 2021): Carbon monoxide, a colourless, odourless gas produced by incomplete combustion, binding to haemoglobin 200x more readily than oxygen. Sources: vehicle exhaust, gas appliances, open fires, industrial combustion. Health effects: at high concentrations causes headache, confusion, and death by oxygen deprivation; chronic low-level exposure impairs neurological function. Hazard level: high indoors/traffic.',
-        ],
-      },
-      {
-        title: 'From chemistry to a single number',
-        body:
-          'Air quality is reported using the Air Quality Index (AQI). The AQI converts raw pollutant concentrations into a 0–500 score, helping people understand what the air means for health and daily activity.',
-        bullets: [
-          'AQI 0–50: Safe for all outdoor activities. No restrictions needed for sensitive groups. Exercise freely outdoors. PM2.5 < 12 µg/m³ — within WHO guideline.',
-          'AQI 51–100: Acceptable for most people. Unusually sensitive individuals should reduce prolonged outdoor activity. Light outdoor activity is fine for most. PM2.5 12–35 µg/m³ — above WHO guideline.',
-          'AQI 101–150: General public unlikely to be affected. Children, elderly, and those with respiratory/heart conditions should limit outdoor exertion. Active children and adults should reduce prolonged outdoor activity. PM2.5 35–55 µg/m³ — significantly above WHO guideline.',
-          'AQI 151–200: Everyone may begin to feel health effects. Children and sensitive groups should avoid outdoor activity. Everyone should reduce prolonged outdoor exertion. PM2.5 55–150 µg/m³ — 10–30x WHO guideline.',
-          'AQI 201–300: Health alert — significant aggravation for everyone. Sensitive groups should stay indoors. Avoid outdoor activity and use an air purifier indoors. PM2.5 150–250 µg/m³ — Delhi reaches this regularly in winter.',
-          'AQI 301–500: Emergency conditions — everyone affected. Stay indoors with air purification and seal windows. No outdoor activity; wear an N95 mask if you must go out. PM2.5 250+ µg/m³ — Ulaanbaatar’s worst winter nights reach 700+ µg/m³.',
-        ],
-      },
-      {
-        title: 'How we measure air quality?',
-        body:
-          'No single technology gives us the full story. Ground stations are accurate but sparse. Satellites cover the globe but miss surface detail. Low-cost sensors fill gaps but need calibration. Together they create the best picture we have.',
-        bullets: [
-          'Ground stations — Strengths: highest accuracy and the regulatory standard, hourly real-time data streams, used for official AQI reporting. Limitations: very sparse in low-income countries, $50,000–$200,000 per unit, Africa has <100 stations for 1.4bn people.',
-          'Satellite sensors — Strengths: full global coverage every 1–2 days, detects pollution events in unmonitored regions, AI can extract surface-level estimates from column data. Limitations: measures column average not surface level, blocked by thick clouds and aerosol layers, spatial resolution ~3.5km² minimum.',
-          'Low-cost sensors — Strengths: dense urban networks for block-level detail, community-owned and operated, AirQo deploying across African cities. Limitations: lower accuracy and needs calibration against reference, humidity and temperature affect readings, data quality varies widely by device and location.',
-        ],
-      },
-      {
-        title: 'The WHO 2021 revision',
-        body:
-          'The WHO 2021 revision is the threshold that made 99% of the world unsafe. In 2021 the WHO tightened its annual PM2.5 guideline from 10 micrograms per cubic meter to just 5 micrograms per cubic meter; the strongest evidence-based limit ever set.',
-      },
-      {
-        title: 'Why the revision matters',
-        body:
-          'The 2021 revision was based on decades of epidemiological evidence showing health harm begins at concentrations far below the old 10 micrograms per cubic meter limit. The new standard is aspirational for most of the world, but it defines what clean air actually means for human health.',
-      },
-    ],
-    aiSections: [
-      {
-        title: 'A story about the air we cannot see',
-        body:
-          'Imagine a bridge that crosses every border without ever being built. Air behaves like that bridge. It is invisible, yet it carries oxygen into our lungs, carbon dioxide out of them, and the consequences of our choices across cities, countries, and continents.',
-      },
-      {
-        title: 'Breath as a global exchange',
-        body:
-          'Every breath is a tiny environmental transaction. Humans and animals trade oxygen for carbon dioxide, while plants keep the cycle moving by turning that carbon dioxide back into oxygen through photosynthesis. The exchange is constant, and the atmosphere makes it possible.',
-      },
-      {
-        title: 'When clean air becomes a measurement problem',
-        body:
-          'Once pollution enters the picture, the story becomes more complex. PM2.5, PM10, NO2, O3, SO2, and CO each tell a different part of the truth, which is why air quality cannot be captured by a single reading or a single source.',
-      },
-      {
-        title: 'Why the AQI matters',
-        body:
-          'The AQI translates science into action. It helps people decide whether to exercise outside, protect sensitive groups, or stay indoors with air purification. In that sense, the index is not just a number, but a public health signal.',
-      },
-      {
-        title: 'Monitoring and accountability',
-        body:
-          'To understand air quality well, we need more than one lens. Stations, satellites, and low-cost sensors each reveal something different, and the WHO guideline change in 2021 reminds us that the bar for clean air is now much higher than most places currently meet.',
-      },
-    ],
-  },
-  {
-    id: 'pollution-and-health',
-    badge: 'Story 2',
-    title: 'The Unequal Burden of Air Pollution - Who Breathes the Cleanest Air?',
-    shortDescription: 'Explores geographic inequality in exposure and trends over time.',
-    overview:
-      'This story examines global disparities in air pollution exposure, trends since 2015, and the drivers of inequality.',
-    promptFocus:
-      'Describe how pollution exposure varies geographically, how trends changed since 2015, and how geography and exposure-level lenses reveal global air quality inequality.',
-    status: 'ready',
-    humanSections: [
-      {
-        title: 'Global Snapshot: Air Quality',
-        label: 'live-map',
-        body:
-          'Air quality is not just a scientific metrics, it’s a story of justice, inequality, and resilience. While some regions are improving, others face worsening pollution, often impacting the most vulnerable populations. The interactable map displays the current PM2.5 and other pollutant values all over the world.',
-      },
-      {
-        title: 'Trends Overtime - Which Regions Are Improving vs. Worsening Since 2015?',
-        chart: {
-          type: 'line',
-          dataSourceKey: 'pollutantTrends',
-        },
-        body:
-          'Since 2015, Air quality trends have changed sharply across regions — driven by policy, urbanization, energy transitions, and economic development. While some regions are making real progress, others are facing worsening air pollution, often due to rapid industrialization and weak regulation.',
-      },
-      {
-        title: 'Inequality lens - geography vs exposure levels',
-        body:
-          'Between 2015 and 2026, global air quality inequality was shaped by both geography and local exposure. The biggest gaps came from between-country differences, while income and neighborhood siting within countries drove the worst local exposures. High-exposure zones are concentrated in Central & South Asia and Sub-Saharan Africa, while lower-exposure zones include Iceland, Australia, Estonia, and New Zealand. Within countries, the highest exposure is found in low-income and minority neighborhoods near roads and industry, versus high-income majority-suburban or rural areas.',
-      },
-    ],
-    aiSections: [
-      {
-        title: 'Global Snapshot: Air Quality (AI)',
-        body:
-          'From a systems perspective, the map makes visible how pollution ties into economic patterns, policy choices, and population vulnerability. The interactive map highlights PM2.5 hotspots alongside other pollutant layers to help identify where exposure and risk align.',
-      },
-      {
-        title: 'Trends Overtime (AI)',
-        body:
-          'AI analysis highlights which regions show consistent improvement and which show persistent or worsening trends since 2015. Use the yearly pollutant trends to compare regions and verify the narrative.',
-      },
-      {
-        title: 'Inequality lens (AI)',
-        body:
-          'Looking through two lenses—geography and exposure level—shows that most of the global gap in air quality comes from differences between countries, while within-country exposure remains highest for low-income and minority communities near pollution sources. Both perspectives are needed to understand and address unequal clean-air access.',
-      },
-    ],
-  },
   {
     id: 'aqi-and-decisions',
     badge: 'Story 3',
@@ -612,14 +449,6 @@ export const storyModes: { id: StoryMode; label: string; description: string }[]
 ];
 
 const aiNarrativeOpeners: Record<string, string[]> = {
-  'invisible-bridge': [
-    'This story begins with a simple truth: the air around us is never just background.',
-    'The first lesson in this theme is that breathing is not an isolated act.',
-  ],
-  'pollution-and-health': [
-    'Pollution becomes clearer when we follow it from the source to the body.',
-    'This theme traces the hidden route from emissions to everyday health outcomes.',
-  ],
   'aqi-and-decisions': [
     'AQI turns invisible chemistry into a decision people can use today.',
     'The index matters because it changes what people do, not just what they know.',
@@ -631,14 +460,6 @@ const aiNarrativeOpeners: Record<string, string[]> = {
 };
 
 const aiNarrativeClosers: Record<string, string[]> = {
-  'invisible-bridge': [
-    'In that sense, air is not just around us. It is the medium that connects biology, climate, and responsibility.',
-    'The bridge is invisible, but the consequences of crossing it are very real.',
-  ],
-  'pollution-and-health': [
-    'Once the pathway is visible, the health burden is harder to ignore.',
-    'Seeing the chain clearly is the first step toward reducing exposure.',
-  ],
   'aqi-and-decisions': [
     'That is why AQI is less like a statistic and more like a daily guide.',
     'A single number can be the difference between acting normally and acting cautiously.',
@@ -650,19 +471,6 @@ const aiNarrativeClosers: Record<string, string[]> = {
 };
 
 const sectionPhrases: Record<string, string[]> = {
-  'invisible-bridge': [
-    'the atmosphere acts as a shared biological system',
-    'breathing becomes a daily exchange between humans and the planet',
-    'pollution interrupts a cycle that is normally seamless',
-    'monitoring tools translate invisible conditions into public knowledge',
-    'the WHO revision redraws the line for what healthy air should mean',
-  ],
-  'pollution-and-health': [
-    'particulate matter travels deep into the lungs and bloodstream',
-    'combustion gases reveal where fuel use is concentrated',
-    'ozone and sulfur dioxide behave differently because chemistry changes with weather and industry',
-    'health effects are strongest when exposure is repeated and prolonged',
-  ],
   'aqi-and-decisions': [
     'low AQI supports normal outdoor life',
     'mid-range AQI introduces caution for sensitive groups',

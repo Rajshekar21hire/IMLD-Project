@@ -324,7 +324,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <div className="border-b border-slate-200 bg-gradient-to-r from-slate-950 via-slate-900 to-blue-950 text-white">
+      <div className="border-b border-blue-700 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
         <div className="max-w-7xl mx-auto px-4 py-7">
           <div className="flex items-center gap-3">
             <BarChart3 className="w-8 h-8 text-sky-300" />
