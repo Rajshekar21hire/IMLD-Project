@@ -354,9 +354,11 @@ export const DashboardPage: React.FC = () => {
   const storyFourAiCategoryData = storyFourAiCategories[storyFourAiCategory] || storyFourAiCategories.Personal;
   const storyFourAiCategoriesList = ['Personal', 'Household', 'Community', 'Policy'] as const;
   const storyFourAiVoices = useMemo(() => {
-    // Always use the curated human section bullets so quotes and narratives display correctly.
+    // Use AI-generated bullets when available; fall back to curated human bullets.
+    const aiVoiceSection = normalizedAiSections[1];
     const humanVoiceSection = selectedTheme.humanSections[1];
-    const sourceBullets = humanVoiceSection?.bullets || [];
+    const sourceBullets =
+      (aiVoiceSection?.bullets?.length ? aiVoiceSection.bullets : humanVoiceSection?.bullets) || [];
 
     const issueDefaults = [
       'Childhood asthma and urban air pollution',
