@@ -269,7 +269,7 @@ def get_statistics():
         )
 
         if not data_list:
-            return jsonify({'success': False, 'error': 'No data available'}), 404
+            return jsonify({'success': False, 'error': 'No data available for the selected filters'}), 200
 
         stats = DataService.get_pollution_statistics(data_list, pollution_type)
         aqi_dist = DataService.get_aqi_distribution(data_list)
@@ -322,7 +322,7 @@ def get_analytics_summary():
         )
 
         if not data_list:
-            return jsonify({'success': False, 'error': 'No data available'}), 404
+            return jsonify({'success': False, 'error': 'No data available for the selected filters'}), 200
 
         stats_map = {}
         for pollutant in sorted(set(selected_pollutants)):

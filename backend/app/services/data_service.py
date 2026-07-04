@@ -59,7 +59,11 @@ class DataService:
             unit = (period_unit or 'days').strip().lower() if period_unit else 'days'
             value = period_value if period_value is not None else days
             value = int(value or 30)
-            cutoff_date = DataService._subtract_period(datetime.utcnow(), unit, value)
+            # Use the dataset's max date as the reference so that historical datasets
+            # work correctly regardless of the current system date.
+            max_date = db.session.query(func.max(AirQualityData.measurement_date)).scalar()
+            reference_date = max_date if max_date else datetime.utcnow()
+            cutoff_date = DataService._subtract_period(reference_date, unit, value)
             query = query.filter(AirQualityData.measurement_date >= cutoff_date)
 
         return query.order_by(AirQualityData.measurement_date.desc()).all()
