@@ -190,7 +190,7 @@ IMLD Project/
 ├── frontend/
 │   └── src/
 │       ├── components/      # FilterComponent, StoryDisplay, ChatWidget, etc.
-│       ├── pages/           # HomePage, AnalyticsPage, LiveMapPage, RealtimePollutionPage
+│       ├── pages/           # HomePage, DashboardPage, LiveMapPage, RealtimePollutionPage
 │       ├── services/        # API client
 │       └── hooks/           # useFilters
 └── README.md

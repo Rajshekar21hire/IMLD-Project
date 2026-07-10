@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, BarChart3, BookOpen, Bot, Copy, Globe, Layers, ShieldCheck, Sparkles, Users, Wind, HeartPulse, Megaphone, Quote } from 'lucide-react';
+import { AlertTriangle, BarChart3, Bot, Globe, ShieldCheck, Users, Wind, HeartPulse, Megaphone, Quote } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -19,7 +19,17 @@ import {
   LineChart,
 } from 'recharts';
 import { storyAPI } from '../services/api';
-import { storyModes, storyThemes, StoryMode, StoryTheme, StorySection, StoryCategoryBlock } from '../data/storyThemes';
+import { storyModes } from '../data/storyModes';
+import { storyThemes } from '../data/storyThemeData';
+import { StoryMode, StoryTheme, StorySection, StoryCategoryBlock } from '../data/storyTypes';
+import { DotPlot } from '../components/BubbleMatrix';
+import SkyBackground from '../components/SkyBackground';
+import { AirshedHeroSection } from '../components/AirshedHeroSection';
+import { BestWorstAirQualitySection } from '../components/BestWorstAirQualitySection';
+import { RootCauseExplorerSection } from '../components/RootCauseExplorerSection';
+import { ReadingPatternSection } from '../components/ReadingPatternSection';
+import { DeepDivesWorstAffectedSection } from '../components/DeepDivesWorstAffectedSection';
+import { AirCanGetBetterSection } from '../components/AirCanGetBetterSection';
 
 interface CityRankingRecord {
   rank: number;
@@ -72,6 +82,303 @@ interface StoryThreeTestimonial {
   author: string;
   details: string;
 }
+
+type StoryFourHumanCategory = 'Personal' | 'Household' | 'Policy' | 'Community';
+
+interface StoryFourHumanIntervention {
+  id: string;
+  category: StoryFourHumanCategory;
+  title: string;
+  stat: string;
+  detail: string;
+  iconKey:
+    | 'ev'
+    | 'bike'
+    | 'induction'
+    | 'flame-out'
+    | 'purifier'
+    | 'solar'
+    | 'factory'
+    | 'bus'
+    | 'field'
+    | 'tree'
+    | 'zone'
+    | 'monitor';
+}
+
+interface StoryFourImpactStat {
+  id: string;
+  value: string;
+  label: string;
+  detail: string;
+}
+
+const storyFourHumanInterventions: StoryFourHumanIntervention[] = [
+  {
+    id: 'personal-ev',
+    category: 'Personal',
+    title: 'Switch to an electric or hybrid vehicle',
+    stat: 'NO2 cut 60 to 100% per vehicle',
+    detail:
+      'Road transport is the largest single contributor to urban NO2. Switching from petrol removes tailpipe PM2.5 entirely. If you cannot switch, walk, cycle, or use public transport.',
+    iconKey: 'ev',
+  },
+  {
+    id: 'personal-bike',
+    category: 'Personal',
+    title: 'Choose cycling or walking for short trips',
+    stat: 'Zero tailpipe emissions per trip',
+    detail:
+      'Every trip shifted from car to bike removes a vehicle from the road and removes you as a pollution source. It also lowers time spent in traffic exposure zones.',
+    iconKey: 'bike',
+  },
+  {
+    id: 'household-induction',
+    category: 'Household',
+    title: 'Replace gas cooking with induction',
+    stat: 'Indoor NO2 cut up to 40%',
+    detail:
+      'Gas hobs release NO2 and PM2.5 directly into the kitchen. Induction cooking is zero emission at point of use and lowers indoor exposure quickly.',
+    iconKey: 'induction',
+  },
+  {
+    id: 'household-flame',
+    category: 'Household',
+    title: 'Stop burning wood or waste indoors',
+    stat: 'Indoor PM2.5 cut 50 to 90%',
+    detail:
+      'Open fires and wood stoves are a major source of indoor PM2.5. Move to certified low emission alternatives or remove combustion heating where possible.',
+    iconKey: 'flame-out',
+  },
+  {
+    id: 'household-purifier',
+    category: 'Household',
+    title: 'Use a HEPA air purifier indoors',
+    stat: 'Indoor PM2.5 cut 70 to 90%',
+    detail:
+      'A HEPA purifier in a bedroom lowers overnight PM2.5 exposure. This is one of the strongest personal health improvements during sleep hours.',
+    iconKey: 'purifier',
+  },
+  {
+    id: 'household-solar',
+    category: 'Household',
+    title: 'Switch to solar or renewable electricity',
+    stat: 'SO2 and PM demand eliminated',
+    detail:
+      'Coal power remains a leading source of SO2 globally. Shifting demand to renewable supply reduces pressure on the most polluting generation sources.',
+    iconKey: 'solar',
+  },
+  {
+    id: 'policy-factory',
+    category: 'Policy',
+    title: 'Industrial emission standards with enforcement',
+    stat: 'PM2.5 cut 35%, China, 5 years',
+    detail:
+      'Mandatory scrubbers, fuel switching, and real time stack checks with penalties can produce fast results. China reduced PM2.5 by 35% from 2014 to 2019.',
+    iconKey: 'factory',
+  },
+  {
+    id: 'policy-bus',
+    category: 'Policy',
+    title: 'Electrify urban bus fleets',
+    stat: 'PM2.5 cut 48% in corridors',
+    detail:
+      'Shenzhen deployed about 16,000 electric buses and reduced bus linked PM2.5 in major travel corridors by 48%, with gains for high traffic neighborhoods.',
+    iconKey: 'bus',
+  },
+  {
+    id: 'policy-field',
+    category: 'Policy',
+    title: 'End agricultural burning, with alternatives',
+    stat: 'Delhi winter AQI down 30% potential',
+    detail:
+      'Seasonal stubble burning drives severe winter events. Incentives for mechanical harvesters and payments for no burn practices work better than bans alone.',
+    iconKey: 'field',
+  },
+  {
+    id: 'community-tree',
+    category: 'Community',
+    title: 'Plant trees on busy streets',
+    stat: 'PM2.5 cut 15 to 25% on tree lined streets',
+    detail:
+      'Street trees absorb NO2 through leaf stomata and trap particulates on canopy surfaces. Correct species and maintenance improve local street level protection.',
+    iconKey: 'tree',
+  },
+  {
+    id: 'community-zone',
+    category: 'Community',
+    title: 'Advocate for a low emission zone in your city',
+    stat: 'NO2 cut 30 to 50% in zone',
+    detail:
+      'London ULEZ lowered roadside NO2 by 44% and helped reduce asthma hospitalizations. More than 320 low emission zones now operate across Europe.',
+    iconKey: 'zone',
+  },
+  {
+    id: 'community-monitor',
+    category: 'Community',
+    title: 'Demand real time AQI monitoring and data',
+    stat: 'Foundation for all other action',
+    detail:
+      'Cities cannot manage what they do not measure. Public monitoring and transparent data make interventions visible, enforceable, and trusted by communities.',
+    iconKey: 'monitor',
+  },
+];
+
+const storyFourImpactStats: StoryFourImpactStat[] = [
+  {
+    id: 'lives',
+    value: '3.7M',
+    label: 'lives saved per year',
+    detail:
+      'Meeting WHO 2030 clean air targets could remove most population level pollution deaths. South Asia could gain around five years of life expectancy in the highest burden regions.',
+  },
+  {
+    id: 'years',
+    value: '5 yrs',
+    label: 'to see visible change',
+    detail:
+      'China cut PM2.5 by 35% within five years through industrial regulation and enforcement. London ULEZ also produced major roadside NO2 cuts in a similarly short time frame.',
+  },
+  {
+    id: 'indoor',
+    value: '90%',
+    label: 'less indoor PM2.5, immediately',
+    detail:
+      'Moving from wood fire to clean cookstoves can lower indoor PM2.5 by more than 90% from day one. Children in clean households report far fewer respiratory infections.',
+  },
+  {
+    id: 'warning',
+    value: '48 hrs',
+    label: 'of advance warning now possible',
+    detail:
+      'Machine learning systems now forecast city level AQI up to 72 hours ahead with high accuracy. This enables schools and health systems to act before hazardous episodes peak.',
+  },
+];
+
+const StoryFourIcon: React.FC<{ iconKey: StoryFourHumanIntervention['iconKey'] }> = ({ iconKey }) => {
+  switch (iconKey) {
+    case 'ev':
+      return (
+        <svg viewBox="0 0 120 80" className="s4h-icon-svg" aria-hidden="true">
+          <rect x="16" y="34" width="72" height="22" rx="7" fill="none" stroke="currentColor" strokeWidth="3" />
+          <path d="M24 34 L34 22 H66 L76 34" fill="none" stroke="currentColor" strokeWidth="3" />
+          <circle cx="34" cy="60" r="8" fill="none" stroke="currentColor" strokeWidth="3" className="s4h-spin" />
+          <circle cx="72" cy="60" r="8" fill="none" stroke="currentColor" strokeWidth="3" className="s4h-spin" />
+          <path d="M94 26 L106 26 L98 39 H108" fill="none" stroke="currentColor" strokeWidth="3" className="s4h-pulse" />
+        </svg>
+      );
+    case 'bike':
+      return (
+        <svg viewBox="0 0 120 80" className="s4h-icon-svg" aria-hidden="true">
+          <circle cx="28" cy="58" r="10" fill="none" stroke="currentColor" strokeWidth="3" className="s4h-spin" />
+          <circle cx="82" cy="58" r="10" fill="none" stroke="currentColor" strokeWidth="3" className="s4h-spin" />
+          <path d="M28 58 L48 38 L62 58 L48 58 Z" fill="none" stroke="currentColor" strokeWidth="3" />
+          <path d="M62 58 L72 40 H88" fill="none" stroke="currentColor" strokeWidth="3" />
+          <path d="M43 34 H54" fill="none" stroke="currentColor" strokeWidth="3" className="s4h-sway" />
+        </svg>
+      );
+    case 'induction':
+      return (
+        <svg viewBox="0 0 120 80" className="s4h-icon-svg" aria-hidden="true">
+          <rect x="26" y="46" width="68" height="16" rx="6" fill="none" stroke="currentColor" strokeWidth="3" />
+          <circle cx="40" cy="54" r="5" fill="none" stroke="currentColor" strokeWidth="2.5" />
+          <circle cx="60" cy="54" r="5" fill="none" stroke="currentColor" strokeWidth="2.5" />
+          <circle cx="80" cy="54" r="5" fill="none" stroke="currentColor" strokeWidth="2.5" />
+          <path d="M44 40 C42 33, 46 28, 44 21" fill="none" stroke="currentColor" strokeWidth="2.5" className="s4h-rise" />
+          <path d="M60 40 C58 33, 62 28, 60 21" fill="none" stroke="currentColor" strokeWidth="2.5" className="s4h-rise s4h-delay-1" />
+          <path d="M76 40 C74 33, 78 28, 76 21" fill="none" stroke="currentColor" strokeWidth="2.5" className="s4h-rise s4h-delay-2" />
+        </svg>
+      );
+    case 'flame-out':
+      return (
+        <svg viewBox="0 0 120 80" className="s4h-icon-svg" aria-hidden="true">
+          <path d="M60 58 C76 58,80 42,68 31 C67 39,58 41,60 58 Z" fill="none" stroke="currentColor" strokeWidth="3" className="s4h-flicker" />
+          <path d="M57 58 C44 58,40 43,48 35 C48 41,55 45,57 58 Z" fill="none" stroke="currentColor" strokeWidth="3" className="s4h-flicker s4h-delay-1" />
+          <path d="M36 22 L86 68" stroke="currentColor" strokeWidth="4" strokeLinecap="round" />
+        </svg>
+      );
+    case 'purifier':
+      return (
+        <svg viewBox="0 0 120 80" className="s4h-icon-svg" aria-hidden="true">
+          <rect x="26" y="20" width="52" height="44" rx="8" fill="none" stroke="currentColor" strokeWidth="3" />
+          <circle cx="52" cy="42" r="10" fill="none" stroke="currentColor" strokeWidth="2.5" className="s4h-spin" />
+          <path d="M52 32 L52 52 M42 42 L62 42" stroke="currentColor" strokeWidth="2.5" className="s4h-spin" />
+          <circle cx="90" cy="28" r="2.5" fill="currentColor" className="s4h-drift" />
+          <circle cx="98" cy="40" r="2" fill="currentColor" className="s4h-drift s4h-delay-1" />
+          <circle cx="88" cy="52" r="2" fill="currentColor" className="s4h-drift s4h-delay-2" />
+        </svg>
+      );
+    case 'solar':
+      return (
+        <svg viewBox="0 0 120 80" className="s4h-icon-svg" aria-hidden="true">
+          <rect x="30" y="40" width="54" height="22" rx="3" fill="none" stroke="currentColor" strokeWidth="3" />
+          <path d="M30 47 H84 M30 54 H84 M43 40 V62 M56 40 V62 M69 40 V62" stroke="currentColor" strokeWidth="2" />
+          <circle cx="94" cy="22" r="7" fill="none" stroke="currentColor" strokeWidth="3" />
+          <path d="M94 8 V13 M94 31 V36 M80 22 H85 M103 22 H108 M84 12 L88 16 M100 28 L104 32 M84 32 L88 28 M100 16 L104 12" stroke="currentColor" strokeWidth="2" className="s4h-spin-slow" />
+          <rect x="34" y="43" width="10" height="4" fill="currentColor" className="s4h-glint" />
+        </svg>
+      );
+    case 'factory':
+      return (
+        <svg viewBox="0 0 120 80" className="s4h-icon-svg" aria-hidden="true">
+          <path d="M24 58 H96 V34 L80 42 V34 L62 42 V28 H24 Z" fill="none" stroke="currentColor" strokeWidth="3" />
+          <rect x="34" y="18" width="9" height="18" fill="none" stroke="currentColor" strokeWidth="3" />
+          <circle cx="38" cy="13" r="3" fill="currentColor" className="s4h-smoke" />
+          <circle cx="46" cy="10" r="2.5" fill="currentColor" className="s4h-smoke s4h-delay-1" />
+          <circle cx="32" cy="8" r="2" fill="currentColor" className="s4h-smoke s4h-delay-2" />
+        </svg>
+      );
+    case 'bus':
+      return (
+        <svg viewBox="0 0 120 80" className="s4h-icon-svg" aria-hidden="true">
+          <rect x="22" y="26" width="72" height="30" rx="8" fill="none" stroke="currentColor" strokeWidth="3" />
+          <path d="M30 34 H86" stroke="currentColor" strokeWidth="2" />
+          <circle cx="40" cy="58" r="7" fill="none" stroke="currentColor" strokeWidth="3" className="s4h-spin" />
+          <circle cx="76" cy="58" r="7" fill="none" stroke="currentColor" strokeWidth="3" className="s4h-spin" />
+          <path d="M98 28 L108 28 L102 39 H110" fill="none" stroke="currentColor" strokeWidth="3" className="s4h-pulse" />
+        </svg>
+      );
+    case 'field':
+      return (
+        <svg viewBox="0 0 120 80" className="s4h-icon-svg" aria-hidden="true">
+          <path d="M20 58 C36 52, 52 64, 68 58 C84 52, 96 60, 104 57" fill="none" stroke="currentColor" strokeWidth="3" />
+          <path d="M20 66 C36 60, 52 72, 68 66 C84 60, 96 68, 104 65" fill="none" stroke="currentColor" strokeWidth="3" />
+          <path d="M58 47 C66 47,70 39,64 33 C63 36,58 39,58 47 Z" fill="none" stroke="currentColor" strokeWidth="3" className="s4h-flicker" />
+          <path d="M50 25 L72 55" stroke="currentColor" strokeWidth="3.5" strokeLinecap="round" />
+        </svg>
+      );
+    case 'tree':
+      return (
+        <svg viewBox="0 0 120 80" className="s4h-icon-svg" aria-hidden="true">
+          <rect x="56" y="44" width="8" height="18" rx="3" fill="currentColor" />
+          <circle cx="60" cy="34" r="14" fill="none" stroke="currentColor" strokeWidth="3" className="s4h-breathe" />
+          <circle cx="46" cy="38" r="9" fill="none" stroke="currentColor" strokeWidth="2.5" className="s4h-sway" />
+          <circle cx="74" cy="38" r="9" fill="none" stroke="currentColor" strokeWidth="2.5" className="s4h-sway s4h-delay-1" />
+        </svg>
+      );
+    case 'zone':
+      return (
+        <svg viewBox="0 0 120 80" className="s4h-icon-svg" aria-hidden="true">
+          <rect x="46" y="34" width="28" height="22" rx="4" fill="none" stroke="currentColor" strokeWidth="3" />
+          <path d="M36 44 H46 M74 44 H84 M60 24 V34 M60 56 V66" stroke="currentColor" strokeWidth="3" />
+          <circle cx="60" cy="45" r="18" fill="none" stroke="currentColor" strokeWidth="2" className="s4h-ring" />
+          <circle cx="60" cy="45" r="26" fill="none" stroke="currentColor" strokeWidth="2" className="s4h-ring s4h-delay-1" />
+        </svg>
+      );
+    case 'monitor':
+      return (
+        <svg viewBox="0 0 120 80" className="s4h-icon-svg" aria-hidden="true">
+          <rect x="24" y="20" width="72" height="44" rx="7" fill="none" stroke="currentColor" strokeWidth="3" />
+          <rect x="38" y="48" width="8" height="10" rx="2" fill="currentColor" className="s4h-bar" />
+          <rect x="52" y="42" width="8" height="16" rx="2" fill="currentColor" className="s4h-bar s4h-delay-1" />
+          <rect x="66" y="36" width="8" height="22" rx="2" fill="currentColor" className="s4h-bar s4h-delay-2" />
+          <circle cx="84" cy="30" r="3" fill="currentColor" className="s4h-blink" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+};
 
 const toSafeText = (value: any): string => {
   if (typeof value === 'string') {
@@ -148,60 +455,24 @@ const normalizeStorySections = (input: any, fallback: StorySection[] = []): Stor
 
 const formatRankingRowLabel = (row: CityRankingRecord) => `${row.city}, ${row.country}`;
 
-const buildPrompt = (theme: StoryTheme, mode: StoryMode, sections: StorySection[]) => {
-  const sourceSections = sections.length
-    ? sections
-        .map((section, index) => {
-          const lines = [`${index + 1}. ${section.title}`];
-
-          if (section.body) {
-            lines.push(`Body: ${section.body}`);
-          }
-
-          if (section.categoryBlocks && section.categoryBlocks.length > 0) {
-            lines.push('Categories:');
-            section.categoryBlocks.forEach((group) => {
-              lines.push(`  - ${group.label}`);
-              group.cards.forEach((card) => {
-                lines.push(`    * ${card.title}`);
-                lines.push(`      Body: ${card.body}`);
-                lines.push(`      Footer: ${card.footer}`);
-              });
-            });
-          }
-
-          if (section.bullets && section.bullets.length > 0) {
-            lines.push('Bullets:');
-            section.bullets.forEach((bullet) => lines.push(`  - ${bullet}`));
-          }
-
-          return lines.join('\n');
-        })
-        .join('\n\n')
-    : 'No source sections provided yet';
-
-  return [
-    `You are an AI storytelling agent.`,
-    `Theme: ${theme.title}`,
-    `Mode: ${mode === 'human' ? 'Human-curated source story' : mode === 'agentic' ? 'Agentic AI-generated story' : 'AI/Ollama-generated story'}`,
-    `Prompt focus: ${theme.promptFocus}`,
-    `Subtopics to cover: ${sections.length ? sections.map((section) => section.title).join(', ') : 'No source sections provided yet'}`,
-    `Source details:\n${sourceSections}`,
-    'Write in a clear, accessible, story-first style with short sections, strong transitions, and factual grounding.',
-    'Keep the narrative aligned with the same theme and subtopic structure.',
-    'Do not copy the human story wording; rewrite it in a fresh voice with different examples and transitions.',
-  ].join('\n');
-};
+const STORY_STUDIO_SIDEBAR_THEME_IDS = ['aqi-and-decisions'] as const;
+const STORY_FOUR_THEME_ID = 'measurement-and-governance';
 
 export const DashboardPage: React.FC = () => {
   const standardPm25Value = 5;
-  const [selectedThemeId, setSelectedThemeId] = useState(storyThemes[0].id);
+  const sidebarThemes = useMemo(
+    () => storyThemes.filter((theme) => theme.id === STORY_STUDIO_SIDEBAR_THEME_IDS[0]),
+    []
+  );
+  const defaultThemeId = sidebarThemes[0]?.id || storyThemes[0]?.id;
+  const [selectedThemeId, setSelectedThemeId] = useState(defaultThemeId);
   const [selectedMode, setSelectedMode] = useState<StoryMode>('human');
-  const [copyState, setCopyState] = useState<'idle' | 'copied'>('idle');
   const [aiStories, setAiStories] = useState<Record<string, { title: string; summary: string; sections: StorySection[]; provider?: string }>>({});
   const [aiLoading, setAiLoading] = useState(false);
   const [aiRequested, setAiRequested] = useState<Record<string, boolean>>({});
   const [aiError, setAiError] = useState('');
+  const [storyFourAiLoading, setStoryFourAiLoading] = useState(false);
+  const [storyFourAiError, setStoryFourAiError] = useState('');
   const [rankingCount, setRankingCount] = useState(5);
   const [rankingType, setRankingType] = useState<'best' | 'worst' | 'both'>('worst');
   const [rankingLoading, setRankingLoading] = useState(false);
@@ -216,6 +487,9 @@ export const DashboardPage: React.FC = () => {
   const [storyFourAiVoiceIndex, setStoryFourAiVoiceIndex] = useState(0);
   const [storyFourOutcomeFilter, setStoryFourOutcomeFilter] = useState<'All' | 'Health' | 'Economy' | 'Environment' | 'Technology'>('All');
   const [storyFourCaseStudyId, setStoryFourCaseStudyId] = useState('china-pm25');
+  const [storyFourHumanCategory, setStoryFourHumanCategory] = useState<StoryFourHumanCategory>('Personal');
+  const [storyFourFlippedCards, setStoryFourFlippedCards] = useState<Record<string, boolean>>({});
+  const [storyFourExpandedImpactId, setStoryFourExpandedImpactId] = useState<string | null>(null);
 
   const [storyThreeAiTestimonials, setStoryThreeAiTestimonials] = useState<StoryThreeTestimonial[]>([]);
   const [storyThreeTestimonialsLoading, setStoryThreeTestimonialsLoading] = useState(false);
@@ -224,11 +498,16 @@ export const DashboardPage: React.FC = () => {
   const [storyThreeHumanTestimonialsRequested, setStoryThreeHumanTestimonialsRequested] = useState(false);
 
   const selectedTheme = useMemo(
-    () => storyThemes.find((theme) => theme.id === selectedThemeId) ?? storyThemes[0],
-    [selectedThemeId]
+    () => sidebarThemes.find((theme) => theme.id === selectedThemeId) ?? sidebarThemes[0] ?? storyThemes[0],
+    [selectedThemeId, sidebarThemes]
+  );
+  const storyFourTheme = useMemo(
+    () => storyThemes.find((theme) => theme.id === STORY_FOUR_THEME_ID) ?? null,
+    []
   );
 
   const selectedAiStory = aiStories[selectedTheme.id];
+  const selectedStoryFourAi = storyFourTheme ? aiStories[storyFourTheme.id] : undefined;
   const normalizedAiSections = useMemo(
     () => normalizeStorySections(selectedAiStory?.sections, selectedTheme.humanSections),
     [selectedAiStory?.sections, selectedTheme.humanSections]
@@ -236,6 +515,31 @@ export const DashboardPage: React.FC = () => {
   const selectedAiSummary = toSafeText(selectedAiStory?.summary) || selectedTheme.overview;
   const selectedAiProvider = toSafeText(selectedAiStory?.provider) || 'Ollama';
   const hasGeneratedAiStory = Boolean(aiRequested[selectedTheme.id] || selectedAiStory);
+  const hasGeneratedStoryFourAi = Boolean(storyFourTheme && (aiRequested[storyFourTheme.id] || selectedStoryFourAi));
+  const storyFourAiProvider = toSafeText(selectedStoryFourAi?.provider) || 'Ollama';
+  const storyFourAiSummary = toSafeText(selectedStoryFourAi?.summary) || storyFourTheme?.overview || '';
+  const storyFourAiSections = useMemo(() => {
+    if (!storyFourTheme) {
+      return [] as StorySection[];
+    }
+    const normalized = normalizeStorySections(selectedStoryFourAi?.sections, storyFourTheme.humanSections);
+    const padded = [0, 1, 2].map((i) => normalized[i] ?? storyFourTheme.humanSections[i]);
+    return padded.map((section, index) => {
+      if (index === 1) {
+        return {
+          ...section,
+          title: 'Human element - resident testimonials, health worker interviews',
+        } as StorySection;
+      }
+      if (index === 2) {
+        return {
+          ...section,
+          title: 'What governments must do',
+        } as StorySection;
+      }
+      return section;
+    });
+  }, [storyFourTheme, selectedStoryFourAi?.sections]);
   const isAiLikeMode = selectedMode !== 'human';
   const isStoryThreeAiView = selectedTheme.id === 'aqi-and-decisions' && isAiLikeMode;
   const shouldHideAiSectionsUntilGenerated = isAiLikeMode && selectedTheme.id !== 'aqi-and-decisions' && !hasGeneratedAiStory;
@@ -243,6 +547,10 @@ export const DashboardPage: React.FC = () => {
   const activeSections = useMemo(
     () => {
       if (selectedMode === 'human') {
+        if (selectedTheme.id === 'measurement-and-governance') {
+          // Story 4 human mode uses a dedicated editorial layout rendered below.
+          return [];
+        }
         return selectedTheme.humanSections;
       }
       if (shouldHideAiSectionsUntilGenerated) {
@@ -283,12 +591,12 @@ export const DashboardPage: React.FC = () => {
   const aiGenerationSections = useMemo(() => {
     return selectedTheme.humanSections;
   }, [selectedTheme]);
-
-  const promptText = buildPrompt(
-    selectedTheme,
-    selectedMode,
-    selectedMode !== 'human' ? aiGenerationSections : selectedTheme.humanSections
+  const hasComparisonGrid = useMemo(
+    () => activeSections.some((section: StorySection) => Boolean(section.table)),
+    [activeSections]
   );
+  const isDeepDivesTheme = selectedTheme.id === 'aqi-and-decisions' && hasComparisonGrid;
+
   const isStoryThreeHumanView = selectedTheme.id === 'aqi-and-decisions' && selectedMode === 'human';
   const storyThreeTestimonialIntroIndex = useMemo(() => {
     if (!isStoryThreeHumanView) {
@@ -316,6 +624,56 @@ export const DashboardPage: React.FC = () => {
   }, [isStoryThreeHumanView, selectedTheme, storyThreeTestimonialIntroIndex]);
   const isStoryFourHumanView = selectedTheme.id === 'measurement-and-governance' && selectedMode === 'human';
   const isStoryFourAiView = selectedTheme.id === 'measurement-and-governance' && isAiLikeMode;
+  const storyFourHumanCategoryTabs = useMemo(
+    () => [
+      { id: 'Personal' as const, emoji: '🚲' },
+      { id: 'Household' as const, emoji: '🏠' },
+      { id: 'Policy' as const, emoji: '🏛️' },
+      { id: 'Community' as const, emoji: '🌳' },
+    ],
+    []
+  );
+  const storyFourHumanCards = useMemo(
+    () => storyFourHumanInterventions.filter((item) => item.category === storyFourHumanCategory),
+    [storyFourHumanCategory]
+  );
+  const storyFourHumanPalette: Record<
+    StoryFourHumanCategory,
+    { accent: string; tint: string; text: string; glowA: string; glowB: string; glowC: string }
+  > = {
+    Personal: {
+      accent: '#2A5FA5',
+      tint: '#E7EFF8',
+      text: '#173764',
+      glowA: '#3B82F6',
+      glowB: '#06B6D4',
+      glowC: '#A78BFA',
+    },
+    Household: {
+      accent: '#B8720F',
+      tint: '#FBF0DD',
+      text: '#6A4308',
+      glowA: '#F97316',
+      glowB: '#F59E0B',
+      glowC: '#FB7185',
+    },
+    Policy: {
+      accent: '#6A4A9E',
+      tint: '#EFEAF7',
+      text: '#3E2A60',
+      glowA: '#8B5CF6',
+      glowB: '#EC4899',
+      glowC: '#22D3EE',
+    },
+    Community: {
+      accent: '#357A4A',
+      tint: '#E7F2EA',
+      text: '#1F4A2C',
+      glowA: '#22C55E',
+      glowB: '#14B8A6',
+      glowC: '#FACC15',
+    },
+  };
   const storyFourCategoryStyles: Record<string, { labelClass: string; headerClass: string; cardClass: string; footerClass: string }> = {
     Personal: {
       labelClass: 'text-blue-700',
@@ -398,6 +756,14 @@ export const DashboardPage: React.FC = () => {
       setStoryFourAiVoiceIndex(0);
     }
   }, [storyFourAiVoices, storyFourAiVoiceIndex]);
+
+  useEffect(() => {
+    if (!isStoryFourHumanView) {
+      setStoryFourFlippedCards({});
+      setStoryFourExpandedImpactId(null);
+      setStoryFourHumanCategory('Personal');
+    }
+  }, [isStoryFourHumanView]);
 
   const selectedStoryFourAiVoice = storyFourAiVoices[storyFourAiVoiceIndex];
   const storyThreeHumanTestimonials = useMemo(() => {
@@ -664,6 +1030,64 @@ export const DashboardPage: React.FC = () => {
     }
   }, [selectedTheme, aiGenerationSections]);
 
+  const generateStoryFourAi = useCallback(async () => {
+    if (!storyFourTheme) {
+      setStoryFourAiError('Story 4 source theme is not available.');
+      return;
+    }
+    if (storyFourTheme.status !== 'ready') {
+      setStoryFourAiError('Story 4 source content is not ready for AI generation.');
+      return;
+    }
+
+    setStoryFourAiLoading(true);
+    setStoryFourAiError('');
+
+    try {
+      const response = await storyAPI.generateThemeStory({
+        mode: 'ai',
+        theme: {
+          id: storyFourTheme.id,
+          title: storyFourTheme.title,
+          overview: storyFourTheme.overview,
+          promptFocus: storyFourTheme.promptFocus,
+          sections: storyFourTheme.humanSections,
+        },
+      });
+
+      if (response.data?.success) {
+        const story = response.data.data.story;
+        const normalizedGeneratedSections = normalizeStorySections(story?.sections, storyFourTheme.humanSections);
+        setAiStories((current) => ({
+          ...current,
+          [storyFourTheme.id]: {
+            title: toSafeText(story?.title) || storyFourTheme.title,
+            summary: toSafeText(story?.summary) || storyFourTheme.overview,
+            sections: normalizedGeneratedSections,
+            provider: toSafeText(response.data.data.provider) || 'Ollama',
+          },
+        }));
+        setAiRequested((current) => ({
+          ...current,
+          [storyFourTheme.id]: true,
+        }));
+      } else {
+        throw new Error(response.data?.error || 'Failed to generate Story 4 AI content');
+      }
+    } catch (error: any) {
+      const isNetworkError = error?.code === 'ERR_NETWORK' || (!error?.response && !!error?.request);
+      const backendUrl = error?.config?.baseURL || 'http://localhost:5000/api';
+
+      if (isNetworkError) {
+        setStoryFourAiError(`Cannot reach backend (${backendUrl}). Start the backend server and try again.`);
+      } else {
+        setStoryFourAiError(error.response?.data?.error || error.message || 'Failed to generate Story 4 AI content');
+      }
+    } finally {
+      setStoryFourAiLoading(false);
+    }
+  }, [storyFourTheme]);
+
   const generateCityRankings = useCallback(async (overrideRankingType?: 'best' | 'worst' | 'both') => {
     const effectiveRankingType = overrideRankingType ?? rankingType;
     setRankingLoading(true);
@@ -857,6 +1281,12 @@ export const DashboardPage: React.FC = () => {
   }, [isAiLikeMode, selectedMode, selectedThemeId, selectedTheme.id, selectedTheme.status, selectedAiStory, aiLoading, generateAiStory, aiRequested]);
 
   useEffect(() => {
+    if (!sidebarThemes.some((theme) => theme.id === selectedThemeId)) {
+      setSelectedThemeId(defaultThemeId);
+    }
+  }, [selectedThemeId, sidebarThemes, defaultThemeId]);
+
+  useEffect(() => {
     setRankingError('');
     setSelectedCityLabel('');
     setSelectedCityBucket(null);
@@ -868,117 +1298,338 @@ export const DashboardPage: React.FC = () => {
     setStoryThreeHumanTestimonialsRequested(false);
   }, [selectedThemeId, selectedMode]);
 
-  const handleCopyPrompt = async () => {
-    try {
-      await navigator.clipboard.writeText(promptText);
-      setCopyState('copied');
-      window.setTimeout(() => setCopyState('idle'), 1500);
-    } catch (error) {
-      console.error('Failed to copy prompt:', error);
-    }
-  };
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, []);
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(59,130,246,0.18),_transparent_30%),linear-gradient(180deg,_#0f172a_0%,_#111827_45%,_#f8fafc_45%,_#f8fafc_100%)]">
-      <div className="max-w-[1600px] mx-auto px-4 py-10 lg:py-14">
-        <div className="rounded-3xl bg-slate-950/90 text-white border border-white/10 shadow-2xl overflow-hidden">
-          <div className="p-6 md:p-10 border-b border-white/10 bg-gradient-to-r from-sky-950 via-slate-950 to-indigo-950">
-            <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-              <div className="max-w-3xl">
-                <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm font-semibold tracking-wide text-sky-100">
-                  <Sparkles className="w-4 h-4" />
-                  Theme-based storytelling dashboard
-                </div>
-                <h1 className="mt-5 text-4xl md:text-5xl font-black tracking-tight">
-                  Story studio for human and AI-generated air narratives
-                </h1>
-                <p className="mt-4 text-base md:text-lg text-slate-300 leading-relaxed">
-                  Choose one of the four story themes, switch between the human version and the AI/Ollama version,
-                  and drill into subtopics that keep the same subject structure across both modes.
-                </p>
-              </div>
+    <div id="story-studio-top" className="story-studio-page story-studio-theme relative min-h-screen overflow-hidden bg-transparent">
+      <SkyBackground />
 
-              <div className="grid grid-cols-2 gap-3 text-sm min-w-[260px]">
-                <div className="rounded-2xl bg-white/10 p-4 border border-white/10">
-                  <div className="text-slate-300">Themes</div>
-                  <div className="text-3xl font-bold mt-1">{storyThemes.length}</div>
-                </div>
-                <div className="rounded-2xl bg-white/10 p-4 border border-white/10">
-                  <div className="text-slate-300">Modes</div>
-                  <div className="text-3xl font-bold mt-1">{storyModes.length}</div>
-                </div>
-              </div>
-            </div>
-          </div>
+      <style>{`
+        .story-studio-theme {
+          --ss-bg-0: #f8fafc;
+          --ss-bg-1: #eef3f8;
+          --ss-bg-2: #eaf6ff;
+          --ss-bg-3: #d6ecff;
+          --ss-bg-4: #c1e1ff;
+          --ss-accent: #7ab8e6;
+          --ss-border: rgba(163, 177, 198, 0.35);
+          --ss-text: #17324a;
+          --ss-muted: #4a6075;
+        }
 
-          <div className="p-6 md:p-10 bg-slate-50 text-slate-900">
-            <div className="grid grid-cols-1 xl:grid-cols-[300px_1fr] gap-6">
-              <aside className="space-y-6">
-                <div className="rounded-3xl bg-white border border-slate-200 shadow-sm p-5">
-                  <div className="flex items-center gap-2 text-slate-900 font-bold text-lg">
-                    <Layers className="w-5 h-5 text-sky-600" />
-                    Story themes
-                  </div>
-                  <div className="mt-4 space-y-3">
-                    {storyThemes.map((theme) => {
-                      const active = theme.id === selectedThemeId;
+        .story-studio-page .story-studio-shell {
+          background: transparent !important;
+        }
 
-                      return (
-                        <button
-                          key={theme.id}
-                          type="button"
-                          onClick={() => setSelectedThemeId(theme.id)}
-                          className={`w-full text-left rounded-2xl border p-4 transition-all duration-200 ${
-                            active
-                              ? 'border-sky-500 bg-sky-50 shadow-md'
-                              : 'border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm'
-                          }`}
-                        >
-                          <div className="flex items-start justify-between gap-3">
-                            <div>
-                              <div className="text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">
-                                {theme.badge}
-                              </div>
-                              <div className="mt-1 font-bold text-slate-900">{theme.title}</div>
-                            </div>
-                            <div className={`mt-1 h-3 w-3 rounded-full ${active ? 'bg-sky-500' : 'bg-slate-300'}`} />
-                          </div>
-                          <p className="mt-2 text-sm text-slate-600">{theme.shortDescription}</p>
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
+        .story-studio-page .ss-structural,
+        .story-studio-page .ss-structural > section,
+        .story-studio-page .ss-structural-section,
+        .story-studio-page main > section,
+        .story-studio-page main > article > section,
+        .story-studio-page .ss-subgrid > article,
+        .story-studio-page .ss-subgrid > section {
+          background: transparent !important;
+          border-color: transparent !important;
+          box-shadow: none !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+        }
 
-                <div className="rounded-3xl bg-slate-950 text-white p-5 shadow-lg">
-                  <div className="flex items-center gap-2 font-bold text-lg">
-                    <BookOpen className="w-5 h-5 text-sky-300" />
-                    AI prompt
-                  </div>
-                  <p className="mt-3 text-sm text-slate-300 leading-relaxed">
-                    This is the prompt you can send to your AI agent to generate a similar story for the same theme
-                    and subtopic structure.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleCopyPrompt}
-                    className="mt-4 inline-flex items-center gap-2 rounded-xl bg-sky-500 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-400 transition-colors"
-                  >
-                    <Copy className="w-4 h-4" />
-                    {copyState === 'copied' ? 'Prompt copied' : 'Copy prompt'}
-                  </button>
-                </div>
-              </aside>
+        .story-studio-theme .ss-fog-layer {
+          position: absolute;
+          left: -5%;
+          width: 110%;
+          pointer-events: none;
+          border-radius: 9999px;
+          filter: blur(22px);
+          opacity: 0.55;
+          animation: ssFogFloat 28s ease-in-out infinite;
+        }
 
+        .story-studio-theme .ss-fog-layer-1 {
+          top: 8%;
+          height: 180px;
+          background: linear-gradient(90deg, rgba(234, 246, 255, 0.15), rgba(214, 236, 255, 0.5), rgba(226, 232, 240, 0.2));
+        }
+
+        .story-studio-theme .ss-fog-layer-2 {
+          top: 30%;
+          height: 220px;
+          background: linear-gradient(120deg, rgba(238, 243, 248, 0.15), rgba(193, 225, 255, 0.45), rgba(203, 213, 225, 0.2));
+          animation-duration: 34s;
+          animation-delay: -8s;
+        }
+
+        .story-studio-theme .ss-fog-layer-3 {
+          top: 62%;
+          height: 240px;
+          background: linear-gradient(90deg, rgba(248, 250, 252, 0.1), rgba(214, 236, 255, 0.42), rgba(193, 225, 255, 0.2));
+          animation-duration: 42s;
+          animation-delay: -16s;
+        }
+
+        .story-studio-theme .ss-backdrop {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+          background:
+            radial-gradient(circle at 15% 8%, rgba(122, 184, 230, 0.26), transparent 36%),
+            radial-gradient(circle at 85% 0%, rgba(167, 211, 245, 0.22), transparent 34%),
+            linear-gradient(180deg, rgba(193, 225, 255, 0.58) 0%, rgba(238, 243, 248, 0.75) 40%, rgba(248, 250, 252, 0.86) 100%);
+        }
+
+        .story-studio-theme .ss-content-wrap {
+          position: relative;
+          z-index: 1;
+        }
+
+        .story-studio-theme .ss-section-container {
+          width: 100%;
+          max-width: 1600px;
+          margin-inline: auto;
+          padding-inline: 1rem;
+        }
+
+        .story-studio-theme .ss-section {
+          width: 100%;
+          max-width: 100%;
+          background-color: rgba(255, 255, 255, 0.84) !important;
+          border: 1px solid var(--ss-border);
+          border-radius: 1.5rem;
+          box-shadow: 0 10px 30px rgba(122, 184, 230, 0.16) !important;
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+        }
+
+        .story-studio-theme .ss-section > * {
+          width: 100%;
+        }
+
+        .story-studio-theme .ss-subgrid {
+          display: grid;
+          gap: 0.75rem;
+        }
+
+        @media (min-width: 768px) {
+          .story-studio-theme .ss-subgrid {
+            gap: 1rem;
+          }
+        }
+
+        .story-studio-theme p {
+          font-size: 1.125rem !important;
+          line-height: 1.8 !important;
+        }
+
+        @media (min-width: 768px) {
+          .story-studio-theme p {
+            font-size: 1.25rem !important;
+          }
+        }
+
+        .story-studio-theme .rounded-3xl.bg-slate-950\/90,
+        .story-studio-theme .bg-slate-950,
+        .story-studio-theme .from-sky-950,
+        .story-studio-theme .via-slate-950,
+        .story-studio-theme .to-indigo-950 {
+          background: linear-gradient(135deg, rgba(122, 184, 230, 0.38), rgba(167, 211, 245, 0.3), rgba(248, 250, 252, 0.24)) !important;
+          color: var(--ss-text) !important;
+          border-color: var(--ss-border) !important;
+          backdrop-filter: blur(8px);
+        }
+
+        .story-studio-theme .bg-white,
+        .story-studio-theme .bg-slate-50,
+        .story-studio-theme .bg-sky-50,
+        .story-studio-theme .bg-emerald-50,
+        .story-studio-theme .bg-rose-50,
+        .story-studio-theme .bg-amber-50 {
+          background-color: rgba(255, 255, 255, 0.86) !important;
+          border-color: var(--ss-border) !important;
+          backdrop-filter: blur(12px);
+          -webkit-backdrop-filter: blur(12px);
+        }
+
+        .story-studio-theme .text-white,
+        .story-studio-theme .text-slate-950,
+        .story-studio-theme .text-slate-900,
+        .story-studio-theme .text-slate-800,
+        .story-studio-theme .text-slate-700,
+        .story-studio-theme .text-slate-600,
+        .story-studio-theme .text-slate-500,
+        .story-studio-theme .text-slate-300 {
+          color: var(--ss-text) !important;
+        }
+
+        .story-studio-theme .text-sky-700,
+        .story-studio-theme .text-sky-600,
+        .story-studio-theme .text-blue-700,
+        .story-studio-theme .text-emerald-700 {
+          color: var(--ss-accent) !important;
+        }
+
+        .story-studio-page .ss-mode-btn.ss-mode-btn-active,
+        .story-studio-page .ss-mode-btn.ss-mode-btn-active * {
+          color: #ffffff !important;
+        }
+
+        .story-studio-page .ss-mode-btn.ss-mode-btn-active .ss-mode-btn-desc {
+          color: rgba(255, 255, 255, 0.88) !important;
+        }
+
+        .story-studio-theme .border-slate-200,
+        .story-studio-theme .border-slate-300,
+        .story-studio-theme .border-white\/10,
+        .story-studio-theme .border-sky-200,
+        .story-studio-theme .border-sky-400,
+        .story-studio-theme .border-emerald-200,
+        .story-studio-theme .border-rose-200,
+        .story-studio-theme .border-amber-200 {
+          border-color: var(--ss-border) !important;
+        }
+
+        .story-studio-theme .shadow-2xl,
+        .story-studio-theme .shadow-sm,
+        .story-studio-theme .shadow-md,
+        .story-studio-theme .shadow-lg,
+        .story-studio-theme .shadow-inner {
+          box-shadow: 0 12px 34px rgba(122, 184, 230, 0.18) !important;
+        }
+
+        .story-studio-page .ss-structural-section {
+          background: transparent !important;
+          border-color: transparent !important;
+          box-shadow: none !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+        }
+
+        .story-studio-page .ss-structural,
+        .story-studio-page .ss-structural > section,
+        .story-studio-page main > section,
+        .story-studio-page main > article > section,
+        .story-studio-page .ss-subgrid > article,
+        .story-studio-page .ss-subgrid > section {
+          background: transparent !important;
+          border-color: transparent !important;
+          box-shadow: none !important;
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+        }
+
+        .story-studio-page .ss-theme-heading-wrap {
+          position: relative;
+        }
+
+        .story-studio-page .ss-theme-title {
+          margin-top: 0.5rem;
+          font-size: clamp(3rem, 5vw, 5rem) !important;
+          line-height: 0.96 !important;
+          font-weight: 900;
+          letter-spacing: -0.03em;
+          color: #0f2f4b !important;
+          text-wrap: balance;
+          transition: transform 280ms ease, text-shadow 280ms ease, color 280ms ease;
+        }
+
+        .story-studio-page .ss-gradient-heading {
+          margin-top: 0.5rem;
+        }
+
+        .story-studio-page .ss-gradient-line {
+          display: block;
+          font-size: clamp(3rem, 5vw, 5rem);
+          line-height: 0.96;
+          font-weight: 900;
+          letter-spacing: -0.03em;
+          background-size: 300% 100%;
+          background-position: 0% 50%;
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+          -webkit-text-fill-color: transparent;
+          animation: ssGradientFlow 6s ease-in-out infinite;
+          cursor: pointer;
+          text-wrap: balance;
+        }
+
+        .story-studio-page .ss-gradient-line-1 {
+          background-image: linear-gradient(90deg, #0c447c 0%, #1d9e75 35%, #378add 70%, #0c447c 100%);
+        }
+
+        .story-studio-page .ss-gradient-line-2 {
+          background-image: linear-gradient(90deg, #d85a30 0%, #ef9f27 35%, #993c1d 70%, #d85a30 100%);
+          animation-delay: 0.6s;
+        }
+
+        .story-studio-page .ss-gradient-line:hover {
+          animation: ssGradientFlow 2s ease-in-out infinite;
+        }
+
+        .story-studio-page .ss-gradient-caption {
+          margin-top: 0.65rem;
+          font-size: 14px !important;
+          color: #0c447c !important;
+          line-height: 1.4;
+        }
+
+        .story-studio-page .ss-theme-heading-wrap:hover .ss-theme-title {
+          transform: translateY(-2px);
+          color: #0a3a62 !important;
+          text-shadow: 0 8px 24px rgba(16, 72, 116, 0.16);
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .story-studio-page .ss-theme-title,
+          .story-studio-page .ss-theme-heading-wrap:hover .ss-theme-title {
+            transform: none !important;
+            text-shadow: none !important;
+          }
+        }
+
+        @keyframes ssFogFloat {
+          0%, 100% { transform: translate3d(-2%, 0, 0) scale(1); }
+          50% { transform: translate3d(2.5%, -10px, 0) scale(1.03); }
+        }
+
+        @keyframes ssGradientFlow {
+          0% { background-position: 0% 50%; }
+          50% { background-position: 100% 50%; }
+          100% { background-position: 0% 50%; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .story-studio-theme .ss-fog-layer {
+            animation: none !important;
+          }
+
+          .story-studio-page .ss-gradient-line {
+            animation: none !important;
+            background-position: 50% 50% !important;
+          }
+        }
+      `}</style>
+
+      <div className="ss-content-wrap ss-section-container py-10 lg:py-14">
+        <div className="rounded-3xl ss-structural">
+          <div className="story-studio-shell ss-structural p-6 md:p-10 text-slate-900">
+            <div className="grid grid-cols-1 gap-6">
               <main className="space-y-6">
-                <div className="rounded-3xl bg-white border border-slate-200 shadow-sm p-6 md:p-8">
-                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                    <div className="max-w-3xl">
-                      <div className="inline-flex items-center gap-2 rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-slate-600">
-                        {selectedTheme.badge}
-                      </div>
-                      <h2 className="mt-4 text-3xl font-black text-slate-950">{selectedTheme.title}</h2>
-                      <p className="mt-3 text-slate-600 leading-relaxed">
+                <div className="ss-structural rounded-3xl p-6 md:p-8">
+                  <div className="space-y-6">
+                    <div className="w-full ss-theme-heading-wrap">
+                      {selectedTheme.id === 'aqi-and-decisions' ? (
+                        <div className="ss-gradient-heading" aria-label={selectedTheme.title}>
+                          <span className="ss-gradient-line ss-gradient-line-1">Today&apos;s Air,</span>
+                          <span className="ss-gradient-line ss-gradient-line-2">Tomorrow&apos;s Future</span>
+                          
+                        </div>
+                      ) : (
+                        <h2 className="ss-theme-title">{selectedTheme.title}</h2>
+                      )}
+                      <p className="mt-4 text-lg text-slate-600 leading-relaxed md:text-xl">
                         {selectedTheme.status === 'awaiting-source'
                           ? 'This theme is waiting for the story text you will send next.'
                           : selectedMode === 'human'
@@ -998,7 +1649,7 @@ export const DashboardPage: React.FC = () => {
                             type="button"
                             onClick={generateAiStory}
                             disabled={aiLoading || hasGeneratedAiStory}
-                            className="mt-1 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                            className="mt-1 inline-flex items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
                           >
                             {aiLoading ? 'Generating...' : hasGeneratedAiStory ? 'Generated AI' : 'Generate AI'}
                           </button>
@@ -1019,8 +1670,8 @@ export const DashboardPage: React.FC = () => {
                       )}
                     </div>
 
-                    <div className="rounded-2xl border border-slate-200 bg-slate-50 p-2 shadow-inner">
-                      <div className="grid grid-cols-3 gap-2">
+                    <div className="rounded-2xl border border-transparent bg-transparent p-4">
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
                         {storyModes.map((mode) => {
                           const active = mode.id === selectedMode;
 
@@ -1029,14 +1680,14 @@ export const DashboardPage: React.FC = () => {
                               key={mode.id}
                               type="button"
                               onClick={() => setSelectedMode(mode.id)}
-                              className={`rounded-xl px-4 py-3 text-left transition-all ${
+                              className={`ss-mode-btn rounded-xl px-6 py-5 text-left transition-all ${
                                 active
-                                  ? 'bg-slate-950 text-white shadow-md'
+                                  ? 'ss-mode-btn-active bg-sky-600 text-white shadow-md'
                                   : 'bg-transparent text-slate-600 hover:bg-white'
                               }`}
                             >
-                              <div className="font-semibold">{mode.label}</div>
-                              <div className={`mt-1 text-xs leading-4 ${active ? 'text-slate-300' : 'text-slate-500'}`}>
+                              <div className="text-2xl font-bold md:text-[1.75rem]">{mode.label}</div>
+                              <div className={`ss-mode-btn-desc mt-3 text-base leading-7 md:text-lg ${active ? 'text-slate-300' : 'text-slate-500'}`}>
                                 {mode.description}
                               </div>
                             </button>
@@ -1047,69 +1698,65 @@ export const DashboardPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div className={`grid grid-cols-1 gap-5 ${isStoryFourHumanView || isStoryFourAiView || isStoryThreeHumanView ? 'md:grid-cols-1' : 'md:grid-cols-2'}`}>
+                {hasComparisonGrid && (
+                  <div className="ss-structural">
+                    <AirshedHeroSection />
+                  </div>
+                )}
+                {hasComparisonGrid && (
+                  <div className="ss-structural">
+                    <BestWorstAirQualitySection />
+                  </div>
+                )}
+                {hasComparisonGrid && (
+                  <div className="ss-structural">
+                    <RootCauseExplorerSection />
+                  </div>
+                )}
+
+                <div className={`ss-structural ss-subgrid grid-cols-1 ${isStoryFourHumanView || isStoryFourAiView || isStoryThreeHumanView ? 'md:grid-cols-1' : 'md:grid-cols-2'}`}>
                   {activeSections
                     .filter((section, sectionIndex) =>
                       !isStoryThreeHumanView ||
                       sectionIndex < storyThreeTestimonialIntroIndex
                     )
                     .map((section, index) => (
+                    <React.Fragment key={`${selectedTheme.id}-${selectedMode}-${section.title}`}>
                     <article
-                      key={`${selectedTheme.id}-${selectedMode}-${section.title}`}
-                      className={`rounded-3xl bg-white border border-slate-200 shadow-sm p-6 hover:shadow-md transition-shadow`}
+                      className=" border-slate-200 bg-transparent p-6 "
                     >
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <div className="text-xs font-bold uppercase tracking-[0.22em] text-sky-700">
-                            Subtopic {index + 1}
+                      {isDeepDivesTheme ? (
+                        section.title === 'Deep dives: the worst-affected places' ? (
+                          <DeepDivesWorstAffectedSection />
+                        ) : (
+                          <h3 className="text-xl font-bold text-slate-950">
+                            {section.title}
+                          </h3>
+                        )
+                      ) : (
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <div className="text-xs font-bold uppercase tracking-[0.22em] text-sky-700">
+                              Subtopic {index + 1}
+                            </div>
+                            <h3 className="mt-2 text-xl font-bold text-slate-950">
+                              {section.title}
+                            </h3>
                           </div>
-                          <h3 className="mt-2 text-xl font-bold text-slate-950">{section.title}</h3>
+                          <div className="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">
+                            {selectedMode === 'human' ? 'Human story' : 'AI/Ollama story'}
+                          </div>
                         </div>
-                        <div className="rounded-full bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-700">
-                          {selectedMode === 'human' ? 'Human story' : 'AI/Ollama story'}
-                        </div>
-                      </div>
+                      )}
 
-                      {section.body.split('\n\n').map((paragraph, paragraphIndex) => (
+                      {section.title !== 'Deep dives: the worst-affected places' && section.body.split('\n\n').map((paragraph, paragraphIndex) => (
                         <p key={paragraphIndex} className="mt-4 text-slate-700 leading-relaxed">
                           {paragraph}
                         </p>
                       ))}
 
                       {section.table && (
-                        <div className="mt-5 overflow-x-auto rounded-2xl border border-slate-200">
-                          <table className="w-full min-w-[900px] text-sm">
-                            <thead>
-                              <tr className="bg-slate-50">
-                                <th className="sticky left-0 z-10 bg-slate-50 px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.12em] text-slate-500">
-                                  Root cause
-                                </th>
-                                {section.table.columns.map((column) => (
-                                  <th
-                                    key={column}
-                                    className="px-4 py-3 text-left text-xs font-bold uppercase tracking-[0.12em] text-slate-500"
-                                  >
-                                    {column}
-                                  </th>
-                                ))}
-                              </tr>
-                            </thead>
-                            <tbody className="divide-y divide-slate-200">
-                              {section.table.rows.map((row) => (
-                                <tr key={row.label}>
-                                  <td className="sticky left-0 z-10 bg-white px-4 py-3 align-top text-sm font-bold text-slate-900">
-                                    {row.label}
-                                  </td>
-                                  {row.values.map((value, valueIndex) => (
-                                    <td key={valueIndex} className="px-4 py-3 align-top text-sm text-slate-700">
-                                      {value}
-                                    </td>
-                                  ))}
-                                </tr>
-                              ))}
-                            </tbody>
-                          </table>
-                        </div>
+                        <DotPlot rows={section.table.rows} columns={section.table.columns} />
                       )}
 
                       {selectedMode === 'human' && section.categoryBlocks && isStoryFourHumanView && index === 0 ? (
@@ -1122,7 +1769,6 @@ export const DashboardPage: React.FC = () => {
                                 <div className={`text-2xl font-semibold ${style.labelClass}`}>{group.label}</div>
                                 <div
                                   className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4"
-                                  style={{ gridTemplateColumns: `repeat(${Math.min(group.cards.length, 4)}, minmax(0, 1fr))` }}
                                 >
                                   {group.cards.map((card) => (
                                     <div key={card.title} className={`overflow-hidden ${style.cardClass} shadow-sm`}>
@@ -1150,11 +1796,11 @@ export const DashboardPage: React.FC = () => {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -10 }}
                             transition={{ duration: 0.35, ease: 'easeOut' }}
-                            className="mt-5 rounded-3xl border border-slate-200 bg-slate-50 p-4"
+                            className="mt-5 bg-slate-50 p-4"
                           >
-                            <div className="space-y-5">
+                            <div className="mx-auto max-w-5xl">
                               <div>
-                                <h4 className="mt-3 text-2xl font-black text-slate-950">The air can get better. Here&apos;s how.</h4>
+                                <h2 className="mt-3 text-2xl font-black text-slate-950">The air can get better. Here&apos;s how.</h2>
                                 <p className="mt-2 text-lg font-semibold text-slate-700">4 categories, 12 proven interventions.</p>
                               </div>
 
@@ -1268,7 +1914,7 @@ export const DashboardPage: React.FC = () => {
                                 </AnimatePresence>
                               </div>
 
-                              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm">
+                              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
                                 <div className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">Impact visualization</div>
                                 <p className="mt-2 text-sm text-slate-600">
                                   Compare the relative pollution reduction of each intervention as you switch categories.
@@ -1333,7 +1979,7 @@ export const DashboardPage: React.FC = () => {
                                   animate={{ opacity: 1, y: 0 }}
                                   exit={{ opacity: 0, y: -8 }}
                                   transition={{ duration: 0.3, ease: 'easeOut' }}
-                                  className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm"
+                                  className="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md"
                                 >
                                   <div className="flex items-start gap-3">
                                     <Quote className="mt-1 h-5 w-5 text-sky-600" />
@@ -1373,7 +2019,7 @@ export const DashboardPage: React.FC = () => {
                                           initial={{ opacity: 0, y: 8 }}
                                           animate={{ opacity: 1, y: 0 }}
                                           transition={{ duration: 0.25, delay: stepIndex * 0.05 }}
-                                          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-xs font-semibold text-slate-700"
+                                          className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-center text-xs font-semibold text-slate-700 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md"
                                         >
                                           {step}
                                         </motion.div>
@@ -1424,7 +2070,7 @@ export const DashboardPage: React.FC = () => {
                                     animate={{ opacity: 1, y: 0 }}
                                     exit={{ opacity: 0, y: 8 }}
                                     transition={{ duration: 0.25 }}
-                                    className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm"
+                                    className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md"
                                   >
                                     <div className="text-2xl">{card.icon}</div>
                                     <h5 className="mt-2 text-lg font-bold text-slate-950">{card.metric}</h5>
@@ -1438,7 +2084,7 @@ export const DashboardPage: React.FC = () => {
                               </AnimatePresence>
                             </div>
 
-                            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                            <div className="rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
                               <div className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Government Success Stories</div>
                               <div className="mt-3 grid grid-cols-1 gap-3 lg:grid-cols-[0.95fr_1.05fr]">
                                 <div className="space-y-2">
@@ -1463,7 +2109,7 @@ export const DashboardPage: React.FC = () => {
                               </div>
                             </div>
 
-                            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                            <div className="rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
                               <div className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">What Clean Air Looks Like in 2035</div>
                               <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
                                 {[
@@ -1531,50 +2177,17 @@ export const DashboardPage: React.FC = () => {
                         )
                       )}
                     </article>
+                    {isDeepDivesTheme && index === 0 && (
+                      <div className="ss-structural">
+                        <ReadingPatternSection />
+                      </div>
+                    )}
+                    </React.Fragment>
                   ))}
                 </div>
 
-                {isStoryThreeHumanView && storyThreeTestimonials.length > 0 && (
-                  <div className="rounded-3xl border border-slate-200 bg-slate-50 p-6 md:p-8">
-                    <h3 className="text-2xl font-black text-slate-950">Human stories: Real lives shaped by air quality</h3>
-                    <p className="mt-3 text-slate-700 leading-relaxed">
-                      {selectedTheme.humanSections[storyThreeTestimonialIntroIndex]?.body || ''}
-                    </p>
-                    <div className="mt-5 flex flex-col gap-4">
-                      {storyThreeTestimonials.map((testimonial) => (
-                        <article
-                          key={testimonial.title}
-                          className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
-                        >
-                          <h4 className="text-sm font-bold text-slate-950">{testimonial.title}</h4>
-                          <p className="mt-2 text-sm leading-relaxed text-slate-700">{testimonial.body}</p>
-                        </article>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                <div className="rounded-3xl border border-slate-200 bg-gradient-to-r from-sky-50 to-indigo-50 p-6 md:p-8">
-                  <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                    <div className="max-w-3xl">
-                      <h3 className="text-2xl font-black text-slate-950">Prompt handoff for the AI agent</h3>
-                      <p className="mt-2 text-slate-600 leading-relaxed">
-                        Send the prompt on the left to your agent whenever you want a similar story generated for the
-                        selected theme. The structure stays consistent, so human and AI stories can be compared
-                        side-by-side.
-                      </p>
-                    </div>
-                    <div className="rounded-2xl bg-slate-950 px-5 py-4 text-white">
-                      <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Current view</div>
-                      <div className="mt-1 text-lg font-bold">
-                        {selectedTheme.badge} {selectedMode === 'human' ? 'Human' : 'AI'} mode
-                      </div>
-                    </div>
-                  </div>
-
-                  {canShowStoryThreeAiSections && (
-                    <>
-                    <div className="mt-6 rounded-2xl border border-sky-200 bg-white p-5">
+                {canShowStoryThreeAiSections && (
+                    <div className="ss-section rounded-2xl border border-sky-200 bg-white p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                         <div>
                           <div className="inline-flex items-center gap-2 rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">
@@ -1587,7 +2200,7 @@ export const DashboardPage: React.FC = () => {
                           </p>
                         </div>
 
-                        <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 lg:w-auto">
+                        <div className="ss-subgrid w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                           <label className="flex flex-col text-sm font-semibold text-slate-700">
                             City count
                             <input
@@ -1625,7 +2238,7 @@ export const DashboardPage: React.FC = () => {
                               void generateCityRankings();
                             }}
                             disabled={rankingLoading}
-                            className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
+                            className="inline-flex w-full items-center justify-center gap-2 self-end rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
                           >
                             <BarChart3 className="h-4 w-4" />
                             {rankingLoading ? 'Generating...' : 'Run Story 3'}
@@ -1650,7 +2263,7 @@ export const DashboardPage: React.FC = () => {
                             <p className="mt-2 text-sm text-slate-700">{rankingResult.summary}</p>
                           </div>
 
-                          <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                          <div className="rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
                               <h6 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">
                                 PM2.5 vs standard comparison
                               </h6>
@@ -1781,7 +2394,7 @@ export const DashboardPage: React.FC = () => {
                           </div>
 
                           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                            <div className="rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
                               <h6 className="text-base font-bold text-slate-900">AI insights</h6>
                               <ul className="mt-3 space-y-2">
                                 {rankingResult.insights.map((insight) => (
@@ -1793,7 +2406,7 @@ export const DashboardPage: React.FC = () => {
                               </ul>
                             </div>
 
-                            <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                            <div className="rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
                               <h6 className="text-base font-bold text-slate-900">Recommendations</h6>
                               <ul className="mt-3 space-y-2">
                                 {rankingResult.recommendations.map((item) => (
@@ -1806,13 +2419,13 @@ export const DashboardPage: React.FC = () => {
                             </div>
                           </div>
 
-                          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
+                          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
                             <h5 className="text-lg font-bold text-slate-950">City Ranking Details</h5>
                             <p className="mt-1 text-sm text-slate-600">Explore ranked city rows and open city-level profiles in one place.</p>
 
                             <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
                               {(rankingType === 'worst' || rankingType === 'both') && (
-                                <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                                <div className="rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
                                   <h6 className="text-base font-bold text-slate-900">Worst city ranking details</h6>
                                   <p className="mt-1 text-xs text-slate-500">Click a city row to view detailed city profile.</p>
                                   <div className="mt-3 overflow-x-auto">
@@ -1847,7 +2460,7 @@ export const DashboardPage: React.FC = () => {
                               )}
 
                               {(rankingType === 'best' || rankingType === 'both') && (
-                                <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                                <div className="rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
                                   <h6 className="text-base font-bold text-slate-900">Best city ranking details</h6>
                                   <p className="mt-1 text-xs text-slate-500">Click a city row to view detailed city profile.</p>
                                   <div className="mt-3 overflow-x-auto">
@@ -1883,7 +2496,7 @@ export const DashboardPage: React.FC = () => {
                             </div>
 
                             {(selectedCityLabel || cityDetailsLoading || cityDetails || cityDetailsError) && (
-                              <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5">
+                              <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
                                 <div className="flex flex-wrap items-center justify-between gap-3">
                                   <h6 className="text-lg font-bold text-slate-900">
                                     City details {selectedCityLabel ? `- ${selectedCityLabel}` : ''}
@@ -1926,7 +2539,7 @@ export const DashboardPage: React.FC = () => {
                                       </div>
                                     </div>
 
-                                    <div className="rounded-2xl border border-slate-200 bg-white p-4">
+                                    <div className="rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
                                       <h6 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">
                                         All pollutants (top 3 highlighted)
                                       </h6>
@@ -2012,67 +2625,448 @@ export const DashboardPage: React.FC = () => {
                       )}
 
                     </div>
-
-                    <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5">
-                        <h5 className="text-lg font-bold text-slate-950">Human Stories from the Air We Breathe</h5>
-
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setStoryThreeHumanTestimonialsRequested(true);
-                            if (!storyThreeAiTestimonials.length && !storyThreeTestimonialsLoading) {
-                              void generateStoryThreeTestimonials();
-                            }
-                          }}
-                          disabled={storyThreeTestimonialsLoading}
-                          className="mt-3 inline-flex items-center justify-center gap-2 rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-                        >
-                          {storyThreeTestimonialsLoading ? 'Generating Testimonials...' : 'Generate Human Testimonials'}
-                        </button>
-
-                        {storyThreeHumanTestimonialsRequested && storyThreeTestimonialsProvider && storyThreeAiTestimonials.length > 0 && (
-                          <div className="mt-3 inline-flex rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
-                            Testimonials provider: {storyThreeTestimonialsProvider}
-                          </div>
-                        )}
-
-                        {storyThreeHumanTestimonialsRequested && storyThreeTestimonialsError && (
-                          <p className="mt-3 text-sm text-red-600">{storyThreeTestimonialsError}</p>
-                        )}
-
-                        {storyThreeHumanTestimonialsRequested && storyThreeAiTestimonials.length > 0 && (
-                          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-3">
-                            {storyThreeAiTestimonials.map((testimonial) => (
-                              <article key={testimonial.id} className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-                                <p className="text-sm text-slate-700">{testimonial.quote}</p>
-                                {testimonial.details && (
-                                  <p className="mt-2 text-sm text-slate-600">{testimonial.details}</p>
-                                )}
-                                <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">{testimonial.author}</p>
-                              </article>
-                            ))}
-                          </div>
-                        )}
-                    </div>
-                    </>
                   )}
-                </div>
+
+                {selectedTheme.id === 'aqi-and-decisions' && (
+                  <section className="ss-structural w-full p-4 md:p-8">
+                    <style>{`
+                      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;600&family=Space+Grotesk:wght@500;600;700&display=swap');
+
+                      .s4h-root {
+                        color: #14201A;
+                        font-family: 'Inter', sans-serif;
+                      }
+                      .s4h-root h2,
+                      .s4h-root h3,
+                      .s4h-root h4,
+                      .s4h-root .s4h-display {
+                        font-family: 'Space Grotesk', sans-serif;
+                      }
+                      .s4h-root .s4h-eyebrow,
+                      .s4h-root .s4h-pill,
+                      .s4h-root .s4h-hint,
+                      .s4h-root .s4h-label {
+                        font-family: 'JetBrains Mono', monospace;
+                      }
+                      .s4h-flip-wrap {
+                        perspective: 1200px;
+                      }
+                      .s4h-flip-inner {
+                        position: relative;
+                        width: 100%;
+                        height: 100%;
+                        transform-style: preserve-3d;
+                        transition: transform 0.6s ease;
+                      }
+                      .s4h-flip-card.is-flipped .s4h-flip-inner {
+                        transform: rotateY(180deg);
+                      }
+                      .s4h-face {
+                        position: absolute;
+                        inset: 0;
+                        backface-visibility: hidden;
+                        border-radius: 16px;
+                      }
+                      .s4h-back {
+                        transform: rotateY(180deg);
+                      }
+                      .s4h-icon-svg {
+                        width: 100%;
+                        height: 100%;
+                        position: relative;
+                        z-index: 2;
+                        color: #ffffff;
+                        filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.2));
+                        transition: transform 0.35s ease;
+                      }
+                      .s4h-icon-stage {
+                        position: relative;
+                        overflow: hidden;
+                        isolation: isolate;
+                        background: linear-gradient(135deg, var(--s4h-grad-a), var(--s4h-grad-b), var(--s4h-grad-c));
+                        background-size: 220% 220%;
+                        animation: s4h-gradient-shift 6s ease-in-out infinite;
+                        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.22);
+                        transition: transform 0.35s ease, box-shadow 0.35s ease;
+                      }
+                      .s4h-icon-stage::before,
+                      .s4h-icon-stage::after {
+                        content: '';
+                        position: absolute;
+                        border-radius: 9999px;
+                        pointer-events: none;
+                        opacity: 0.6;
+                        filter: blur(1px);
+                        z-index: 1;
+                      }
+                      .s4h-icon-stage::before {
+                        width: 120px;
+                        height: 120px;
+                        top: -44px;
+                        left: -22px;
+                        background: radial-gradient(circle, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0) 72%);
+                        animation: s4h-orb-float 4.8s ease-in-out infinite;
+                      }
+                      .s4h-icon-stage::after {
+                        width: 112px;
+                        height: 112px;
+                        right: -26px;
+                        bottom: -50px;
+                        background: radial-gradient(circle, rgba(255, 255, 255, 0.42) 0%, rgba(255, 255, 255, 0) 72%);
+                        animation: s4h-orb-float 5.7s ease-in-out infinite reverse;
+                      }
+                      .s4h-icon-spark {
+                        position: absolute;
+                        width: 8px;
+                        height: 8px;
+                        border-radius: 9999px;
+                        background: rgba(255, 255, 255, 0.9);
+                        box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.16);
+                        z-index: 1;
+                        animation: s4h-spark-drift 2.8s ease-in-out infinite;
+                      }
+                      .s4h-icon-spark.s4h-spark-1 { top: 14px; right: 16px; }
+                      .s4h-icon-spark.s4h-spark-2 { bottom: 14px; left: 18px; animation-delay: 0.8s; }
+                      .s4h-flip-card:hover .s4h-icon-stage {
+                        transform: translateY(-2px) scale(1.03);
+                        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.34), 0 12px 26px rgba(0, 0, 0, 0.14);
+                      }
+                      .s4h-flip-card:hover .s4h-icon-svg {
+                        transform: scale(1.08) rotate(-2deg);
+                      }
+                      .s4h-spin { animation: s4h-spin 1.3s linear infinite; transform-origin: center; }
+                      .s4h-spin-slow { animation: s4h-spin 6s linear infinite; transform-origin: center; }
+                      .s4h-pulse { animation: s4h-pulse 1.4s ease-in-out infinite; transform-origin: center; }
+                      .s4h-sway { animation: s4h-sway 2.2s ease-in-out infinite; transform-origin: center; }
+                      .s4h-rise { animation: s4h-rise 1.5s ease-in-out infinite; }
+                      .s4h-flicker { animation: s4h-flicker 1.1s ease-in-out infinite; transform-origin: center bottom; }
+                      .s4h-drift { animation: s4h-drift 1.8s ease-out infinite; }
+                      .s4h-glint { animation: s4h-glint 2.2s ease-in-out infinite; }
+                      .s4h-smoke { animation: s4h-smoke 1.8s ease-in-out infinite; }
+                      .s4h-breathe { animation: s4h-breathe 2.6s ease-in-out infinite; transform-origin: center; }
+                      .s4h-ring { animation: s4h-ring 2.2s ease-out infinite; transform-origin: center; }
+                      .s4h-bar { animation: s4h-bar 1.1s ease-in-out infinite; transform-origin: bottom; }
+                      .s4h-blink { animation: s4h-blink 1.2s steps(2, end) infinite; }
+                      .s4h-delay-1 { animation-delay: 0.25s; }
+                      .s4h-delay-2 { animation-delay: 0.5s; }
+
+                      @keyframes s4h-spin {
+                        from { transform: rotate(0deg); }
+                        to { transform: rotate(360deg); }
+                      }
+                      @keyframes s4h-gradient-shift {
+                        0%, 100% { background-position: 0% 50%; }
+                        50% { background-position: 100% 50%; }
+                      }
+                      @keyframes s4h-orb-float {
+                        0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.6; }
+                        50% { transform: translate(7px, -9px) scale(1.08); opacity: 0.82; }
+                      }
+                      @keyframes s4h-spark-drift {
+                        0%, 100% { transform: translate(0, 0) scale(1); opacity: 0.88; }
+                        50% { transform: translate(-6px, -7px) scale(1.25); opacity: 0.45; }
+                      }
+                      @keyframes s4h-pulse {
+                        0%, 100% { opacity: 1; transform: scale(1); }
+                        50% { opacity: 0.65; transform: scale(1.08); }
+                      }
+                      @keyframes s4h-sway {
+                        0%, 100% { transform: translateX(0); }
+                        50% { transform: translateX(2px); }
+                      }
+                      @keyframes s4h-rise {
+                        0% { opacity: 0.9; transform: translateY(0); }
+                        100% { opacity: 0; transform: translateY(-10px); }
+                      }
+                      @keyframes s4h-flicker {
+                        0%, 100% { transform: scale(1); opacity: 0.95; }
+                        50% { transform: scale(0.92); opacity: 0.7; }
+                      }
+                      @keyframes s4h-drift {
+                        0% { opacity: 0.8; transform: translate(0, 0); }
+                        100% { opacity: 0; transform: translate(-14px, 4px); }
+                      }
+                      @keyframes s4h-glint {
+                        0% { transform: translateX(0); opacity: 0; }
+                        20% { opacity: 0.9; }
+                        60% { opacity: 0.8; }
+                        100% { transform: translateX(34px); opacity: 0; }
+                      }
+                      @keyframes s4h-smoke {
+                        0% { opacity: 0.7; transform: translateY(0) scale(1); }
+                        100% { opacity: 0; transform: translateY(-12px) scale(0.6); }
+                      }
+                      @keyframes s4h-breathe {
+                        0%, 100% { transform: scale(1); }
+                        50% { transform: scale(1.06); }
+                      }
+                      @keyframes s4h-ring {
+                        0% { opacity: 0.9; transform: scale(0.8); }
+                        100% { opacity: 0; transform: scale(1.2); }
+                      }
+                      @keyframes s4h-bar {
+                        0%, 100% { transform: scaleY(0.55); }
+                        50% { transform: scaleY(1); }
+                      }
+                      @keyframes s4h-blink {
+                        0%, 50% { opacity: 1; }
+                        51%, 100% { opacity: 0.25; }
+                      }
+
+                      @media (prefers-reduced-motion: reduce) {
+                        .s4h-flip-inner {
+                          transform: none !important;
+                          transition: none !important;
+                        }
+                        .s4h-front {
+                          display: flex;
+                        }
+                        .s4h-back {
+                          display: none;
+                          transform: none !important;
+                        }
+                        .s4h-flip-card.is-flipped .s4h-front {
+                          display: none;
+                        }
+                        .s4h-flip-card.is-flipped .s4h-back {
+                          display: flex;
+                        }
+                        .s4h-spin,
+                        .s4h-spin-slow,
+                        .s4h-icon-stage,
+                        .s4h-icon-stage::before,
+                        .s4h-icon-stage::after,
+                        .s4h-icon-spark,
+                        .s4h-pulse,
+                        .s4h-sway,
+                        .s4h-rise,
+                        .s4h-flicker,
+                        .s4h-drift,
+                        .s4h-glint,
+                        .s4h-smoke,
+                        .s4h-breathe,
+                        .s4h-ring,
+                        .s4h-bar,
+                        .s4h-blink {
+                          animation: none !important;
+                        }
+                      }
+                    `}</style>
+
+                    <div className="mx-auto max-w-5xl">
+                  
+                      {selectedMode === 'human' ? (
+                        <>
+                      <div className="ss-structural">
+                        <AirCanGetBetterSection />
+                      </div>
+
+                      <section className="ss-structural pt-4 pb-16 px-6 md:px-12">
+                        <div className="mb-6 flex flex-wrap items-center gap-3">
+                          {storyFourHumanCategoryTabs.map((tab) => {
+                            const active = storyFourHumanCategory === tab.id;
+                            const palette = storyFourHumanPalette[tab.id];
+
+                            return (
+                              <button
+                                key={tab.id}
+                                type="button"
+                                onClick={() => setStoryFourHumanCategory(tab.id)}
+                                className="s4h-pill rounded-full border px-8 py-4 text-[18px] font-semibold tracking-[0.08em] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                                style={
+                                  active
+                                    ? {
+                                        backgroundColor: palette.accent,
+                                        borderColor: palette.accent,
+                                        color: '#ffffff',
+                                        boxShadow: '0 8px 20px rgba(20,30,25,0.12)',
+                                      }
+                                    : {
+                                        backgroundColor: '#ffffff',
+                                        borderColor: 'rgba(20,30,25,0.25)',
+                                        color: '#14201A',
+                                      }
+                                }
+                                aria-pressed={active}
+                              >
+                                {tab.id} {tab.emoji}
+                              </button>
+
+                            );
+                          })}
+                        </div>
+
+                      <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(190px,1fr))]">
+                          {storyFourHumanCards.map((card) => {
+                            const palette = storyFourHumanPalette[card.category];
+                            const flipped = Boolean(storyFourFlippedCards[card.id]);
+
+                            return (
+                              <button
+                                key={card.id}
+                                type="button"
+                                className={`s4h-flip-card s4h-flip-wrap aspect-square min-h-[190px] w-full rounded-2xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${flipped ? 'is-flipped' : ''}`}
+                                onClick={() => {
+                                  setStoryFourFlippedCards((current) => ({
+                                    ...current,
+                                    [card.id]: !current[card.id],
+                                  }));
+                                }}
+                                aria-pressed={flipped}
+                                aria-label={`${card.title}. ${flipped ? 'Tap to flip back' : 'Tap to flip for evidence'}`}
+                              >
+                                <div className="s4h-flip-inner">
+                                  <div
+                                    className="s4h-face s4h-front flex h-full flex-col border border-[rgba(20,30,25,0.12)] bg-white p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md"
+                                  >
+                                    <div
+                                      className="s4h-icon-stage flex h-[44%] items-center justify-center rounded-xl"
+                                      style={{
+                                        color: '#ffffff',
+                                        '--s4h-grad-a': palette.glowA,
+                                        '--s4h-grad-b': palette.glowB,
+                                        '--s4h-grad-c': palette.glowC,
+                                      } as React.CSSProperties}
+                                    >
+                                      <span className="s4h-icon-spark s4h-spark-1" aria-hidden="true" />
+                                      <span className="s4h-icon-spark s4h-spark-2" aria-hidden="true" />
+                                      <div className="h-[74px] w-[84px]">
+                                        <StoryFourIcon iconKey={card.iconKey} />
+                                      </div>
+                                    </div>
+                                    <div className="mt-3 grid flex-1 grid-rows-[auto_1fr_auto] gap-2">
+                                      <span
+                                        className="s4h-pill inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-semibold leading-tight"
+                                        style={{ backgroundColor: palette.tint, color: palette.text }}
+                                      >
+                                        {card.stat}
+                                      </span>
+                                      <h4 className="line-clamp-3 text-base font-semibold leading-snug text-[#14201A] md:text-[15px]">
+                                        {card.title}
+                                      </h4>
+                                      <span className="s4h-hint text-xs text-[#5F6960]">tap to flip</span>
+                                    </div>
+                                  </div>
+
+                                  <div
+                                    className="s4h-face s4h-back grid h-full grid-rows-[auto_1fr_auto] border border-[rgba(20,30,25,0.12)] bg-white p-3 shadow-sm"
+                                  >
+                                    <div className="s4h-label text-xs uppercase tracking-[0.1em] text-[#5F6960]">The evidence</div>
+                                    <p className="line-clamp-[7] text-sm leading-relaxed text-[#14201A]">{card.detail}</p>
+                                    <span className="s4h-hint text-xs text-[#5F6960]">tap to flip back</span>
+                                  </div>
+                                </div>
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <br/>
+                        <div className="rounded-2xl border border-[rgba(20,30,25,0.12)] bg-white p-5 md:p-6">
+                          <h3 className="text-2xl font-bold text-[#14201A]">If this happened everywhere</h3>
+                          <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+                            {storyFourImpactStats.map((stat) => {
+                              const expanded = storyFourExpandedImpactId === stat.id;
+                              return (
+                                <button
+                                  key={stat.id}
+                                  type="button"
+                                  onClick={() => setStoryFourExpandedImpactId(expanded ? null : stat.id)}
+                                  className="rounded-2xl border border-[rgba(20,30,25,0.12)] bg-[#7AD0E4] p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#2A5FA5]"
+                                  aria-expanded={expanded}
+                                >
+                                  <div className="flex items-start justify-between gap-3">
+                                    <div>
+                                      <div className="s4h-display text-3xl font-bold leading-none text-[#14201A]">{stat.value}</div>
+                                      <div className="mt-1 text-sm font-medium text-[#5F6960]">{stat.label}</div>
+                                    </div>
+                                    <span className="s4h-pill rounded-full bg-white px-2 py-1 text-[10px] uppercase tracking-[0.08em] text-[#5F6960]">
+                                      {expanded ? 'collapse' : 'expand'}
+                                    </span>
+                                  </div>
+                                  {expanded && (
+                                    <p className="mt-3 text-sm leading-relaxed text-[#14201A]">{stat.detail}</p>
+                                  )}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      
+                      </section>
+
+              
+                        </>
+                      ) : (
+                        <>
+                          <header className="rounded-2xl border border-[rgba(20,30,25,0.12)] bg-white p-6 md:p-8">
+                            <div className="s4h-eyebrow text-[11px] uppercase tracking-[0.18em] text-[#5F6960]">story 4 ollama generation</div>
+                            <h2 className="s4h-display mt-4 text-4xl font-bold leading-tight text-[#14201A] md:text-5xl">
+                              Future predictions and pathways to clean air
+                            </h2>
+                            <p className="mt-4 max-w-3xl text-base text-[#5F6960] md:text-lg">
+                              Generate Story 4 from this merged Story Studio page using the original Ollama payload and response flow.
+                            </p>
+                            <div className="mt-4 flex flex-wrap items-center gap-3">
+                              {hasGeneratedStoryFourAi && (
+                                <span className="rounded-full px-3 py-1 text-sm font-semibold border bg-emerald-50 text-emerald-700 border-emerald-200">
+                                  Generated by {storyFourAiProvider}
+                                </span>
+                              )}
+                              <button
+                                type="button"
+                                onClick={generateStoryFourAi}
+                                disabled={storyFourAiLoading || hasGeneratedStoryFourAi}
+                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
+                              >
+                                {storyFourAiLoading ? 'Generating Story 4...' : hasGeneratedStoryFourAi ? 'Story 4 Generated' : 'Generate Story 4 AI'}
+                              </button>
+                            </div>
+                            {storyFourAiError && <p className="mt-3 text-sm text-red-600">{storyFourAiError}</p>}
+                            {hasGeneratedStoryFourAi && (
+                              <p className="mt-3 text-sm leading-relaxed text-[#5F6960]">{storyFourAiSummary}</p>
+                            )}
+                          </header>
+
+                          {hasGeneratedStoryFourAi && (
+                            <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
+                              {storyFourAiSections.map((section, index) => (
+                                <article key={`${section.title}-${index}`} className="rounded-2xl border border-[rgba(20,30,25,0.12)] bg-white p-4">
+                                  <div className="s4h-label text-[10px] uppercase tracking-[0.1em] text-[#5F6960]">Story 4 AI section {index + 1}</div>
+                                  <h3 className="mt-2 text-lg font-bold text-[#14201A]">{section.title}</h3>
+                                  <p className="mt-3 text-sm leading-relaxed text-[#2f3a33]">{section.body}</p>
+                                  {section.bullets && section.bullets.length > 0 && (
+                                    <ul className="mt-3 space-y-2">
+                                      {section.bullets.slice(0, 4).map((bullet) => (
+                                        <li key={bullet} className="text-sm text-[#2f3a33]">- {bullet}</li>
+                                      ))}
+                                    </ul>
+                                  )}
+                                </article>
+                              ))}
+                            </section>
+                          )}
+                        </>
+                      )}
+                    </div>
+          
+                  </section>
+                )}
 
                 {selectedTheme.status === 'awaiting-source' && (
-                  <div className="rounded-3xl border border-dashed border-slate-300 bg-white p-6 text-slate-600">
+                  <div className="ss-section rounded-3xl border border-dashed border-slate-300 bg-white p-6 text-slate-600">
                     Story content for this theme has not been added yet. Send the source text when you are ready,
                     and I will split it into subtopics plus a matching AI/Ollama version.
                   </div>
                 )}
 
                 {isAiLikeMode && selectedTheme.status === 'ready' && aiLoading && (
-                  <div className="rounded-3xl border border-slate-200 bg-white p-6 text-slate-600">
+                  <div className="ss-section rounded-3xl border border-slate-200 bg-white p-6 text-slate-600 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
                     Generating a new AI/Ollama story for this theme... this can take a moment on a local model.
                   </div>
                 )}
 
                 {isAiLikeMode && selectedTheme.status === 'ready' && !aiLoading && !hasGeneratedAiStory && !aiError && (
-                  <div className="rounded-3xl border border-slate-200 bg-white p-6 text-slate-600">
+                  <div className="ss-section rounded-3xl border border-slate-200 bg-white p-6 text-slate-600 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
                     No AI story has been generated yet. Click the button above when you want Ollama to generate one.
                   </div>
                 )}

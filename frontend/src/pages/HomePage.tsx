@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   Wind, Map as MapIcon, Activity, BookOpen, Zap,
-  Globe, BarChart2, ChevronRight, Leaf, Database,
+  Globe, ChevronRight, Leaf, Database,
   ZoomIn, ZoomOut, RotateCcw, AlertCircle,
 } from 'lucide-react';
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
@@ -355,21 +355,6 @@ export const HomePage: React.FC = () => {
         </div>
       </section>
 
-      {/* ── CTA ── */}
-      <section className="py-16 px-6">
-        <div className="max-w-screen-2xl mx-auto flex flex-col items-center gap-5 text-center">
-          <p className="text-4xl font-bold text-slate-900">Interested in how we can improve air quality?</p>
-          <Link
-            to="/dashboard"
-            className="group inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold px-10 py-4 rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-300 hover:shadow-blue-500/40 hover:scale-105 text-lg"
-          >
-            Explore
-            <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-          </Link>
-          <p className="text-4xl font-bold text-slate-900 mt-1">Scroll down to know more specifically on what is air quality and data analytics!</p>
-        </div>
-      </section>
-
       {/* ── STATS ── */}
       <section ref={statsRef} className="py-20 px-6 border-t border-white/40">
         <div className="max-w-screen-2xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
@@ -668,19 +653,16 @@ export const HomePage: React.FC = () => {
           <div className="text-center mb-16">
             <p className="text-blue-600 text-base font-semibold uppercase tracking-widest mb-3">What's Inside</p>
             <h2 className="text-5xl font-bold text-slate-900 mb-4">Data Analytics and More</h2>
+            <p className="mt-8 text-4xl font-bold text-slate-900">Interested in how we can improve air quality?</p>
+            <Link
+              to="/dashboard#story-studio-top"
+              className="group mt-5 inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold px-10 py-4 rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-300 hover:shadow-blue-500/40 hover:scale-105 text-lg"
+            >
+              Explore
+              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </Link>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <FeatureCard
-              to="/analytics"
-              gradient="from-emerald-600/20 to-teal-600/20"
-              border="border-emerald-500/20"
-              iconBg="bg-emerald-500/20"
-              icon={<BarChart2 className="w-7 h-7 text-emerald-400" />}
-              title="Analytics"
-              desc="Deep-dive into pollution trends across time and geography. Interactive charts reveal patterns hidden in raw data."
-              badge="Visualizations"
-              badgeColor="text-emerald-300 bg-emerald-500/10 border-emerald-500/20"
-            />
+          <div className="mx-auto grid max-w-3xl grid-cols-1 gap-6">
             <FeatureCard
               to="/realtime"
               gradient="from-orange-600/20 to-red-600/20"

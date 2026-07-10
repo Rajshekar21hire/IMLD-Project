@@ -1,4 +1,183 @@
 /* App-specific styles */
+.sky-bg {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+  background: linear-gradient(180deg, #7ec3ed 0%, #a9daf5 30%, #cdebfa 60%, #e9f7fd 100%);
+}
+
+.sky-wash,
+.sky-cloud,
+.sky-speck {
+  position: absolute;
+  pointer-events: none;
+  will-change: transform, opacity;
+}
+
+.sky-wash {
+  inset: -20%;
+  opacity: 0.95;
+  background:
+    radial-gradient(circle at 14% 20%, rgba(126, 195, 237, 0.55) 0%, rgba(126, 195, 237, 0) 44%),
+    radial-gradient(circle at 78% 18%, rgba(169, 218, 245, 0.5) 0%, rgba(169, 218, 245, 0) 46%),
+    radial-gradient(circle at 18% 78%, rgba(205, 235, 250, 0.45) 0%, rgba(205, 235, 250, 0) 50%),
+    radial-gradient(circle at 84% 76%, rgba(126, 195, 237, 0.35) 0%, rgba(126, 195, 237, 0) 48%);
+  filter: blur(30px);
+  animation: sky-wash-drift 26s ease-in-out infinite alternate;
+}
+
+.sky-cloud {
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.6) 40%, rgba(255, 255, 255, 0) 72%);
+  filter: blur(22px);
+  opacity: 0.98;
+}
+
+.sky-cloud-1 {
+  width: 34vw;
+  height: 34vw;
+  top: 2vh;
+  left: -10vw;
+  animation: sky-cloud-drift-1 38s ease-in-out infinite;
+}
+
+.sky-cloud-2 {
+  width: 28vw;
+  height: 28vw;
+  top: 6vh;
+  right: -8vw;
+  animation: sky-cloud-drift-2 42s ease-in-out infinite;
+}
+
+.sky-cloud-3 {
+  width: 42vw;
+  height: 42vw;
+  top: 22vh;
+  left: 34vw;
+  animation: sky-cloud-drift-3 44s ease-in-out infinite;
+}
+
+.sky-cloud-4 {
+  width: 30vw;
+  height: 30vw;
+  top: 48vh;
+  left: -7vw;
+  animation: sky-cloud-drift-4 34s ease-in-out infinite;
+}
+
+.sky-cloud-5 {
+  width: 32vw;
+  height: 32vw;
+  top: 66vh;
+  right: 3vw;
+  animation: sky-cloud-drift-5 40s ease-in-out infinite;
+}
+
+.sky-speck {
+  top: 112vh;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 0 12px rgba(255, 255, 255, 0.45);
+  filter: blur(0.5px);
+  transform: translate3d(0, 0, 0);
+  animation-name: sky-speck-rise;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+
+@keyframes sky-wash-drift {
+  0% {
+    transform: translate3d(-1.5vw, -1vh, 0) scale(1) rotate(0deg);
+  }
+  33% {
+    transform: translate3d(2vw, 1vh, 0) scale(1.05) rotate(2deg);
+  }
+  66% {
+    transform: translate3d(-1vw, 2vh, 0) scale(1.02) rotate(-2deg);
+  }
+  100% {
+    transform: translate3d(1.5vw, -1vh, 0) scale(1.06) rotate(1deg);
+  }
+}
+
+@keyframes sky-cloud-drift-1 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(3vw, -2vh, 0) scale(1.08);
+  }
+}
+
+@keyframes sky-cloud-drift-2 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-4vw, 1.5vh, 0) scale(1.05);
+  }
+}
+
+@keyframes sky-cloud-drift-3 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(2vw, 2.5vh, 0) scale(1.07);
+  }
+}
+
+@keyframes sky-cloud-drift-4 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(4vw, -1.5vh, 0) scale(1.04);
+  }
+}
+
+@keyframes sky-cloud-drift-5 {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  50% {
+    transform: translate3d(-3vw, -2vh, 0) scale(1.06);
+  }
+}
+
+@keyframes sky-speck-rise {
+  0% {
+    transform: translate3d(calc(var(--speck-drift, 0vw) * -0.35), 0, 0) scale(0.85);
+    opacity: 0;
+  }
+  12% {
+    opacity: 0.9;
+  }
+  55% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate3d(var(--speck-drift, 0vw), -125vh, 0) scale(1.1);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sky-wash,
+  .sky-cloud,
+  .sky-speck {
+    animation: none !important;
+    transform: none !important;
+  }
+}
+
 .prose {
   @apply text-gray-700;
 }
