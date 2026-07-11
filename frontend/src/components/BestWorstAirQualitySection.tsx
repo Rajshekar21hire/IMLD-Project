@@ -60,7 +60,13 @@ export const BestWorstAirQualitySection: React.FC = () => {
           datasets: [
             {
               data: bestAirQualityData.map((item) => item.value),
-              backgroundColor: 'rgb(22, 163, 74)',
+              backgroundColor: [
+                '#15803d',
+                '#22c55e',
+                '#4ade80',
+                '#86efac',
+                '#bbf7d0',
+              ],
               borderRadius: 4,
               borderSkipped: false,
               maxBarThickness: 20,
@@ -81,7 +87,13 @@ export const BestWorstAirQualitySection: React.FC = () => {
           datasets: [
             {
               data: worstAirQualityData.map((item) => item.value),
-              backgroundColor: 'rgb(220, 38, 38)',
+              backgroundColor: [
+                '#fecaca',
+                '#fca5a5',
+                '#f87171',
+                '#ef4444',
+                '#b91c1c',
+              ],
               borderRadius: 4,
               borderSkipped: false,
               maxBarThickness: 20,
@@ -124,8 +136,7 @@ export const BestWorstAirQualitySection: React.FC = () => {
             <br />
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
-                <p className="text-sm font-semibold text-slate-700">Best air quality</p>
-                 <br />
+                <p className="text-sm font-semibold text-slate-700">Best Air Quality</p>
                 <div className="mt-3 h-[200px]">
                   <canvas
                     ref={bestCanvasRef}
@@ -136,7 +147,7 @@ export const BestWorstAirQualitySection: React.FC = () => {
               </article>
 
               <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
-                <p className="text-sm font-semibold text-slate-700">Worst air quality</p>
+                <p className="text-sm font-semibold text-slate-700">Worst Air Quality</p>
                 <div className="mt-3 h-[200px]">
                   <canvas
                     ref={worstCanvasRef}

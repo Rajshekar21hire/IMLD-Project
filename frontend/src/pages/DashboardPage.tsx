@@ -1536,6 +1536,7 @@ export const DashboardPage: React.FC = () => {
 
         .story-studio-page .ss-gradient-heading {
           margin-top: 0.5rem;
+          text-align: center;
         }
 
         .story-studio-page .ss-gradient-line {
@@ -2896,7 +2897,7 @@ export const DashboardPage: React.FC = () => {
                           })}
                         </div>
 
-                      <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(190px,1fr))]">
+                      <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
                           {storyFourHumanCards.map((card) => {
                             const palette = storyFourHumanPalette[card.category];
                             const flipped = Boolean(storyFourFlippedCards[card.id]);
@@ -2905,7 +2906,7 @@ export const DashboardPage: React.FC = () => {
                               <button
                                 key={card.id}
                                 type="button"
-                                className={`s4h-flip-card s4h-flip-wrap aspect-square min-h-[190px] w-full rounded-2xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${flipped ? 'is-flipped' : ''}`}
+                                className={`s4h-flip-card s4h-flip-wrap min-h-[280px] w-full rounded-2xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${flipped ? 'is-flipped' : ''}`}
                                 onClick={() => {
                                   setStoryFourFlippedCards((current) => ({
                                     ...current,
@@ -2952,7 +2953,7 @@ export const DashboardPage: React.FC = () => {
                                     className="s4h-face s4h-back grid h-full grid-rows-[auto_1fr_auto] border border-[rgba(20,30,25,0.12)] bg-white p-3 shadow-sm"
                                   >
                                     <div className="s4h-label text-xs uppercase tracking-[0.1em] text-[#5F6960]">The evidence</div>
-                                    <p className="line-clamp-[7] text-sm leading-relaxed text-[#14201A]">{card.detail}</p>
+                                    <p className="text-sm leading-relaxed text-[#14201A]">{card.detail}</p>
                                     <span className="s4h-hint text-xs text-[#5F6960]">tap to flip back</span>
                                   </div>
                                 </div>
@@ -2962,7 +2963,7 @@ export const DashboardPage: React.FC = () => {
                         </div>
                         <br/>
                         <div className="rounded-2xl border border-[rgba(20,30,25,0.12)] bg-white p-5 md:p-6">
-                          <h3 className="text-2xl font-bold text-[#14201A]">If this happened everywhere</h3>
+                          <h3 className="text-2xl font-bold text-[#14201A]">If This Happened Everywhere</h3>
                           <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
                             {storyFourImpactStats.map((stat) => {
                               const expanded = storyFourExpandedImpactId === stat.id;
