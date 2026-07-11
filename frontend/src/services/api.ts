@@ -23,6 +23,7 @@ export const dataAPI = {
   getCities: (country?: string) => apiClient.get('/data/cities', { params: { country } }),
   getFilteredData: (params: any) => apiClient.get('/data/filter', { params }),
   getStatistics: (params: any) => apiClient.get('/data/statistics', { params }),
+  generateAnalyticsSummary: (data: any) => storyApiClient.post('/data/summary', data),
   getLiveReadings: (params: any) => apiClient.get('/data/live', { params }),
   addSampleData: () => apiClient.post('/data/sample-data'),
   getYearlyTrends: (params?: any) => apiClient.get('/data/yearly-trends', { params }),

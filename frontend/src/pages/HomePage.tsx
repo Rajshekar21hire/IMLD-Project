@@ -662,7 +662,7 @@ export const HomePage: React.FC = () => {
               <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
             </Link>
           </div>
-          <div className="mx-auto grid max-w-3xl grid-cols-1 gap-6">
+          <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2">
             <FeatureCard
               to="/realtime"
               gradient="from-orange-600/20 to-red-600/20"
@@ -673,6 +673,17 @@ export const HomePage: React.FC = () => {
               desc="Watch live AQI readings update dynamically. City-level granularity with instant pollutant breakdowns."
               badge="Live Data"
               badgeColor="text-orange-300 bg-orange-500/10 border-orange-500/20"
+            />
+            <FeatureCard
+              to="/analytics"
+              gradient="from-blue-600/20 to-indigo-600/20"
+              border="border-blue-500/20"
+              iconBg="bg-blue-500/20"
+              icon={<Database className="w-7 h-7 text-blue-400" />}
+              title="Analytics Dashboard"
+              desc="Explore trends, compare pollutants, and generate AI summaries from the historical dataset."
+              badge="Insights"
+              badgeColor="text-blue-300 bg-blue-500/10 border-blue-500/20"
             />
           </div>
         </div>

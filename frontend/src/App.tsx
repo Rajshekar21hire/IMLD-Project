@@ -1,11 +1,12 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import { Wind } from 'lucide-react';
 import { FilterProvider } from './hooks/useFilters';
 import './styles/App.css';
 
 const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })));
 const DashboardPage = lazy(() => import('./pages/DashboardPage').then(m => ({ default: m.DashboardPage })));
+const AnalyticsPage = lazy(() => import('./pages/AnalyticsPage').then(m => ({ default: m.AnalyticsPage })));
 const RealtimePollutionPage = lazy(() => import('./pages/RealtimePollutionPage').then(m => ({ default: m.RealtimePollutionPage })));
 const AboutPage = lazy(() => import('./pages/AboutPage').then(m => ({ default: m.AboutPage })));
 
@@ -41,6 +42,12 @@ function App() {
                   Story Studio
                 </Link>
                 <Link
+                  to="/analytics"
+                  className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
+                >
+                  Analytics
+                </Link>
+                <Link
                   to="/realtime"
                   className="text-gray-600 hover:text-gray-900 font-medium transition-colors"
                 >
@@ -55,7 +62,7 @@ function App() {
             <Routes>
               <Route path="/" element={<HomePage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
-              <Route path="/analytics" element={<Navigate to="/dashboard" replace />} />
+              <Route path="/analytics" element={<AnalyticsPage />} />
               <Route path="/realtime" element={<RealtimePollutionPage />} />
               <Route path="/about" element={<AboutPage />} />
             </Routes>
@@ -76,6 +83,7 @@ function App() {
                   <ul className="space-y-2 text-gray-400">
                     <li><Link to="/" className="hover:text-white transition-colors">Home</Link></li>
                     <li><Link to="/dashboard" className="hover:text-white transition-colors">Story Studio</Link></li>
+                    <li><Link to="/analytics" className="hover:text-white transition-colors">Analytics</Link></li>
                     <li><Link to="/realtime" className="hover:text-white transition-colors">Real-Time</Link></li>
                   </ul>
                 </div>
