@@ -35,7 +35,7 @@ const MAP_AQI_BANDS = [
   { max: Infinity, color: '#7c3aed', label: 'Hazardous',        range: '300+'   },
 ];
 const MAP_NO_DATA_COLOR = '#334155';
-const MAP_OCEAN_COLOR   = '#0c1a2e';
+const MAP_OCEAN_COLOR   = '#95BFEE';
 const MAP_BORDER_COLOR  = '#0f172a';
 const MAP_DEFAULT_POSITION: MapPosition = { coordinates: [10, 20], zoom: 1 };
 function aqiColor(aqi: number | null): string {
@@ -99,9 +99,9 @@ const POLLUTANTS = [
   {
     key: 'pm25', label: 'PM2.5', color: '#b91c1c', bg: 'bg-red-800',
     guideline: '5 µg/m³ annual mean (WHO 2021)',
-    description: 'Fine particulate matter — particles under 2.5 micrometres in diameter. The single most lethal air pollutant tracked globally.',
+    description: 'Fine particulate matter - particles under 2.5 micrometres in diameter. The single most lethal air pollutant tracked globally.',
     sources: 'Vehicle exhaust, coal combustion, wildfires, agricultural burning, industrial processes.',
-    health: 'Penetrates deep into lung tissue and enters the bloodstream, driving cardiovascular disease, stroke, lung cancer, diabetes, and cognitive decline — no safe level has been identified.',
+    health: 'Penetrates deep into lung tissue and enters the bloodstream, driving cardiovascular disease, stroke, lung cancer, diabetes, and cognitive decline - no safe level has been identified.',
     hazard: 'Very high',
     hazardColor: '#b91c1c',
   },
@@ -110,14 +110,14 @@ const POLLUTANTS = [
     guideline: '15 µg/m³ annual mean (WHO 2021)',
     description: 'Coarse particles between 2.5 and 10 micrometres, trapped in the nose and upper airways.',
     sources: 'Road dust, construction, pollen, sea salt, agricultural operations.',
-    health: 'Nasal and throat irritation, bronchitis, and aggravated asthma — largely filtered before reaching the lungs, unlike PM2.5.',
+    health: 'Nasal and throat irritation, bronchitis, and aggravated asthma: largely filtered before reaching the lungs, unlike PM2.5.',
     hazard: 'Moderate',
     hazardColor: '#c2410c',
   },
   {
     key: 'no2', label: 'NO₂', color: '#a16207', bg: 'bg-yellow-700',
     guideline: '10 µg/m³ annual mean (WHO 2021)',
-    description: 'Nitrogen dioxide, a reddish-brown gas formed when fuel burns at high temperatures — a major marker of traffic pollution.',
+    description: 'Nitrogen dioxide, a reddish-brown gas formed when fuel burns at high temperatures which is a major marker of traffic pollution.',
     sources: 'Vehicle engines, power plants, industrial boilers, gas appliances.',
     health: 'Inflames the lining of the airways, reducing lung function and worsening asthma; long-term exposure is linked to development of asthma in children.',
     hazard: 'High near roads',
@@ -126,7 +126,7 @@ const POLLUTANTS = [
   {
     key: 'o3', label: 'O₃', color: '#15803d', bg: 'bg-green-700',
     guideline: '100 µg/m³ peak season daily max (WHO 2021)',
-    description: 'Ground-level ozone, formed when NO₂ and volatile organic compounds react in sunlight — not emitted directly, peaks on hot, sunny, stagnant days.',
+    description: 'Ground-level ozone, formed when NO₂ and volatile organic compounds react in sunlight - not emitted directly, peaks on hot, sunny, stagnant days.',
     sources: 'Vehicle exhaust + industrial VOCs + sunlight.',
     health: 'Irritates the respiratory system, triggers asthma attacks, reduces lung capacity, and damages crops and ecosystems as well as human health.',
     hazard: 'High in summer heat',
@@ -135,7 +135,7 @@ const POLLUTANTS = [
   {
     key: 'so2', label: 'SO₂', color: '#0f766e', bg: 'bg-teal-700',
     guideline: '40 µg/m³ 24-hour mean (WHO 2021)',
-    description: 'Sulphur dioxide, a sharp-smelling gas released primarily by burning high-sulphur coal and heavy oil — a major cause of acid rain.',
+    description: 'Sulphur dioxide, a sharp-smelling gas released primarily by burning high-sulphur coal and heavy oil: a major cause of acid rain.',
     sources: 'Coal-fired power plants, oil refineries, metal smelters, volcanoes.',
     health: 'Constricts airways immediately on inhalation, is a major driver of COPD near industrial zones, and combines with water vapour to form sulphuric acid in the lungs.',
     hazard: 'High near industry',
@@ -170,7 +170,7 @@ const PollutantExplorer: React.FC = () => {
               <div className="flip-card-front flex flex-col items-center justify-center border"
                 style={{ backgroundColor: p.color + '15', borderColor: p.color + '55' }}
               >
-                <div className="text-3xl font-black text-slate-900 mb-2" dangerouslySetInnerHTML={{ __html: p.label }} />
+                <div className="text-3xl font-black mb-2" style={{ color: p.color }} dangerouslySetInnerHTML={{ __html: p.label }} />
                 <div className="text-xs uppercase tracking-widest text-slate-500 mt-1">Hover to explore</div>
                 <div className="mt-4 w-10 h-1 rounded-full" style={{ backgroundColor: p.color }} />
               </div>
@@ -298,6 +298,27 @@ export const HomePage: React.FC = () => {
           -webkit-text-fill-color:transparent;
           animation:shimmer 4s linear infinite;
         }
+        .aqi-scale-text{
+          background:linear-gradient(90deg,#22c55e 0%,#eab308 35%,#f97316 65%,#ef4444 100%);
+          -webkit-background-clip:text;
+          background-clip:text;
+          -webkit-text-fill-color:transparent;
+          background-size:100% auto;
+        }
+        .teal-shimmer-text{
+          background-image:linear-gradient(90deg,#0c447c 0%,#1d9e75 35%,#378add 70%,#0c447c 100%);
+          background-size:300% 100%;
+          -webkit-background-clip:text;
+          background-clip:text;
+          -webkit-text-fill-color:transparent;
+          color:transparent;
+          animation:tealShimmer 6s ease-in-out infinite;
+        }
+        @keyframes tealShimmer{
+          0%{background-position:0% 50%}
+          50%{background-position:100% 50%}
+          100%{background-position:0% 50%}
+        }
         .card-lift{transition:transform 0.3s ease,box-shadow 0.3s ease}
         .card-lift:hover{transform:translateY(-6px)}
         .aqi-seg{transition:transform 0.2s ease,filter 0.2s ease;position:relative}
@@ -359,32 +380,32 @@ export const HomePage: React.FC = () => {
       <section ref={statsRef} className="py-20 px-6 border-t border-white/40">
         <div className="max-w-screen-2xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6">
           <StatCard
-            icon={<Globe className="w-6 h-6 text-blue-400" />}
+            icon={<Globe className="w-6 h-6 text-[#6A9FB5]" />}
             value={`${countries}+`}
             label="Countries"
-            color="blue"
+            color="blue1"
           />
           <StatCard
-            icon={<Database className="w-6 h-6 text-emerald-400" />}
+            icon={<Database className="w-6 h-6 text-[#6A9FB5]" />}
             value={`${readings}K+`}
             label="Data Readings"
-            color="emerald"
+            color="blue2"
           />
           <StatCard
-            icon={<MapIcon className="w-6 h-6 text-violet-400" />}
+            icon={<MapIcon className="w-6 h-6 text-[#6A9FB5]" />}
             value={`${cities}+`}
             label="Cities Tracked"
-            color="violet"
+            color="blue3"
           />
           <StatCard
-            icon={<Zap className="w-6 h-6 text-amber-400" />}
+            icon={<Zap className="w-6 h-6 text-[#6A9FB5]" />}
             value="Live"
             label="AQI Updates"
-            color="amber"
+            color="blue4"
           />
         </div>
-        <p className="mt-8 text-center text-slate-500 text-2xl max-w-4xl mx-auto">
-          Data sourced from the World Air Quality Index (WAQI) project — a global network of over 12,000 air quality monitoring stations across 1,000+ cities, covering PM2.5, PM10, NO₂, O₃, SO₂, and CO pollutants.
+        <p className="mt-8 text-center text-slate-500 text-2xl w-full mx-auto">
+          Data sourced from the World Air Quality Index (WAQI) project - a global network of over 12,000 air quality monitoring stations across 1,000+ cities, covering PM2.5, PM10, NO₂, O₃, SO₂, and CO pollutants.
         </p>
       </section>
 
@@ -392,9 +413,9 @@ export const HomePage: React.FC = () => {
       <section className="py-16 px-6" id="worldwide-aqi">
         <div className="max-w-screen-2xl mx-auto">
           <div className="mb-6">
-            <div className="flex items-center gap-3 mb-1">
+            <div className="flex items-center justify-center gap-3 mb-1">
               <Globe className="w-7 h-7 text-blue-400" />
-              <h2 className="text-5xl font-bold text-slate-900">Worldwide Air Quality</h2>
+              <h2 className="text-6xl font-extrabold shimmer-text">Worldwide Air Quality</h2>
             </div>
             <p className="text-slate-600 text-2xl mt-2">
               Explore the average Air Quality Index (AQI) for each country based on historical data. Drag to pan, and scroll or use the buttons to zoom.
@@ -489,13 +510,13 @@ export const HomePage: React.FC = () => {
               {MAP_AQI_BANDS.map(band => (
                 <div key={band.label} className="flex items-center gap-1.5">
                   <div className="w-3.5 h-3.5 rounded-sm flex-shrink-0" style={{ backgroundColor: band.color }} />
-                  <span className="text-xs text-slate-700">{band.range}</span>
-                  <span className="text-xs text-slate-500">({band.label})</span>
+                  <span className="text-base text-slate-700">{band.range}</span>
+                  <span className="text-base text-slate-500">({band.label})</span>
                 </div>
               ))}
               <div className="flex items-center gap-1.5">
                 <div className="w-3.5 h-3.5 rounded-sm flex-shrink-0" style={{ backgroundColor: MAP_NO_DATA_COLOR }} />
-                <span className="text-xs text-slate-400">No data</span>
+                <span className="text-base text-slate-400">No data</span>
               </div>
             </div>
           </div>
@@ -527,7 +548,7 @@ export const HomePage: React.FC = () => {
       <section className="py-20 px-6">
         <div className="max-w-screen-2xl mx-auto">
           <div className="text-center mb-12">
-            <h3 className="text-5xl font-bold text-slate-900 mb-6">What exactly are we breathing?</h3>
+            <h3 className="text-5xl font-bold mb-6" style={{ color: '#1e3a5f' }}>What Exactly Are We Breathing?</h3>
           </div>
 
           {/* Pollutant flip cards */}
@@ -549,11 +570,11 @@ export const HomePage: React.FC = () => {
             <p className="text-blue-600 text-base font-semibold uppercase tracking-widest mb-3">
               Understanding AQI
             </p>
-            <h2 className="text-5xl font-bold text-slate-900 mb-4">The Air Quality Index Scale</h2>
+            <h2 className="text-5xl font-bold mb-4" style={{ color: '#1e3a5f' }}>The Air Quality Index Scale</h2>
             <p className="text-slate-600 max-w-5xl mx-auto text-2xl">
               Clean air is essential for healthy living, but according to the World Health Organization, almost 99% of the global population breathes air exceeding their guideline limits of air pollution.
               AQI translates complex pollution measurements into one number that tells you how clean
-              or polluted the air is — and what health effects might be a concern.
+              or polluted the air is and what health effects might be a concern.
             </p>
           </div>
 
@@ -622,15 +643,15 @@ export const HomePage: React.FC = () => {
                   onMouseLeave={() => setHoveredAqi(null)}
                 >
                   <div>
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center justify-center gap-2 mb-3">
                       <div
                         className="rounded-sm flex-shrink-0 transition-all duration-300"
                         style={{ backgroundColor: band.color, width: isActive ? '18px' : '16px', height: isActive ? '18px' : '16px' }}
                       />
                     <span className={`font-bold text-slate-900 transition-all duration-300 ${isActive ? 'text-xl' : 'text-lg'}`}>{band.label}</span>
                   </div>
-                  <p className={`text-slate-600 mb-2 transition-all duration-300 ${isActive ? 'text-lg' : 'text-base'}`}>{band.range}</p>
-                  <p className={`text-slate-600 leading-relaxed transition-all duration-300 ${isActive ? 'text-base' : 'text-sm'}`}>{band.desc}</p>
+                  <p className={`text-center text-slate-600 mb-2 transition-all duration-300 ${isActive ? 'text-lg' : 'text-base'}`}>{band.range}</p>
+                  <p className={`text-center text-slate-600 leading-relaxed transition-all duration-300 ${isActive ? 'text-base' : 'text-sm'}`}>{band.desc}</p>
                   </div>
                   {isSliderActive && (
                     <div
@@ -651,9 +672,9 @@ export const HomePage: React.FC = () => {
       <section className="py-28 px-6">
         <div className="max-w-screen-2xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-blue-600 text-base font-semibold uppercase tracking-widest mb-3">What's Inside</p>
-            <h2 className="text-5xl font-bold text-slate-900 mb-4">Data Analytics and More</h2>
-            <p className="mt-8 text-4xl font-bold text-slate-900">Interested in how we can improve air quality?</p>
+            <p className="text-blue-600 text-base font-semibold uppercase tracking-widest mb-3" style={{ color: '#1e3a5f' }}>What's Inside</p>
+            <h2 className="text-5xl font-bold mb-4" style={{ color: '#1e3a5f' }}>Data Analytics and More</h2>
+            <p className="mt-8 text-4xl font-bold" style={{ color: '#1e3a5f' }}>Interested In How We Can <span className="teal-shimmer-text">Improve Air Quality</span>?</p>
             <Link
               to="/dashboard#story-studio-top"
               className="group mt-5 inline-flex items-center gap-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold px-10 py-4 rounded-xl shadow-lg shadow-blue-500/25 transition-all duration-300 hover:shadow-blue-500/40 hover:scale-105 text-lg"
@@ -665,14 +686,14 @@ export const HomePage: React.FC = () => {
           <div className="mx-auto grid max-w-5xl grid-cols-1 gap-6 md:grid-cols-2">
             <FeatureCard
               to="/realtime"
-              gradient="from-orange-600/20 to-red-600/20"
-              border="border-orange-500/20"
-              iconBg="bg-orange-500/20"
-              icon={<Activity className="w-7 h-7 text-orange-400" />}
+              gradient="from-blue-600/20 to-sky-600/20"
+              border="border-blue-500/20"
+              iconBg="bg-blue-500/20"
+              icon={<Activity className="w-7 h-7 text-blue-400" />}
               title="Real-Time Monitor"
               desc="Watch live AQI readings update dynamically. City-level granularity with instant pollutant breakdowns."
               badge="Live Data"
-              badgeColor="text-orange-300 bg-orange-500/10 border-orange-500/20"
+              badgeColor="text-[#2E4A62] font-semibold bg-blue-100/60 border-blue-400/40"
             />
             <FeatureCard
               to="/analytics"
@@ -683,7 +704,7 @@ export const HomePage: React.FC = () => {
               title="Analytics Dashboard"
               desc="Explore trends, compare pollutants, and generate AI summaries from the historical dataset."
               badge="Insights"
-              badgeColor="text-blue-300 bg-blue-500/10 border-blue-500/20"
+              badgeColor="text-[#2E4A62] font-semibold bg-blue-100/60 border-blue-400/40"
             />
           </div>
         </div>
@@ -695,10 +716,10 @@ export const HomePage: React.FC = () => {
 
 function MapStatCard({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
   return (
-    <div className="bg-white rounded-xl p-4 border border-[#CBD5E1] shadow-sm">
-      <p className="text-sm text-slate-500 uppercase tracking-wide mb-1">{label}</p>
-      <p className="text-2xl font-bold truncate" style={{ color: color ?? '#1e293b' }}>{value}</p>
-      {sub && <p className="text-sm text-slate-500 mt-0.5">{sub}</p>}
+    <div className="rounded-xl p-4 border border-blue-200 bg-blue-50 shadow-sm text-center">
+      <p className="text-sm text-slate-500 uppercase tracking-wide mb-1 text-center">{label}</p>
+      <p className="text-2xl font-bold truncate text-center" style={{ color: color ?? '#1e293b' }}>{value}</p>
+      {sub && <p className="text-sm text-slate-500 mt-0.5 text-center">{sub}</p>}
     </div>
   );
 }
@@ -740,11 +761,19 @@ function StatCard({
     emerald: 'border-emerald-500/20 bg-emerald-500/5',
     violet: 'border-violet-500/20 bg-violet-500/5',
     amber: 'border-amber-500/20 bg-amber-500/5',
+    violet1: 'border-violet-200 bg-violet-50',
+    violet2: 'border-purple-200 bg-purple-100',
+    violet3: 'border-violet-300 bg-violet-100',
+    violet4: 'border-purple-300 bg-purple-50',
+    blue1: 'border-blue-200 bg-blue-50',
+    blue2: 'border-blue-200 bg-blue-50',
+    blue3: 'border-blue-200 bg-blue-50',
+    blue4: 'border-blue-200 bg-blue-50',
   };
   return (
-    <div className={`card-lift rounded-2xl border p-6 text-center bg-white shadow-sm ${borders[color]}`}>
+    <div className={`card-lift rounded-2xl border p-6 text-center shadow-sm ${borders[color]}`}>
       <div className="flex justify-center mb-3">{icon}</div>
-      <p className="text-4xl font-extrabold text-slate-900 mb-1">{value}</p>
+      <p className="text-4xl font-extrabold mb-1" style={{ color: '#1e3a5f' }}>{value}</p>
       <p className="text-base text-slate-500">{label}</p>
     </div>
   );
