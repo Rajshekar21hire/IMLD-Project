@@ -99,9 +99,9 @@ const POLLUTANTS = [
   {
     key: 'pm25', label: 'PM2.5', color: '#b91c1c', bg: 'bg-red-800',
     guideline: '5 µg/m³ annual mean (WHO 2021)',
-    description: 'Fine particulate matter — particles under 2.5 micrometres in diameter. The single most lethal air pollutant tracked globally.',
+    description: 'Fine particulate matter - particles under 2.5 micrometres in diameter. The single most lethal air pollutant tracked globally.',
     sources: 'Vehicle exhaust, coal combustion, wildfires, agricultural burning, industrial processes.',
-    health: 'Penetrates deep into lung tissue and enters the bloodstream, driving cardiovascular disease, stroke, lung cancer, diabetes, and cognitive decline — no safe level has been identified.',
+    health: 'Penetrates deep into lung tissue and enters the bloodstream, driving cardiovascular disease, stroke, lung cancer, diabetes, and cognitive decline - no safe level has been identified.',
     hazard: 'Very high',
     hazardColor: '#b91c1c',
   },
@@ -110,14 +110,14 @@ const POLLUTANTS = [
     guideline: '15 µg/m³ annual mean (WHO 2021)',
     description: 'Coarse particles between 2.5 and 10 micrometres, trapped in the nose and upper airways.',
     sources: 'Road dust, construction, pollen, sea salt, agricultural operations.',
-    health: 'Nasal and throat irritation, bronchitis, and aggravated asthma — largely filtered before reaching the lungs, unlike PM2.5.',
+    health: 'Nasal and throat irritation, bronchitis, and aggravated asthma: largely filtered before reaching the lungs, unlike PM2.5.',
     hazard: 'Moderate',
     hazardColor: '#c2410c',
   },
   {
     key: 'no2', label: 'NO₂', color: '#a16207', bg: 'bg-yellow-700',
     guideline: '10 µg/m³ annual mean (WHO 2021)',
-    description: 'Nitrogen dioxide, a reddish-brown gas formed when fuel burns at high temperatures — a major marker of traffic pollution.',
+    description: 'Nitrogen dioxide, a reddish-brown gas formed when fuel burns at high temperatures which is a major marker of traffic pollution.',
     sources: 'Vehicle engines, power plants, industrial boilers, gas appliances.',
     health: 'Inflames the lining of the airways, reducing lung function and worsening asthma; long-term exposure is linked to development of asthma in children.',
     hazard: 'High near roads',
@@ -126,7 +126,7 @@ const POLLUTANTS = [
   {
     key: 'o3', label: 'O₃', color: '#15803d', bg: 'bg-green-700',
     guideline: '100 µg/m³ peak season daily max (WHO 2021)',
-    description: 'Ground-level ozone, formed when NO₂ and volatile organic compounds react in sunlight — not emitted directly, peaks on hot, sunny, stagnant days.',
+    description: 'Ground-level ozone, formed when NO₂ and volatile organic compounds react in sunlight - not emitted directly, peaks on hot, sunny, stagnant days.',
     sources: 'Vehicle exhaust + industrial VOCs + sunlight.',
     health: 'Irritates the respiratory system, triggers asthma attacks, reduces lung capacity, and damages crops and ecosystems as well as human health.',
     hazard: 'High in summer heat',
@@ -135,7 +135,7 @@ const POLLUTANTS = [
   {
     key: 'so2', label: 'SO₂', color: '#0f766e', bg: 'bg-teal-700',
     guideline: '40 µg/m³ 24-hour mean (WHO 2021)',
-    description: 'Sulphur dioxide, a sharp-smelling gas released primarily by burning high-sulphur coal and heavy oil — a major cause of acid rain.',
+    description: 'Sulphur dioxide, a sharp-smelling gas released primarily by burning high-sulphur coal and heavy oil: a major cause of acid rain.',
     sources: 'Coal-fired power plants, oil refineries, metal smelters, volcanoes.',
     health: 'Constricts airways immediately on inhalation, is a major driver of COPD near industrial zones, and combines with water vapour to form sulphuric acid in the lungs.',
     hazard: 'High near industry',
@@ -405,7 +405,7 @@ export const HomePage: React.FC = () => {
           />
         </div>
         <p className="mt-8 text-center text-slate-500 text-2xl w-full mx-auto">
-          Data sourced from the World Air Quality Index (WAQI) project — a global network of over 12,000 air quality monitoring stations across 1,000+ cities, covering PM2.5, PM10, NO₂, O₃, SO₂, and CO pollutants.
+          Data sourced from the World Air Quality Index (WAQI) project - a global network of over 12,000 air quality monitoring stations across 1,000+ cities, covering PM2.5, PM10, NO₂, O₃, SO₂, and CO pollutants.
         </p>
       </section>
 
@@ -574,7 +574,7 @@ export const HomePage: React.FC = () => {
             <p className="text-slate-600 max-w-5xl mx-auto text-2xl">
               Clean air is essential for healthy living, but according to the World Health Organization, almost 99% of the global population breathes air exceeding their guideline limits of air pollution.
               AQI translates complex pollution measurements into one number that tells you how clean
-              or polluted the air is — and what health effects might be a concern.
+              or polluted the air is and what health effects might be a concern.
             </p>
           </div>
 
@@ -643,15 +643,15 @@ export const HomePage: React.FC = () => {
                   onMouseLeave={() => setHoveredAqi(null)}
                 >
                   <div>
-                    <div className="flex items-center gap-2 mb-3">
+                    <div className="flex items-center justify-center gap-2 mb-3">
                       <div
                         className="rounded-sm flex-shrink-0 transition-all duration-300"
                         style={{ backgroundColor: band.color, width: isActive ? '18px' : '16px', height: isActive ? '18px' : '16px' }}
                       />
                     <span className={`font-bold text-slate-900 transition-all duration-300 ${isActive ? 'text-xl' : 'text-lg'}`}>{band.label}</span>
                   </div>
-                  <p className={`text-slate-600 mb-2 transition-all duration-300 ${isActive ? 'text-lg' : 'text-base'}`}>{band.range}</p>
-                  <p className={`text-slate-600 leading-relaxed transition-all duration-300 ${isActive ? 'text-base' : 'text-sm'}`}>{band.desc}</p>
+                  <p className={`text-center text-slate-600 mb-2 transition-all duration-300 ${isActive ? 'text-lg' : 'text-base'}`}>{band.range}</p>
+                  <p className={`text-center text-slate-600 leading-relaxed transition-all duration-300 ${isActive ? 'text-base' : 'text-sm'}`}>{band.desc}</p>
                   </div>
                   {isSliderActive && (
                     <div
@@ -716,7 +716,7 @@ export const HomePage: React.FC = () => {
 
 function MapStatCard({ label, value, sub, color }: { label: string; value: string; sub?: string; color?: string }) {
   return (
-    <div className="rounded-xl p-4 border border-violet-300 bg-violet-50 shadow-sm text-center">
+    <div className="rounded-xl p-4 border border-blue-200 bg-blue-50 shadow-sm text-center">
       <p className="text-sm text-slate-500 uppercase tracking-wide mb-1 text-center">{label}</p>
       <p className="text-2xl font-bold truncate text-center" style={{ color: color ?? '#1e293b' }}>{value}</p>
       {sub && <p className="text-sm text-slate-500 mt-0.5 text-center">{sub}</p>}
@@ -765,10 +765,10 @@ function StatCard({
     violet2: 'border-purple-200 bg-purple-100',
     violet3: 'border-violet-300 bg-violet-100',
     violet4: 'border-purple-300 bg-purple-50',
-    blue1: 'border-violet-300 bg-violet-100',
-    blue2: 'border-violet-300 bg-violet-100',
-    blue3: 'border-violet-300 bg-violet-100',
-    blue4: 'border-violet-300 bg-violet-100',
+    blue1: 'border-blue-200 bg-blue-50',
+    blue2: 'border-blue-200 bg-blue-50',
+    blue3: 'border-blue-200 bg-blue-50',
+    blue4: 'border-blue-200 bg-blue-50',
   };
   return (
     <div className={`card-lift rounded-2xl border p-6 text-center shadow-sm ${borders[color]}`}>
