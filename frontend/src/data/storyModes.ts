@@ -13,7 +13,7 @@ export const storyModes: { id: StoryMode; label: string; description: string }[]
   },
   {
     id: 'agentic',
-    label: 'Agentic AI Generated',
-    description: 'Agentic AI narrative using the same theme and subtopic structure.',
+    label: 'Emotionally Intelligent AI',
+    description: 'A warmer, human-centered AI narrative using the same theme and subtopic structure.',
   },
 ];

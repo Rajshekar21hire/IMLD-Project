@@ -1,17 +1,40 @@
 """Story routes for generated stories and theme-based AI storytelling."""
 import json
 import re
+from datetime import datetime
 
 from flask import Blueprint, jsonify, request
 from sqlalchemy import func
 
-from app.models import DataStory, AirQualityData
+from app import db
+from app.models import DataStory, AirQualityData, CachedNarrative
 from app.services.chat_provider_service import ChatProviderService
 from app.services.story_service import StoryService
 
 bp = Blueprint('stories', __name__, url_prefix='/api/stories')
 story_service = StoryService()
 chat_provider_service = ChatProviderService()
+
+
+def _get_cached_narrative(cache_key):
+    """Return a previously generated narrative payload, or None on a miss."""
+    cached = CachedNarrative.query.filter_by(cache_key=cache_key).first()
+    return (cached.payload, cached.provider) if cached else (None, None)
+
+
+def _set_cached_narrative(cache_key, payload, provider):
+    """Persist a generated narrative so future requests for the same
+    parameters skip the Ollama call. Only call this with a real AI-generated
+    payload - never cache fallback text, or it would stick after Ollama comes
+    back up."""
+    cached = CachedNarrative.query.filter_by(cache_key=cache_key).first()
+    if cached:
+        cached.payload = payload
+        cached.provider = provider
+        cached.created_at = datetime.utcnow()
+    else:
+        db.session.add(CachedNarrative(cache_key=cache_key, payload=payload, provider=provider))
+    db.session.commit()
 
 
 def _safe_json_loads(payload_text):
@@ -121,7 +144,6 @@ def _build_theme_story_fallback(title, overview, prompt_focus, source_sections):
 def generate_story():
     """Generate a new story from air quality data"""
     try:
-        from datetime import datetime
         data = request.get_json()
         country = data.get('country')
         city = data.get('city')
@@ -353,6 +375,349 @@ Source subtopics:
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+@bp.route('/deep-dive-narrative', methods=['POST'])
+def generate_deep_dive_narrative():
+    """Generate AI-narrated framing text for the Deep Dives section.
+
+    The factual backbone (city pollution-source table, proven interventions, impact
+    numbers) is never regenerated here - only the connective narrative text is, so the
+    model cannot hallucinate new statistics. Tone differs between 'ai' (analytical) and
+    'agentic' (warm, emotionally intelligent) modes.
+    """
+    try:
+        data = request.get_json() or {}
+        mode = str(data.get('mode', 'ai')).strip().lower()
+        if mode not in ('ai', 'agentic'):
+            mode = 'ai'
+
+        cache_key = f'deep_dive_narrative:{mode}'
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({
+                'success': True,
+                'data': {
+                    'provider': cached_provider,
+                    'mode': mode,
+                    'narrative': cached_payload,
+                }
+            }), 200
+
+        tone_instruction = (
+            "Write in a clear, analytical data-storytelling voice aimed at a general dashboard audience."
+            if mode == 'ai' else
+            "Write with emotional intelligence: warm, hopeful, human-centered and positive in tone, as if "
+            "speaking to someone who cares about the people affected - while staying strictly grounded in "
+            "the facts below. Do not invent new statistics or claims."
+        )
+
+        prompt = f"""
+You are writing framing narration for an air-quality storytelling dashboard about five of the world's
+most polluted cities (Lahore, Delhi, New Delhi, Dhaka, Ghaziabad).
+
+Established facts you must stay grounded in (do not invent new numbers or claims):
+- The five cities share a structural cluster of causes: fossil-fuel transport, coal-fired brick kilns, and unregulated industrial emissions.
+- Flat basin geography causes winter temperature inversions that trap pollutants and turn ordinary emissions into hazardous seasonal spikes.
+- Overlapping jurisdictions across states and countries mean no single authority owns the airshed, undermining enforcement.
+- Proven interventions exist across Personal, Household, Policy, and Community categories (electric vehicles, clean cookstoves, industrial emission standards, low-emission zones, etc).
+- If these interventions were adopted globally: 3.7 million lives could be saved per year, visible city-level change is possible within 5 years, indoor PM2.5 can drop 90% immediately with clean cookstoves, and 48-hour advance pollution warnings are now technically possible.
+
+{tone_instruction}
+
+Return valid JSON only with this exact shape:
+{{
+  "intro": ["paragraph 1", "paragraph 2"],
+  "pattern_cards": [
+    {{"eyebrow": "...", "title": "...", "body": "..."}},
+    {{"eyebrow": "...", "title": "...", "body": "..."}},
+    {{"eyebrow": "...", "title": "...", "body": "..."}}
+  ],
+  "intervention_intro": "...",
+  "impact_intro": "..."
+}}
+
+Rules:
+- "intro" reframes why these five cities are the worst-affected (2 short paragraphs).
+- "pattern_cards" mirrors three angles in this order: the shared structural cluster of causes, the geography that amplifies it, and the governance gap that undermines fixes.
+- "intervention_intro" is 1-2 sentences framing that proven fixes exist across personal, household, policy, and community action.
+- "impact_intro" is 1 sentence framing what would happen if these interventions were adopted everywhere.
+- No markdown fences. No extra keys. Keep each field concise (2-3 sentences max).
+"""
+
+        provider_used = None
+        parsed = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=900,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            parsed = _safe_json_loads(response_text)
+        except Exception:
+            parsed = None
+
+        if not parsed or not isinstance(parsed.get('pattern_cards'), list) or len(parsed.get('pattern_cards')) == 0:
+            return jsonify({
+                'success': False,
+                'error': 'The Ollama service did not return a usable narrative. Make sure Ollama is running and try again.',
+            }), 502
+
+        _set_cached_narrative(cache_key, parsed, provider_used)
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'provider': provider_used,
+                'mode': mode,
+                'narrative': parsed,
+            }
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+# Fixed facts for the "Our duty" intervention tiles and the "If this happened
+# everywhere" impact stats (mirrors the human-authored data in
+# frontend/src/pages/DashboardPage.tsx). Only this factual core is given to the
+# model - it may only rewrite phrasing/tone, never the numbers.
+DEEP_DIVE_INTERVENTION_FACTS = [
+    {'id': 'personal-ev', 'category': 'Personal', 'title': 'Switch to an electric or hybrid vehicle',
+     'facts': 'NO2 cut 60-100% per vehicle. Road transport is the largest single contributor to urban NO2; switching from petrol removes tailpipe PM2.5 entirely.'},
+    {'id': 'personal-bike', 'category': 'Personal', 'title': 'Choose cycling or walking for short trips',
+     'facts': 'Zero tailpipe emissions per trip. Every trip shifted from car to bike removes a vehicle from the road and cuts time spent in high-traffic exposure zones.'},
+    {'id': 'household-induction', 'category': 'Household', 'title': 'Replace gas cooking with induction',
+     'facts': 'Indoor NO2 cut up to 40%. Gas hobs release NO2 and PM2.5 directly into the kitchen; induction is zero emission at point of use.'},
+    {'id': 'household-flame', 'category': 'Household', 'title': 'Stop burning wood or waste indoors',
+     'facts': 'Indoor PM2.5 cut 50-90%. Open fires and wood stoves are a major source of indoor PM2.5.'},
+    {'id': 'household-purifier', 'category': 'Household', 'title': 'Use a HEPA air purifier indoors',
+     'facts': 'Indoor PM2.5 cut 70-90% overnight. A HEPA purifier in a bedroom lowers overnight PM2.5 exposure during the 8+ hours people sleep.'},
+    {'id': 'household-solar', 'category': 'Household', 'title': 'Switch to solar or renewable electricity',
+     'facts': 'SO2 and PM demand eliminated. Coal power remains a leading global source of SO2; shifting demand to renewables reduces pressure on the dirtiest generation.'},
+    {'id': 'policy-factory', 'category': 'Policy', 'title': 'Industrial emission standards with enforcement',
+     'facts': 'PM2.5 cut 35% in China over 5 years (2014-2019) via mandatory scrubbers, fuel switching, and real-time stack monitoring with penalties.'},
+    {'id': 'policy-bus', 'category': 'Policy', 'title': 'Electrify urban bus fleets',
+     'facts': 'PM2.5 cut 48% in corridors. Shenzhen deployed about 16,000 electric buses and reduced bus-linked PM2.5 in major travel corridors by 48%.'},
+    {'id': 'policy-field', 'category': 'Policy', 'title': 'End agricultural burning, with alternatives',
+     'facts': 'Delhi winter AQI down ~30% potential. Seasonal stubble burning in Punjab and Haryana drives severe winter events; subsidised mechanical harvesters and no-burn payments work better than bans alone.'},
+    {'id': 'community-tree', 'category': 'Community', 'title': 'Plant trees on busy streets',
+     'facts': 'PM2.5 cut 15-25% on tree-lined streets. Street trees absorb NO2 through leaf stomata and trap particulates on canopy surfaces.'},
+    {'id': 'community-zone', 'category': 'Community', 'title': 'Advocate for a low emission zone in your city',
+     'facts': 'NO2 cut 30-50% in zone. London ULEZ lowered roadside NO2 by 44% and helped reduce childhood asthma hospitalisations; 320+ low-emission zones now operate across Europe.'},
+    {'id': 'community-monitor', 'category': 'Community', 'title': 'Demand real-time AQI monitoring and data',
+     'facts': 'Foundation for all other action. Cities cannot manage what they do not measure; public monitoring and transparent data make interventions enforceable.'},
+]
+
+DEEP_DIVE_IMPACT_FACTS = [
+    {'id': 'lives', 'value': '3.7M', 'label': 'lives saved per year',
+     'facts': 'Meeting WHO 2030 clean air targets could remove most population-level pollution deaths; South Asia could gain around 5 additional years of life expectancy in the highest-burden regions.'},
+    {'id': 'years', 'value': '5 yrs', 'label': 'to see visible change',
+     'facts': "China cut PM2.5 by 35% within five years through industrial regulation and enforcement; London's ULEZ also produced major roadside NO2 cuts in a similarly short time frame."},
+    {'id': 'indoor', 'value': '90%', 'label': 'less indoor PM2.5, immediately',
+     'facts': 'Moving from wood fire to clean cookstoves can lower indoor PM2.5 by more than 90% from day one; children in clean-cooking households report far fewer respiratory infections.'},
+    {'id': 'warning', 'value': '48 hrs', 'label': 'of advance warning now possible',
+     'facts': 'Machine learning systems now forecast city-level AQI up to 72 hours ahead with over 90% accuracy, enabling schools and health systems to act before hazardous episodes peak.'},
+]
+
+
+def _deep_dive_tone_instruction(mode):
+    return (
+        "Write in a clear, analytical, evidence-first tone for a general dashboard audience."
+        if mode == 'ai' else
+        "Write with a warm, positive, encouraging, human-centered tone, as if speaking to someone "
+        "who wants to take action - while staying strictly grounded in the facts given. Keep it "
+        "hopeful, not preachy."
+    )
+
+
+@bp.route('/deep-dive-interventions', methods=['POST'])
+def generate_deep_dive_interventions():
+    """Rewrite the stat/detail text for the 12 'Our duty' intervention tiles.
+
+    Numbers and named examples are fixed facts fed to the model - only the
+    phrasing is AI-generated, and tone differs between 'ai' and 'agentic' modes.
+    """
+    try:
+        data = request.get_json() or {}
+        mode = str(data.get('mode', 'ai')).strip().lower()
+        if mode not in ('ai', 'agentic'):
+            mode = 'ai'
+
+        cache_key = f'deep_dive_interventions:{mode}'
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({
+                'success': True,
+                'data': {'provider': cached_provider, 'mode': mode, 'interventions': cached_payload},
+            }), 200
+
+        prompt = f"""
+You are rewriting explanatory text for 12 proven air-quality interventions on a
+storytelling dashboard, grouped into four categories: Personal, Household, Policy, Community.
+
+Do not invent or change any numbers, percentages, or named examples (e.g. China,
+Shenzhen, London ULEZ) - reuse only the facts given below for each intervention.
+Only rewrite the phrasing, tone, and framing.
+
+{_deep_dive_tone_instruction(mode)}
+
+Interventions (id, category, title, established facts to stay grounded in):
+{json.dumps(DEEP_DIVE_INTERVENTION_FACTS, indent=2)}
+
+Return valid JSON only with this exact shape:
+{{
+  "interventions": [
+    {{"id": "personal-ev", "stat": "...", "detail": "..."}}
+  ]
+}}
+
+Rules:
+- "stat" is a short punchy line (under 8 words), reusing the given number/percentage exactly.
+- "detail" is 1-2 sentences of evidence-grounded explanation, in the required tone.
+- Return exactly these 12 ids, same order: {', '.join(item['id'] for item in DEEP_DIVE_INTERVENTION_FACTS)}.
+- No markdown fences, no extra keys.
+"""
+
+        provider_used = None
+        parsed = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=900,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            parsed = _safe_json_loads(response_text)
+        except Exception:
+            parsed = None
+
+        interventions = _validate_deep_dive_items(
+            (parsed or {}).get('interventions'),
+            {item['id'] for item in DEEP_DIVE_INTERVENTION_FACTS},
+            ('stat', 'detail'),
+        )
+
+        if not interventions:
+            return jsonify({
+                'success': False,
+                'error': 'The Ollama service did not return usable intervention text. Make sure Ollama is running and try again.',
+            }), 502
+
+        _set_cached_narrative(cache_key, interventions, provider_used)
+
+        return jsonify({
+            'success': True,
+            'data': {'provider': provider_used, 'mode': mode, 'interventions': interventions},
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/deep-dive-impact', methods=['POST'])
+def generate_deep_dive_impact():
+    """Rewrite the detail text for the 4 'If this happened everywhere' impact stats.
+
+    Values and labels are fixed facts fed to the model - only the explanation
+    sentence is AI-generated, and tone differs between 'ai' and 'agentic' modes.
+    """
+    try:
+        data = request.get_json() or {}
+        mode = str(data.get('mode', 'ai')).strip().lower()
+        if mode not in ('ai', 'agentic'):
+            mode = 'ai'
+
+        cache_key = f'deep_dive_impact:{mode}'
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({
+                'success': True,
+                'data': {'provider': cached_provider, 'mode': mode, 'impact_stats': cached_payload},
+            }), 200
+
+        prompt = f"""
+You are rewriting the explanatory text for 4 headline statistics on an air-quality
+storytelling dashboard, showing what would happen if proven interventions were adopted globally.
+
+Do not invent or change the number or label for any statistic - reuse the facts given
+below exactly. Only rewrite the explanation sentence.
+
+{_deep_dive_tone_instruction(mode)}
+
+Statistics (id, value, label, established facts to stay grounded in):
+{json.dumps(DEEP_DIVE_IMPACT_FACTS, indent=2)}
+
+Return valid JSON only with this exact shape:
+{{
+  "impact_stats": [
+    {{"id": "lives", "detail": "..."}}
+  ]
+}}
+
+Rules:
+- "detail" is 1-2 sentences, in the required tone, reusing the given facts.
+- Return exactly these 4 ids: {', '.join(item['id'] for item in DEEP_DIVE_IMPACT_FACTS)}.
+- No markdown fences, no extra keys.
+"""
+
+        provider_used = None
+        parsed = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=500,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            parsed = _safe_json_loads(response_text)
+        except Exception:
+            parsed = None
+
+        impact_stats = _validate_deep_dive_items(
+            (parsed or {}).get('impact_stats'),
+            {item['id'] for item in DEEP_DIVE_IMPACT_FACTS},
+            ('detail',),
+        )
+
+        if not impact_stats:
+            return jsonify({
+                'success': False,
+                'error': 'The Ollama service did not return usable impact text. Make sure Ollama is running and try again.',
+            }), 502
+
+        _set_cached_narrative(cache_key, impact_stats, provider_used)
+
+        return jsonify({
+            'success': True,
+            'data': {'provider': provider_used, 'mode': mode, 'impact_stats': impact_stats},
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+def _validate_deep_dive_items(items, required_ids, required_text_fields):
+    """Return items only if every required id is present with non-empty text fields."""
+    if not isinstance(items, list):
+        return None
+
+    by_id = {}
+    for item in items:
+        if not isinstance(item, dict):
+            continue
+        item_id = item.get('id')
+        if item_id not in required_ids:
+            continue
+        if not all(isinstance(item.get(field), str) and item.get(field).strip() for field in required_text_fields):
+            continue
+        by_id[item_id] = {
+            'id': item_id,
+            **{field: item[field].strip() for field in required_text_fields},
+        }
+
+    if set(by_id.keys()) != required_ids:
+        return None
+
+    return list(by_id.values())
+
+
 @bp.route('/humanize-story', methods=['POST'])
 def humanize_story():
     """Transform a data-driven AI story into a more narrative, humanized version."""
@@ -442,14 +807,17 @@ def generate_city_rankings_story():
         payload = request.get_json() or {}
         count = payload.get('count', 5)
         ranking_type = str(payload.get('ranking_type', 'worst')).strip().lower()
+        mode = str(payload.get('mode', 'ai')).strip().lower()
+        if mode not in ('ai', 'agentic'):
+            mode = 'ai'
 
         try:
             count = int(count)
         except (TypeError, ValueError):
             return jsonify({'success': False, 'error': 'count must be an integer'}), 400
 
-        if count < 1 or count > 25:
-            return jsonify({'success': False, 'error': 'count must be between 1 and 25'}), 400
+        if count < 1 or count > 10:
+            return jsonify({'success': False, 'error': 'count must be between 1 and 10'}), 400
 
         if ranking_type not in {'best', 'worst', 'both'}:
             return jsonify({'success': False, 'error': "ranking_type must be one of: 'best', 'worst', 'both'"}), 400
@@ -493,11 +861,29 @@ def generate_city_rankings_story():
             for index, row in enumerate(best_rows)
         ]
 
-        ai_prompt = f"""
+        cache_key = f'city_rankings:{ranking_type}:{count}:{mode}'
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+
+        if cached_payload:
+            ai_payload = cached_payload
+            provider_used = cached_provider
+        else:
+            tone_instruction = (
+                "Write in a clear, analytical data-storytelling voice aimed at a general dashboard audience."
+                if mode == 'ai' else
+                "Write with a warm, positive, human-centered tone, as if speaking to someone who cares about "
+                "the people affected by these numbers. Use humanized, encouraging language rather than dry "
+                "statistics-speak, while staying strictly grounded in the ranking rows below - do not invent "
+                "new numbers or claims."
+            )
+
+            ai_prompt = f"""
 You are AI Agent 1 for an air-quality storytelling dashboard.
 Create a short, clear narrative for non-technical users based on city PM2.5 rankings.
     Use only the ranking rows provided below. Do not use outside knowledge, external databases, or facts not present in the data.
     Keep the output structure aligned with the human version: headline, summary, insights, and recommendations.
+
+{tone_instruction}
 
 User request:
 - ranking_type: {ranking_type}
@@ -524,18 +910,21 @@ Rules:
 - No markdown fences and no extra keys.
 """
 
-        provider_used = 'fallback'
-        ai_payload = None
-        try:
-            response_text, provider_used = chat_provider_service.generate_local_answer(
-                ai_prompt,
-                model=chat_provider_service.story_ollama_model,
-                num_predict=500,
-                timeout_seconds=chat_provider_service.story_timeout_seconds,
-            )
-            ai_payload = _safe_json_loads(response_text)
-        except Exception:
+            provider_used = 'fallback'
             ai_payload = None
+            try:
+                response_text, provider_used = chat_provider_service.generate_local_answer(
+                    ai_prompt,
+                    model=chat_provider_service.story_ollama_model,
+                    num_predict=500,
+                    timeout_seconds=chat_provider_service.story_timeout_seconds,
+                )
+                ai_payload = _safe_json_loads(response_text)
+            except Exception:
+                ai_payload = None
+
+            if ai_payload:
+                _set_cached_narrative(cache_key, ai_payload, provider_used)
 
         focus_label = 'worst' if ranking_type == 'worst' else 'best' if ranking_type == 'best' else 'worst and best'
         fallback_headline = f"Top {count} {focus_label} cities by average PM2.5"
@@ -558,6 +947,7 @@ Rules:
             ],
             'ranking_type': ranking_type,
             'count': count,
+            'mode': mode,
             'provider': provider_used,
             'worst_cities': worst_cities,
             'best_cities': best_cities,

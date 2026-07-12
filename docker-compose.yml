@@ -25,6 +25,8 @@ services:
       CHAT_PROVIDER: ${CHAT_PROVIDER:-ollama}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
+      # CPU-only inference with large story prompts needs more than the 120s default.
+      OLLAMA_STORY_TIMEOUT_SECONDS: ${OLLAMA_STORY_TIMEOUT_SECONDS:-350}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GOOGLE_API_KEY: ${GOOGLE_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-2.5-flash}
