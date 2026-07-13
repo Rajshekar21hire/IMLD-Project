@@ -31,6 +31,8 @@ import { ReadingPatternSection } from '../components/ReadingPatternSection';
 import { InversionChamber } from '../components/InversionChamber';
 import { InterventionLedger } from '../components/InterventionLedger';
 import { ScaleLadder } from '../components/ScaleLadder';
+import { SourceMixComparator } from '../components/SourceMixComparator';
+import { InterventionImpactScenario } from '../components/InterventionImpactScenario';
 import { AgenticAiSection } from '../components/AgenticAiSection';
 import { DeepDivesWorstAffectedSection } from '../components/DeepDivesWorstAffectedSection';
 import { AirCanGetBetterSection } from '../components/AirCanGetBetterSection';
@@ -2679,6 +2681,12 @@ export const DashboardPage: React.FC = () => {
                         </div>
                         <div className="overflow-hidden rounded-3xl border border-slate-200 shadow-lg shadow-slate-200/60 transition-shadow duration-300 hover:shadow-xl">
                           <ScaleLadder />
+                        </div>
+                        <div className="overflow-hidden rounded-3xl border border-slate-200 shadow-lg shadow-slate-200/60 transition-shadow duration-300 hover:shadow-xl">
+                          <SourceMixComparator />
+                        </div>
+                        <div className="overflow-hidden rounded-3xl border border-slate-200 shadow-lg shadow-slate-200/60 transition-shadow duration-300 hover:shadow-xl">
+                          <InterventionImpactScenario />
                         </div>
                       </div>
                     )}
