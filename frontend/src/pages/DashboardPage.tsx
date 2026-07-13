@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, BarChart3, Bot, Globe, ShieldCheck, Users, Wind, HeartPulse, Megaphone, Quote } from 'lucide-react';
+import { AlertTriangle, Globe, ShieldCheck, Users, Wind, HeartPulse, Megaphone, Quote } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -84,6 +84,24 @@ interface StoryThreeTestimonial {
 }
 
 type StoryFourHumanCategory = 'Personal' | 'Household' | 'Policy' | 'Community';
+
+interface DeepDiveNarrative {
+  intro: string[];
+  pattern_cards: { eyebrow: string; title: string; body: string }[];
+  intervention_intro: string;
+  impact_intro: string;
+}
+
+interface DeepDiveInterventionText {
+  id: string;
+  stat: string;
+  detail: string;
+}
+
+interface DeepDiveImpactText {
+  id: string;
+  detail: string;
+}
 
 interface StoryFourHumanIntervention {
   id: string;
@@ -456,7 +474,6 @@ const normalizeStorySections = (input: any, fallback: StorySection[] = []): Stor
 const formatRankingRowLabel = (row: CityRankingRecord) => `${row.city}, ${row.country}`;
 
 const STORY_STUDIO_SIDEBAR_THEME_IDS = ['aqi-and-decisions'] as const;
-const STORY_FOUR_THEME_ID = 'measurement-and-governance';
 
 export const DashboardPage: React.FC = () => {
   const standardPm25Value = 5;
@@ -467,14 +484,10 @@ export const DashboardPage: React.FC = () => {
   const defaultThemeId = sidebarThemes[0]?.id || storyThemes[0]?.id;
   const [selectedThemeId, setSelectedThemeId] = useState(defaultThemeId);
   const [selectedMode, setSelectedMode] = useState<StoryMode>('human');
-  const [aiStories, setAiStories] = useState<Record<string, { title: string; summary: string; sections: StorySection[]; provider?: string }>>({});
-  const [aiLoading, setAiLoading] = useState(false);
-  const [aiRequested, setAiRequested] = useState<Record<string, boolean>>({});
-  const [aiError, setAiError] = useState('');
-  const [storyFourAiLoading, setStoryFourAiLoading] = useState(false);
-  const [storyFourAiError, setStoryFourAiError] = useState('');
+  const [aiStories] = useState<Record<string, { title: string; summary: string; sections: StorySection[]; provider?: string }>>({});
   const [rankingCount, setRankingCount] = useState(5);
   const [rankingType, setRankingType] = useState<'best' | 'worst' | 'both'>('worst');
+  const [rankingCache, setRankingCache] = useState<Record<string, CityRankingResult>>({});
   const [rankingLoading, setRankingLoading] = useState(false);
   const [rankingError, setRankingError] = useState('');
   const [rankingResult, setRankingResult] = useState<CityRankingResult | null>(null);
@@ -491,6 +504,19 @@ export const DashboardPage: React.FC = () => {
   const [storyFourFlippedCards, setStoryFourFlippedCards] = useState<Record<string, boolean>>({});
   const [storyFourExpandedImpactId, setStoryFourExpandedImpactId] = useState<string | null>(null);
 
+  const [deepDiveCategory, setDeepDiveCategory] = useState<StoryFourHumanCategory>('Personal');
+  const [deepDiveFlippedCards, setDeepDiveFlippedCards] = useState<Record<string, boolean>>({});
+  const [deepDiveExpandedImpactId, setDeepDiveExpandedImpactId] = useState<string | null>(null);
+  const [deepDiveNarrative, setDeepDiveNarrative] = useState<Partial<Record<'ai' | 'agentic', DeepDiveNarrative>>>({});
+  const [deepDiveLoading, setDeepDiveLoading] = useState(false);
+  const [deepDiveError, setDeepDiveError] = useState('');
+  const [deepDiveInterventions, setDeepDiveInterventions] = useState<Partial<Record<'ai' | 'agentic', DeepDiveInterventionText[]>>>({});
+  const [deepDiveInterventionsLoading, setDeepDiveInterventionsLoading] = useState(false);
+  const [deepDiveInterventionsError, setDeepDiveInterventionsError] = useState('');
+  const [deepDiveImpactTexts, setDeepDiveImpactTexts] = useState<Partial<Record<'ai' | 'agentic', DeepDiveImpactText[]>>>({});
+  const [deepDiveImpactLoading, setDeepDiveImpactLoading] = useState(false);
+  const [deepDiveImpactError, setDeepDiveImpactError] = useState('');
+
   const [storyThreeAiTestimonials, setStoryThreeAiTestimonials] = useState<StoryThreeTestimonial[]>([]);
   const [storyThreeTestimonialsLoading, setStoryThreeTestimonialsLoading] = useState(false);
   const [storyThreeTestimonialsError, setStoryThreeTestimonialsError] = useState('');
@@ -501,49 +527,16 @@ export const DashboardPage: React.FC = () => {
     () => sidebarThemes.find((theme) => theme.id === selectedThemeId) ?? sidebarThemes[0] ?? storyThemes[0],
     [selectedThemeId, sidebarThemes]
   );
-  const storyFourTheme = useMemo(
-    () => storyThemes.find((theme) => theme.id === STORY_FOUR_THEME_ID) ?? null,
-    []
-  );
-
   const selectedAiStory = aiStories[selectedTheme.id];
-  const selectedStoryFourAi = storyFourTheme ? aiStories[storyFourTheme.id] : undefined;
   const normalizedAiSections = useMemo(
     () => normalizeStorySections(selectedAiStory?.sections, selectedTheme.humanSections),
     [selectedAiStory?.sections, selectedTheme.humanSections]
   );
   const selectedAiSummary = toSafeText(selectedAiStory?.summary) || selectedTheme.overview;
-  const selectedAiProvider = toSafeText(selectedAiStory?.provider) || 'Ollama';
-  const hasGeneratedAiStory = Boolean(aiRequested[selectedTheme.id] || selectedAiStory);
-  const hasGeneratedStoryFourAi = Boolean(storyFourTheme && (aiRequested[storyFourTheme.id] || selectedStoryFourAi));
-  const storyFourAiProvider = toSafeText(selectedStoryFourAi?.provider) || 'Ollama';
-  const storyFourAiSummary = toSafeText(selectedStoryFourAi?.summary) || storyFourTheme?.overview || '';
-  const storyFourAiSections = useMemo(() => {
-    if (!storyFourTheme) {
-      return [] as StorySection[];
-    }
-    const normalized = normalizeStorySections(selectedStoryFourAi?.sections, storyFourTheme.humanSections);
-    const padded = [0, 1, 2].map((i) => normalized[i] ?? storyFourTheme.humanSections[i]);
-    return padded.map((section, index) => {
-      if (index === 1) {
-        return {
-          ...section,
-          title: 'Human element - resident testimonials, health worker interviews',
-        } as StorySection;
-      }
-      if (index === 2) {
-        return {
-          ...section,
-          title: 'What governments must do',
-        } as StorySection;
-      }
-      return section;
-    });
-  }, [storyFourTheme, selectedStoryFourAi?.sections]);
+  const hasGeneratedAiStory = true;
   const isAiLikeMode = selectedMode !== 'human';
   const isStoryThreeAiView = selectedTheme.id === 'aqi-and-decisions' && isAiLikeMode;
-  const shouldHideAiSectionsUntilGenerated = isAiLikeMode && selectedTheme.id !== 'aqi-and-decisions' && !hasGeneratedAiStory;
-  const canShowStoryThreeAiSections = isStoryThreeAiView && Boolean(selectedAiStory);
+  const canShowStoryThreeAiSections = isStoryThreeAiView;
   const activeSections = useMemo(
     () => {
       if (selectedMode === 'human') {
@@ -553,15 +546,12 @@ export const DashboardPage: React.FC = () => {
         }
         return selectedTheme.humanSections;
       }
-      if (shouldHideAiSectionsUntilGenerated) {
-        return [];
-      }
       if (isStoryThreeAiView && !canShowStoryThreeAiSections) {
         return [];
       }
       if (selectedTheme.id === 'aqi-and-decisions') {
-        // Story 3 AI view shows only the first 2 subtopics.
-        return normalizedAiSections.slice(0, 2);
+        // Story 3 AI/Agentic view shows only the ranking panel below, not the subtopic cards.
+        return [];
       }
       if (selectedTheme.id === 'measurement-and-governance') {
         // Story 4 AI view always shows exactly three subtopics; pad with human sections if AI returned fewer.
@@ -586,11 +576,8 @@ export const DashboardPage: React.FC = () => {
       }
       return normalizedAiSections;
     },
-    [selectedTheme, selectedMode, normalizedAiSections, isStoryThreeAiView, canShowStoryThreeAiSections, shouldHideAiSectionsUntilGenerated]
+    [selectedTheme, selectedMode, normalizedAiSections, isStoryThreeAiView, canShowStoryThreeAiSections]
   );
-  const aiGenerationSections = useMemo(() => {
-    return selectedTheme.humanSections;
-  }, [selectedTheme]);
   const hasComparisonGrid = useMemo(
     () => activeSections.some((section: StorySection) => Boolean(section.table)),
     [activeSections]
@@ -976,120 +963,16 @@ export const DashboardPage: React.FC = () => {
     }));
   }, [rankingResult, standardPm25Value]);
 
-  const generateAiStory = useCallback(async () => {
-    if (selectedTheme.status !== 'ready') {
-      setAiError('This theme is waiting for source story content before AI generation is enabled.');
+  const generateCityRankings = useCallback(async () => {
+    const rankingMode: 'ai' | 'agentic' = selectedMode === 'agentic' ? 'agentic' : 'ai';
+    const cacheKey = `${rankingType}-${rankingCount}-${rankingMode}`;
+    const cached = rankingCache[cacheKey];
+    if (cached) {
+      setRankingResult(cached);
+      setRankingError('');
       return;
     }
 
-    setAiLoading(true);
-    setAiError('');
-
-    try {
-      const response = await storyAPI.generateThemeStory({
-        mode: 'ai',
-        theme: {
-          id: selectedTheme.id,
-          title: selectedTheme.title,
-          overview: selectedTheme.overview,
-          promptFocus: selectedTheme.promptFocus,
-          sections: aiGenerationSections,
-        },
-      });
-
-      if (response.data?.success) {
-        const story = response.data.data.story;
-        const normalizedGeneratedSections = normalizeStorySections(story?.sections, selectedTheme.humanSections);
-        setAiStories((current) => ({
-          ...current,
-          [selectedTheme.id]: {
-            title: toSafeText(story?.title) || selectedTheme.title,
-            summary: toSafeText(story?.summary) || selectedTheme.overview,
-            sections: normalizedGeneratedSections,
-            provider: toSafeText(response.data.data.provider) || 'Ollama',
-          },
-        }));
-        setAiRequested((current) => ({
-          ...current,
-          [selectedTheme.id]: true,
-        }));
-      } else {
-        throw new Error(response.data?.error || 'Failed to generate AI story');
-      }
-    } catch (error: any) {
-      const isNetworkError = error?.code === 'ERR_NETWORK' || (!error?.response && !!error?.request);
-      const backendUrl = error?.config?.baseURL || 'http://localhost:5000/api';
-
-      if (isNetworkError) {
-        setAiError(`Cannot reach backend (${backendUrl}). Start the backend server and try again.`);
-      } else {
-        setAiError(error.response?.data?.error || error.message || 'Failed to generate AI story');
-      }
-    } finally {
-      setAiLoading(false);
-    }
-  }, [selectedTheme, aiGenerationSections]);
-
-  const generateStoryFourAi = useCallback(async () => {
-    if (!storyFourTheme) {
-      setStoryFourAiError('Story 4 source theme is not available.');
-      return;
-    }
-    if (storyFourTheme.status !== 'ready') {
-      setStoryFourAiError('Story 4 source content is not ready for AI generation.');
-      return;
-    }
-
-    setStoryFourAiLoading(true);
-    setStoryFourAiError('');
-
-    try {
-      const response = await storyAPI.generateThemeStory({
-        mode: 'ai',
-        theme: {
-          id: storyFourTheme.id,
-          title: storyFourTheme.title,
-          overview: storyFourTheme.overview,
-          promptFocus: storyFourTheme.promptFocus,
-          sections: storyFourTheme.humanSections,
-        },
-      });
-
-      if (response.data?.success) {
-        const story = response.data.data.story;
-        const normalizedGeneratedSections = normalizeStorySections(story?.sections, storyFourTheme.humanSections);
-        setAiStories((current) => ({
-          ...current,
-          [storyFourTheme.id]: {
-            title: toSafeText(story?.title) || storyFourTheme.title,
-            summary: toSafeText(story?.summary) || storyFourTheme.overview,
-            sections: normalizedGeneratedSections,
-            provider: toSafeText(response.data.data.provider) || 'Ollama',
-          },
-        }));
-        setAiRequested((current) => ({
-          ...current,
-          [storyFourTheme.id]: true,
-        }));
-      } else {
-        throw new Error(response.data?.error || 'Failed to generate Story 4 AI content');
-      }
-    } catch (error: any) {
-      const isNetworkError = error?.code === 'ERR_NETWORK' || (!error?.response && !!error?.request);
-      const backendUrl = error?.config?.baseURL || 'http://localhost:5000/api';
-
-      if (isNetworkError) {
-        setStoryFourAiError(`Cannot reach backend (${backendUrl}). Start the backend server and try again.`);
-      } else {
-        setStoryFourAiError(error.response?.data?.error || error.message || 'Failed to generate Story 4 AI content');
-      }
-    } finally {
-      setStoryFourAiLoading(false);
-    }
-  }, [storyFourTheme]);
-
-  const generateCityRankings = useCallback(async (overrideRankingType?: 'best' | 'worst' | 'both') => {
-    const effectiveRankingType = overrideRankingType ?? rankingType;
     setRankingLoading(true);
     setRankingError('');
     setStoryThreeAiTestimonials([]);
@@ -1103,7 +986,8 @@ export const DashboardPage: React.FC = () => {
     try {
       const response = await storyAPI.generateCityRankings({
         count: rankingCount,
-        ranking_type: effectiveRankingType,
+        ranking_type: rankingType,
+        mode: rankingMode,
       });
 
       if (response.data?.success) {
@@ -1130,7 +1014,7 @@ export const DashboardPage: React.FC = () => {
 
         const normalizedRankingType = ['best', 'worst', 'both'].includes(String(payload?.ranking_type))
           ? (payload.ranking_type as 'best' | 'worst' | 'both')
-          : effectiveRankingType;
+          : rankingType;
 
         const normalizedRankingResult: CityRankingResult = {
           headline: toSafeText(payload?.headline) || `Top ${rankingCount} ${normalizedRankingType} cities by average PM2.5`,
@@ -1152,6 +1036,7 @@ export const DashboardPage: React.FC = () => {
         };
 
         setRankingResult(normalizedRankingResult);
+        setRankingCache((current) => ({ ...current, [cacheKey]: normalizedRankingResult }));
       } else {
         throw new Error(response.data?.error || 'Failed to generate city rankings');
       }
@@ -1161,7 +1046,159 @@ export const DashboardPage: React.FC = () => {
     } finally {
       setRankingLoading(false);
     }
-  }, [rankingCount, rankingType]);
+  }, [rankingCount, rankingType, rankingCache, selectedMode]);
+
+  useEffect(() => {
+    if (isStoryThreeAiView) {
+      void generateCityRankings();
+    }
+  }, [isStoryThreeAiView, generateCityRankings]);
+
+  const deepDiveMode: 'ai' | 'agentic' = selectedMode === 'agentic' ? 'agentic' : 'ai';
+  const deepDiveAccent = deepDiveMode === 'agentic'
+    ? {
+        eyebrow: 'text-indigo-700',
+        cardBorder: 'border-t-indigo-400',
+        wrapperBorder: 'border-indigo-200',
+        impactBg: '#C7D2FE',
+      }
+    : {
+        eyebrow: 'text-cyan-700',
+        cardBorder: 'border-t-cyan-400',
+        wrapperBorder: 'border-cyan-200',
+        impactBg: '#A5F3FC',
+      };
+  const OllamaTag: React.FC<{ className?: string }> = ({ className }) => (
+    <span
+      className={`inline-flex items-center rounded-full border ${deepDiveAccent.wrapperBorder} bg-white px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.1em] ${deepDiveAccent.eyebrow} ${className || ''}`}
+    >
+      Generated by Ollama
+    </span>
+  );
+
+  const generateDeepDiveNarrative = useCallback(async (mode: 'ai' | 'agentic') => {
+    setDeepDiveLoading(true);
+    setDeepDiveError('');
+
+    try {
+      const response = await storyAPI.generateDeepDiveNarrative({ mode });
+
+      if (response.data?.success) {
+        const narrative = response.data.data?.narrative || {};
+        const normalized: DeepDiveNarrative = {
+          intro: toSafeTextList(narrative?.intro, [
+            'These five cities share a structural cluster of causes that repeats across the region.',
+          ]),
+          pattern_cards: Array.isArray(narrative?.pattern_cards)
+            ? narrative.pattern_cards.slice(0, 3).map((card: any) => ({
+                eyebrow: toSafeText(card?.eyebrow) || 'Pattern',
+                title: toSafeText(card?.title) || 'A shared cause',
+                body: toSafeText(card?.body) || '',
+              }))
+            : [],
+          intervention_intro: toSafeText(narrative?.intervention_intro) || 'Proven fixes exist across personal, household, policy, and community action.',
+          impact_intro: toSafeText(narrative?.impact_intro) || 'Adopting these interventions globally would produce measurable gains within years, not decades.',
+        };
+
+        if (normalized.pattern_cards.length === 0) {
+          throw new Error('AI returned an incomplete narrative');
+        }
+
+        setDeepDiveNarrative((current) => ({ ...current, [mode]: normalized }));
+      } else {
+        throw new Error(response.data?.error || 'Failed to generate the deep-dive narrative');
+      }
+    } catch (error: any) {
+      setDeepDiveError(error.response?.data?.error || error.message || 'Failed to generate the deep-dive narrative');
+    } finally {
+      setDeepDiveLoading(false);
+    }
+  }, []);
+
+  const generateDeepDiveInterventions = useCallback(async (mode: 'ai' | 'agentic') => {
+    setDeepDiveInterventionsLoading(true);
+    setDeepDiveInterventionsError('');
+
+    try {
+      const response = await storyAPI.generateDeepDiveInterventions({ mode });
+
+      if (response.data?.success) {
+        const items = response.data.data?.interventions;
+        const normalized: DeepDiveInterventionText[] = Array.isArray(items)
+          ? items
+              .map((item: any) => ({
+                id: toSafeText(item?.id),
+                stat: toSafeText(item?.stat),
+                detail: toSafeText(item?.detail),
+              }))
+              .filter((item: DeepDiveInterventionText) => item.id && item.stat && item.detail)
+          : [];
+
+        if (normalized.length !== storyFourHumanInterventions.length) {
+          throw new Error('AI returned incomplete intervention text');
+        }
+
+        setDeepDiveInterventions((current) => ({ ...current, [mode]: normalized }));
+      } else {
+        throw new Error(response.data?.error || 'Failed to generate intervention text');
+      }
+    } catch (error: any) {
+      setDeepDiveInterventionsError(error.response?.data?.error || error.message || 'Failed to generate intervention text');
+    } finally {
+      setDeepDiveInterventionsLoading(false);
+    }
+  }, []);
+
+  const generateDeepDiveImpact = useCallback(async (mode: 'ai' | 'agentic') => {
+    setDeepDiveImpactLoading(true);
+    setDeepDiveImpactError('');
+
+    try {
+      const response = await storyAPI.generateDeepDiveImpact({ mode });
+
+      if (response.data?.success) {
+        const items = response.data.data?.impact_stats;
+        const normalized: DeepDiveImpactText[] = Array.isArray(items)
+          ? items
+              .map((item: any) => ({
+                id: toSafeText(item?.id),
+                detail: toSafeText(item?.detail),
+              }))
+              .filter((item: DeepDiveImpactText) => item.id && item.detail)
+          : [];
+
+        if (normalized.length !== storyFourImpactStats.length) {
+          throw new Error('AI returned incomplete impact text');
+        }
+
+        setDeepDiveImpactTexts((current) => ({ ...current, [mode]: normalized }));
+      } else {
+        throw new Error(response.data?.error || 'Failed to generate impact text');
+      }
+    } catch (error: any) {
+      setDeepDiveImpactError(error.response?.data?.error || error.message || 'Failed to generate impact text');
+    } finally {
+      setDeepDiveImpactLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isStoryThreeAiView && !deepDiveNarrative[deepDiveMode] && !deepDiveLoading) {
+      void generateDeepDiveNarrative(deepDiveMode);
+    }
+  }, [isStoryThreeAiView, deepDiveMode, deepDiveNarrative, deepDiveLoading, generateDeepDiveNarrative]);
+
+  useEffect(() => {
+    if (isStoryThreeAiView && !deepDiveInterventions[deepDiveMode] && !deepDiveInterventionsLoading) {
+      void generateDeepDiveInterventions(deepDiveMode);
+    }
+  }, [isStoryThreeAiView, deepDiveMode, deepDiveInterventions, deepDiveInterventionsLoading, generateDeepDiveInterventions]);
+
+  useEffect(() => {
+    if (isStoryThreeAiView && !deepDiveImpactTexts[deepDiveMode] && !deepDiveImpactLoading) {
+      void generateDeepDiveImpact(deepDiveMode);
+    }
+  }, [isStoryThreeAiView, deepDiveMode, deepDiveImpactTexts, deepDiveImpactLoading, generateDeepDiveImpact]);
 
   const generateStoryThreeTestimonials = useCallback(async () => {
     if (!rankingResult) {
@@ -1273,12 +1310,6 @@ export const DashboardPage: React.FC = () => {
       setCityDetailsLoading(false);
     }
   }, []);
-
-  useEffect(() => {
-    if (isAiLikeMode && selectedTheme.status === 'ready' && aiRequested[selectedTheme.id] && !selectedAiStory && !aiLoading) {
-      generateAiStory();
-    }
-  }, [isAiLikeMode, selectedMode, selectedThemeId, selectedTheme.id, selectedTheme.status, selectedAiStory, aiLoading, generateAiStory, aiRequested]);
 
   useEffect(() => {
     if (!sidebarThemes.some((theme) => theme.id === selectedThemeId)) {
@@ -1635,40 +1666,8 @@ export const DashboardPage: React.FC = () => {
                           ? 'This theme is waiting for the story text you will send next.'
                           : selectedMode === 'human'
                           ? selectedTheme.overview
-                          : hasGeneratedAiStory
-                          ? selectedAiSummary
-                          : 'Click Generate AI story to reveal the Ollama-generated version for this theme.'}
+                          : selectedAiSummary}
                       </p>
-                      {isAiLikeMode && selectedTheme.status === 'ready' && (
-                        <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
-                          {hasGeneratedAiStory && (
-                            <span className="rounded-full px-3 py-1 font-semibold border bg-emerald-50 text-emerald-700 border-emerald-200">
-                              Generated by {selectedAiProvider}
-                            </span>
-                          )}
-                          <button
-                            type="button"
-                            onClick={generateAiStory}
-                            disabled={aiLoading || hasGeneratedAiStory}
-                            className="mt-1 inline-flex items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
-                          >
-                            {aiLoading ? 'Generating...' : hasGeneratedAiStory ? 'Generated AI' : 'Generate AI'}
-                          </button>
-                          {selectedMode === 'agentic' && hasGeneratedAiStory && (
-                            <button
-                              type="button"
-                              className="rounded-full border border-slate-300 bg-white px-3 py-1 font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
-                            >
-                              Humanize AI
-                            </button>
-                          )}
-                        </div>
-                      )}
-                      {aiError && isAiLikeMode && (
-                        <div className="mt-3 space-y-2">
-                          {aiError && <p className="text-sm text-red-600">{aiError}</p>}
-                        </div>
-                      )}
                     </div>
 
                     <div className="rounded-2xl border border-transparent bg-transparent p-4">
@@ -2188,30 +2187,27 @@ export const DashboardPage: React.FC = () => {
                 </div>
 
                 {canShowStoryThreeAiSections && (
-                    <div className="ss-section rounded-2xl border border-sky-200 bg-white p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
+                    <div className="ss-section rounded-3xl border border-indigo-400/40 bg-gradient-to-br from-blue-600/15 via-indigo-500/10 to-purple-600/15 p-6 shadow-xl shadow-indigo-500/10 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl md:p-8">
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                         <div>
-                          <div className="inline-flex items-center gap-2 rounded-full bg-sky-100 px-3 py-1 text-xs font-semibold uppercase tracking-[0.2em] text-sky-700">
-                            <Bot className="h-3.5 w-3.5" />
-                            Story 3
-                          </div>
-                          <h4 className="mt-3 text-xl font-bold text-slate-950">Best and worst cities by AQI</h4>
-                          <p className="mt-2 text-sm text-slate-600">
-                            Enter how many cities to rank, choose worst, best, or both, then generate AI-powered results.
+                          <h4 className="text-2xl font-extrabold md:text-3xl" style={{ color: '#1e3a5f' }}>Best and worst cities by AQI</h4>
+                          <p className="mt-2 text-base leading-relaxed text-slate-600">
+                            Choose how many cities to rank and whether to see the worst, best, or both - results update automatically.
                           </p>
                         </div>
 
-                        <div className="ss-subgrid w-full grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                        <div className="ss-subgrid w-full grid-cols-1 sm:grid-cols-2">
                           <label className="flex flex-col text-sm font-semibold text-slate-700">
                             City count
-                            <input
-                              type="number"
-                              min={1}
-                              max={25}
+                            <select
                               value={rankingCount}
-                              onChange={(event) => setRankingCount(Math.min(25, Math.max(1, Number(event.target.value) || 1)))}
-                              className="mt-1 rounded-xl border border-slate-300 px-3 py-2 text-sm"
-                            />
+                              onChange={(event) => setRankingCount(Math.min(10, Math.max(1, Number(event.target.value) || 1)))}
+                              className="mt-1 w-full rounded-xl border border-blue-200 bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                            >
+                              {Array.from({ length: 10 }, (_, i) => i + 1).map((n) => (
+                                <option key={n} value={n}>{n}</option>
+                              ))}
+                            </select>
                           </label>
 
                           <label className="flex flex-col text-sm font-semibold text-slate-700">
@@ -2219,76 +2215,81 @@ export const DashboardPage: React.FC = () => {
                             <select
                               value={rankingType}
                               onChange={(event) => {
-                                const nextRankingType = event.target.value as 'best' | 'worst' | 'both';
-                                setRankingType(nextRankingType);
-                                if (rankingResult) {
-                                  void generateCityRankings(nextRankingType);
-                                }
+                                setRankingType(event.target.value as 'best' | 'worst' | 'both');
                               }}
-                              className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+                              className="mt-1 w-full rounded-xl border border-blue-200 bg-white px-3 py-2 text-sm outline-none transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                             >
                               <option value="worst">Top worst cities</option>
                               <option value="best">Top best cities</option>
                               <option value="both">Worst and best cities</option>
                             </select>
                           </label>
-
-                          <button
-                            type="button"
-                            onClick={() => {
-                              void generateCityRankings();
-                            }}
-                            disabled={rankingLoading}
-                            className="inline-flex w-full items-center justify-center gap-2 self-end rounded-xl bg-slate-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 disabled:opacity-60"
-                          >
-                            <BarChart3 className="h-4 w-4" />
-                            {rankingLoading ? 'Generating...' : 'Run Story 3'}
-                          </button>
                         </div>
                       </div>
 
+                      {rankingLoading && <p className="mt-4 text-sm text-slate-600">Generating city rankings...</p>}
                       {rankingError && <p className="mt-4 text-sm text-red-600">{rankingError}</p>}
 
                       {rankingResult && (
                         <div className="mt-6 space-y-6">
-                          <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                          <div className="rounded-2xl border border-blue-200/70 bg-gradient-to-br from-blue-50 to-indigo-50 p-5 shadow-sm">
                             <div className="flex flex-wrap items-center gap-3 text-sm">
-                              <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700 border border-emerald-200">
-                                Provider: {rankingResult.provider || 'Ollama'}
-                              </span>
-                              <span className="rounded-full bg-sky-50 px-3 py-1 font-semibold text-sky-700 border border-sky-200">
+                              {rankingResult.provider === 'ollama' && (
+                                <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700 border border-emerald-200">
+                                  Generated by Ollama
+                                </span>
+                              )}
+                              <span className="rounded-full border border-blue-600/30 bg-blue-500/10 px-3 py-1 font-semibold text-blue-700">
                                 Top {rankingResult.count} {rankingResult.ranking_type}
                               </span>
                             </div>
-                            <h5 className="mt-3 text-lg font-bold text-slate-950">{rankingResult.headline}</h5>
-                            <p className="mt-2 text-sm text-slate-700">{rankingResult.summary}</p>
+                            <div className="mt-3 flex items-start gap-3">
+                              <Quote className="mt-1 h-5 w-5 shrink-0 text-blue-600" />
+                              <h5 className="text-xl font-bold leading-snug" style={{ color: '#1e3a5f' }}>{rankingResult.headline}</h5>
+                            </div>
+                            <p className="mt-2 text-base leading-relaxed text-slate-700">{rankingResult.summary}</p>
                           </div>
 
-                          <div className="rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
-                              <h6 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">
+                          <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
+                              <h6 className="text-sm font-bold uppercase tracking-[0.2em]" style={{ color: '#1e3a5f' }}>
                                 PM2.5 vs standard comparison
                               </h6>
                               {rankingType !== 'both' ? (
                                 <div className="mt-3 h-96 w-full">
                                   <ResponsiveContainer width="100%" height="100%">
                                     <BarChart data={activeRankingRows} margin={{ top: 8, right: 16, left: 16, bottom: 78 }}>
-                                      <CartesianGrid strokeDasharray="3 3" />
+                                      <defs>
+                                        <linearGradient id="mainWorstGrad" x1="0" y1="0" x2="0" y2="1">
+                                          <stop offset="0%" stopColor="#f87171" />
+                                          <stop offset="100%" stopColor="#ef4444" />
+                                        </linearGradient>
+                                        <linearGradient id="mainBestGrad" x1="0" y1="0" x2="0" y2="1">
+                                          <stop offset="0%" stopColor="#4ade80" />
+                                          <stop offset="100%" stopColor="#22c55e" />
+                                        </linearGradient>
+                                        <linearGradient id="mainStandardGrad" x1="0" y1="0" x2="0" y2="1">
+                                          <stop offset="0%" stopColor="#60a5fa" />
+                                          <stop offset="100%" stopColor="#6366f1" />
+                                        </linearGradient>
+                                      </defs>
+                                      <CartesianGrid strokeDasharray="3 3" stroke="#e0e7ff" />
                                       <XAxis
                                         dataKey="city"
                                         angle={-35}
                                         textAnchor="end"
                                         interval={0}
                                         height={92}
-                                        tick={{ fontSize: 11 }}
+                                        tick={{ fontSize: 13, fill: '#475569' }}
                                         tickFormatter={(value: string) => (value.length > 14 ? `${value.slice(0, 14)}...` : value)}
                                       />
-                                      <YAxis />
+                                      <YAxis tick={{ fontSize: 13, fill: '#475569' }} />
                                       <ReferenceLine
                                         y={standardPm25Value}
-                                        stroke="#0f172a"
+                                        stroke="#1e3a5f"
                                         strokeDasharray="4 4"
                                       />
                                       <Tooltip
+                                        contentStyle={{ borderRadius: 12, borderColor: '#c7d2fe', fontSize: 14 }}
                                         formatter={(value: number, name: string) => {
                                           if (name === 'standard_pm25') {
                                             return [`${value.toFixed(2)} ug/m3`, 'Standard PM2.5'];
@@ -2298,55 +2299,67 @@ export const DashboardPage: React.FC = () => {
                                         labelFormatter={(label) => `City: ${label}`}
                                       />
                                       <Legend
+                                        wrapperStyle={{ fontSize: 14 }}
                                         formatter={(value) => (value === 'avg_pm25' ? 'City average PM2.5' : 'Standard PM2.5')}
                                       />
-                                      <Bar dataKey="avg_pm25" fill={rankingType === 'best' ? '#16a34a' : '#dc2626'} radius={[8, 8, 0, 0]}>
+                                      <Bar dataKey="avg_pm25" fill={rankingType === 'best' ? 'url(#mainBestGrad)' : 'url(#mainWorstGrad)'} radius={[10, 10, 0, 0]}>
                                         {activeRankingRows.map((row) => (
                                           <Cell
                                             key={row.label}
-                                            fill={rankingType === 'best' ? '#16a34a' : '#dc2626'}
+                                            fill={rankingType === 'best' ? 'url(#mainBestGrad)' : 'url(#mainWorstGrad)'}
                                           />
                                         ))}
                                       </Bar>
-                                      <Bar dataKey="standard_pm25" fill="#2563eb" radius={[8, 8, 0, 0]} />
+                                      <Bar dataKey="standard_pm25" fill="url(#mainStandardGrad)" radius={[10, 10, 0, 0]} />
                                     </BarChart>
                                   </ResponsiveContainer>
                                 </div>
                               ) : (
                                 <div className="mt-3 space-y-3">
-                                  <div className="flex flex-wrap items-center gap-4 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
+                                  <div className="flex flex-wrap items-center gap-4 rounded-xl border border-indigo-100 bg-indigo-50/60 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-slate-600">
                                     <div className="inline-flex items-center gap-2">
-                                      <span className="h-2.5 w-2.5 rounded-full bg-[#2563eb]" />
+                                      <span className="h-2.5 w-2.5 rounded-full bg-[#6366f1]" />
                                       Standard PM2.5
                                     </div>
                                     <div className="inline-flex items-center gap-2">
-                                      <span className="h-2.5 w-2.5 rounded-full bg-[#dc2626]" />
+                                      <span className="h-2.5 w-2.5 rounded-full bg-[#ef4444]" />
                                       Worst city PM2.5
                                     </div>
                                     <div className="inline-flex items-center gap-2">
-                                      <span className="h-2.5 w-2.5 rounded-full bg-[#16a34a]" />
+                                      <span className="h-2.5 w-2.5 rounded-full bg-[#22c55e]" />
                                       Best city PM2.5
                                     </div>
                                   </div>
 
                                   <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-                                  <div className="h-96 w-full rounded-xl border border-red-100 p-2">
+                                  <div className="h-96 w-full rounded-xl border border-red-100 bg-red-50/30 p-2">
                                     <div className="px-2 text-xs font-semibold uppercase tracking-[0.18em] text-red-700">Worst cities</div>
                                     <ResponsiveContainer width="100%" height="92%">
                                       <BarChart data={worstRankingRows} margin={{ top: 8, right: 16, left: 12, bottom: 78 }}>
-                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <defs>
+                                          <linearGradient id="worstMiniGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stopColor="#f87171" />
+                                            <stop offset="100%" stopColor="#ef4444" />
+                                          </linearGradient>
+                                          <linearGradient id="worstMiniStandardGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stopColor="#60a5fa" />
+                                            <stop offset="100%" stopColor="#6366f1" />
+                                          </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#fee2e2" />
                                         <XAxis
                                           dataKey="city"
                                           angle={-35}
                                           textAnchor="end"
                                           interval={0}
                                           height={92}
-                                          tick={{ fontSize: 11 }}
+                                          tick={{ fontSize: 13, fill: '#475569' }}
                                           tickFormatter={(value: string) => (value.length > 14 ? `${value.slice(0, 14)}...` : value)}
                                         />
-                                        <YAxis />
-                                        <ReferenceLine y={standardPm25Value} stroke="#0f172a" strokeDasharray="4 4" />
+                                        <YAxis tick={{ fontSize: 13, fill: '#475569' }} />
+                                        <ReferenceLine y={standardPm25Value} stroke="#1e3a5f" strokeDasharray="4 4" />
                                         <Tooltip
+                                          contentStyle={{ borderRadius: 12, borderColor: '#fecaca', fontSize: 14 }}
                                           formatter={(value: number, name: string) => {
                                             if (name === 'standard_pm25') {
                                               return [`${value.toFixed(2)} ug/m3`, 'Standard PM2.5'];
@@ -2354,29 +2367,40 @@ export const DashboardPage: React.FC = () => {
                                             return [`${value.toFixed(2)} ug/m3`, 'Worst city PM2.5'];
                                           }}
                                         />
-                                        <Bar dataKey="avg_pm25" fill="#dc2626" radius={[8, 8, 0, 0]} />
-                                        <Bar dataKey="standard_pm25" fill="#2563eb" radius={[8, 8, 0, 0]} />
+                                        <Bar dataKey="avg_pm25" fill="url(#worstMiniGrad)" radius={[10, 10, 0, 0]} />
+                                        <Bar dataKey="standard_pm25" fill="url(#worstMiniStandardGrad)" radius={[10, 10, 0, 0]} />
                                       </BarChart>
                                     </ResponsiveContainer>
                                   </div>
 
-                                  <div className="h-96 w-full rounded-xl border border-emerald-100 p-2">
+                                  <div className="h-96 w-full rounded-xl border border-emerald-100 bg-emerald-50/30 p-2">
                                     <div className="px-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Best cities</div>
                                     <ResponsiveContainer width="100%" height="92%">
                                       <BarChart data={bestRankingRows} margin={{ top: 8, right: 16, left: 12, bottom: 78 }}>
-                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <defs>
+                                          <linearGradient id="bestMiniGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stopColor="#4ade80" />
+                                            <stop offset="100%" stopColor="#22c55e" />
+                                          </linearGradient>
+                                          <linearGradient id="bestMiniStandardGrad" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stopColor="#60a5fa" />
+                                            <stop offset="100%" stopColor="#6366f1" />
+                                          </linearGradient>
+                                        </defs>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#dcfce7" />
                                         <XAxis
                                           dataKey="city"
                                           angle={-35}
                                           textAnchor="end"
                                           interval={0}
                                           height={92}
-                                          tick={{ fontSize: 11 }}
+                                          tick={{ fontSize: 13, fill: '#475569' }}
                                           tickFormatter={(value: string) => (value.length > 14 ? `${value.slice(0, 14)}...` : value)}
                                         />
-                                        <YAxis />
-                                        <ReferenceLine y={standardPm25Value} stroke="#0f172a" strokeDasharray="4 4" />
+                                        <YAxis tick={{ fontSize: 13, fill: '#475569' }} />
+                                        <ReferenceLine y={standardPm25Value} stroke="#1e3a5f" strokeDasharray="4 4" />
                                         <Tooltip
+                                          contentStyle={{ borderRadius: 12, borderColor: '#bbf7d0', fontSize: 14 }}
                                           formatter={(value: number, name: string) => {
                                             if (name === 'standard_pm25') {
                                               return [`${value.toFixed(2)} ug/m3`, 'Standard PM2.5'];
@@ -2384,8 +2408,8 @@ export const DashboardPage: React.FC = () => {
                                             return [`${value.toFixed(2)} ug/m3`, 'Best city PM2.5'];
                                           }}
                                         />
-                                        <Bar dataKey="avg_pm25" fill="#16a34a" radius={[8, 8, 0, 0]} />
-                                        <Bar dataKey="standard_pm25" fill="#2563eb" radius={[8, 8, 0, 0]} />
+                                        <Bar dataKey="avg_pm25" fill="url(#bestMiniGrad)" radius={[10, 10, 0, 0]} />
+                                        <Bar dataKey="standard_pm25" fill="url(#bestMiniStandardGrad)" radius={[10, 10, 0, 0]} />
                                       </BarChart>
                                     </ResponsiveContainer>
                                   </div>
@@ -2395,24 +2419,24 @@ export const DashboardPage: React.FC = () => {
                           </div>
 
                           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                            <div className="rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
-                              <h6 className="text-base font-bold text-slate-900">AI insights</h6>
+                            <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
+                              <h6 className="text-base font-bold" style={{ color: '#1e3a5f' }}>AI insights</h6>
                               <ul className="mt-3 space-y-2">
                                 {rankingResult.insights.map((insight) => (
-                                  <li key={insight} className="flex gap-2 text-sm text-slate-700">
-                                    <span className="mt-1 h-2 w-2 rounded-full bg-sky-500" />
+                                  <li key={insight} className="flex gap-2 text-base text-slate-700 leading-relaxed">
+                                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-blue-500" />
                                     <span>{insight}</span>
                                   </li>
                                 ))}
                               </ul>
                             </div>
 
-                            <div className="rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
-                              <h6 className="text-base font-bold text-slate-900">Recommendations</h6>
+                            <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
+                              <h6 className="text-base font-bold" style={{ color: '#1e3a5f' }}>Recommendations</h6>
                               <ul className="mt-3 space-y-2">
                                 {rankingResult.recommendations.map((item) => (
-                                  <li key={item} className="flex gap-2 text-sm text-slate-700">
-                                    <span className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
+                                  <li key={item} className="flex gap-2 text-base text-slate-700 leading-relaxed">
+                                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
                                     <span>{item}</span>
                                   </li>
                                 ))}
@@ -2420,13 +2444,13 @@ export const DashboardPage: React.FC = () => {
                             </div>
                           </div>
 
-                          <div className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
-                            <h5 className="text-lg font-bold text-slate-950">City Ranking Details</h5>
+                          <div className="mt-6 rounded-2xl border border-blue-100 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
+                            <h5 className="text-lg font-bold" style={{ color: '#1e3a5f' }}>City Ranking Details</h5>
                             <p className="mt-1 text-sm text-slate-600">Explore ranked city rows and open city-level profiles in one place.</p>
 
                             <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
                               {(rankingType === 'worst' || rankingType === 'both') && (
-                                <div className="rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
+                                <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
                                   <h6 className="text-base font-bold text-slate-900">Worst city ranking details</h6>
                                   <p className="mt-1 text-xs text-slate-500">Click a city row to view detailed city profile.</p>
                                   <div className="mt-3 overflow-x-auto">
@@ -2461,7 +2485,7 @@ export const DashboardPage: React.FC = () => {
                               )}
 
                               {(rankingType === 'best' || rankingType === 'both') && (
-                                <div className="rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
+                                <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
                                   <h6 className="text-base font-bold text-slate-900">Best city ranking details</h6>
                                   <p className="mt-1 text-xs text-slate-500">Click a city row to view detailed city profile.</p>
                                   <div className="mt-3 overflow-x-auto">
@@ -2497,9 +2521,9 @@ export const DashboardPage: React.FC = () => {
                             </div>
 
                             {(selectedCityLabel || cityDetailsLoading || cityDetails || cityDetailsError) && (
-                              <div className="mt-4 rounded-2xl border border-slate-200 bg-white p-5 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
+                              <div className="mt-4 rounded-2xl border border-blue-100 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
                                 <div className="flex flex-wrap items-center justify-between gap-3">
-                                  <h6 className="text-lg font-bold text-slate-900">
+                                  <h6 className="text-lg font-bold" style={{ color: '#1e3a5f' }}>
                                     City details {selectedCityLabel ? `- ${selectedCityLabel}` : ''}
                                   </h6>
                                   {cityDetails?.provider && (
@@ -2528,20 +2552,20 @@ export const DashboardPage: React.FC = () => {
                                       return (
                                         <>
                                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                      <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
                                         <div className="text-xs uppercase tracking-[0.16em] text-slate-500">Average AQI</div>
-                                        <div className="mt-1 text-2xl font-bold text-slate-900">
+                                        <div className="mt-1 text-2xl font-bold" style={{ color: '#1e3a5f' }}>
                                           {cityDetails.aqi_avg !== null ? cityDetails.aqi_avg.toFixed(2) : 'N/A'}
                                         </div>
                                       </div>
-                                      <div className="rounded-xl border border-slate-200 bg-slate-50 p-4">
+                                      <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
                                         <div className="text-xs uppercase tracking-[0.16em] text-slate-500">Data samples</div>
-                                        <div className="mt-1 text-2xl font-bold text-slate-900">{cityDetails.sample_count}</div>
+                                        <div className="mt-1 text-2xl font-bold" style={{ color: '#1e3a5f' }}>{cityDetails.sample_count}</div>
                                       </div>
                                     </div>
 
-                                    <div className="rounded-2xl border border-slate-200 bg-white p-4 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
-                                      <h6 className="text-sm font-bold uppercase tracking-[0.2em] text-slate-500">
+                                    <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
+                                      <h6 className="text-sm font-bold uppercase tracking-[0.2em]" style={{ color: '#1e3a5f' }}>
                                         All pollutants (top 3 highlighted)
                                       </h6>
                                       <div className="mt-3 h-72">
@@ -2627,6 +2651,215 @@ export const DashboardPage: React.FC = () => {
 
                     </div>
                   )}
+
+                {isStoryThreeAiView && (
+                  <>
+                    {deepDiveLoading && !deepDiveNarrative[deepDiveMode] && (
+                      <p className="text-base text-slate-600">Generating the {deepDiveMode === 'agentic' ? 'emotionally intelligent' : 'AI'} narrative...</p>
+                    )}
+                    {deepDiveError && !deepDiveNarrative[deepDiveMode] && (
+                      <p className="text-base text-red-600">{deepDiveError}</p>
+                    )}
+
+                    {deepDiveNarrative[deepDiveMode] && (
+                      <>
+                        <section className="ss-structural-section py-16 px-6 md:px-12 bg-transparent">
+                          <div className="mx-auto max-w-5xl bg-transparent">
+                            <div className="space-y-5">
+                              <div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <p className={`font-mono text-xs uppercase tracking-[0.2em] font-bold ${deepDiveAccent.eyebrow}`}>Reading the pattern</p>
+                                  <OllamaTag />
+                                </div>
+                              </div>
+
+                              <div className="grid grid-cols-1 gap-4 min-[820px]:grid-cols-[1fr_auto_1fr_auto_1fr] min-[820px]:items-stretch">
+                                {deepDiveNarrative[deepDiveMode]!.pattern_cards.map((card, index, cards) => (
+                                  <React.Fragment key={index}>
+                                    <article className={`rounded-2xl rounded-t-none border border-slate-200 border-t-4 ${deepDiveAccent.cardBorder} bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md`}>
+                                      <p className={`text-xs font-semibold uppercase tracking-[0.2em] ${deepDiveAccent.eyebrow}`}>{card.eyebrow}</p>
+                                      <h3 className="mt-2 text-[1.05rem] font-semibold text-slate-950">{card.title}</h3>
+                                      <p className="mt-3 text-sm leading-relaxed text-slate-700">{card.body}</p>
+                                    </article>
+
+                                    {index < cards.length - 1 && (
+                                      <div className="hidden items-center justify-center min-[820px]:flex" aria-hidden="true">
+                                        <svg className="h-6 w-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                          <path d="M5 12h14" />
+                                          <path d="m13 6 6 6-6 6" />
+                                        </svg>
+                                      </div>
+                                    )}
+                                  </React.Fragment>
+                                ))}
+                              </div>
+                            </div>
+                          </div>
+                        </section>
+
+                        <section className="ss-structural-section py-16 px-6 md:px-12">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className={`font-mono text-xs uppercase tracking-[0.2em] font-bold ${deepDiveAccent.eyebrow}`}>OUR DUTY</p>
+                            <OllamaTag />
+                          </div>
+
+                          <h2 className="mt-4 text-4xl font-black leading-[1.02] tracking-tight text-slate-950 md:text-6xl">
+                            The Air Can Get <span style={{ color: '#357A4A' }}>Better</span>. Here&apos;s How.
+                          </h2>
+                          <p className="mt-4 text-slate-700 leading-relaxed">{deepDiveNarrative[deepDiveMode]!.intervention_intro}</p>
+                        </section>
+
+                        <section className="ss-structural pt-4 pb-16 px-6 md:px-12">
+                          <div className="mb-6 flex flex-wrap items-center gap-3">
+                            {storyFourHumanCategoryTabs.map((tab) => {
+                              const active = deepDiveCategory === tab.id;
+                              const palette = storyFourHumanPalette[tab.id];
+                              return (
+                                <button
+                                  key={tab.id}
+                                  type="button"
+                                  onClick={() => setDeepDiveCategory(tab.id)}
+                                  className="s4h-pill rounded-full border px-8 py-4 text-[18px] font-semibold tracking-[0.08em] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
+                                  style={
+                                    active
+                                      ? { backgroundColor: palette.accent, borderColor: palette.accent, color: '#ffffff', boxShadow: '0 8px 20px rgba(20,30,25,0.12)' }
+                                      : { backgroundColor: '#ffffff', borderColor: 'rgba(20,30,25,0.25)', color: '#14201A' }
+                                  }
+                                  aria-pressed={active}
+                                >
+                                  {tab.id} {tab.emoji}
+                                </button>
+                              );
+                            })}
+                          </div>
+
+                          {deepDiveInterventionsLoading && !deepDiveInterventions[deepDiveMode] && (
+                            <p className="text-sm text-slate-600">Generating {deepDiveMode === 'agentic' ? 'emotionally intelligent' : 'AI'} intervention text...</p>
+                          )}
+                          {deepDiveInterventionsError && !deepDiveInterventions[deepDiveMode] && (
+                            <p className="text-sm text-red-600">{deepDiveInterventionsError}</p>
+                          )}
+
+                          {deepDiveInterventions[deepDiveMode] && (
+                            <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
+                              {storyFourHumanInterventions
+                                .filter((item) => item.category === deepDiveCategory)
+                                .map((card) => {
+                                  const aiText = deepDiveInterventions[deepDiveMode]!.find((item) => item.id === card.id);
+                                  if (!aiText) {
+                                    return null;
+                                  }
+
+                                  const palette = storyFourHumanPalette[card.category];
+                                  const flipped = Boolean(deepDiveFlippedCards[card.id]);
+
+                                  return (
+                                    <button
+                                      key={card.id}
+                                      type="button"
+                                      className={`s4h-flip-card s4h-flip-wrap min-h-[280px] w-full rounded-2xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${flipped ? 'is-flipped' : ''}`}
+                                      onClick={() => setDeepDiveFlippedCards((current) => ({ ...current, [card.id]: !current[card.id] }))}
+                                      aria-pressed={flipped}
+                                      aria-label={`${card.title}. ${flipped ? 'Tap to flip back' : 'Tap to flip for evidence'}`}
+                                    >
+                                      <div className="s4h-flip-inner">
+                                        <div className="s4h-face s4h-front flex h-full flex-col border border-[rgba(20,30,25,0.12)] bg-white p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
+                                          <div
+                                            className="s4h-icon-stage flex h-[44%] items-center justify-center rounded-xl"
+                                            style={{
+                                              color: '#ffffff',
+                                              '--s4h-grad-a': palette.glowA,
+                                              '--s4h-grad-b': palette.glowB,
+                                              '--s4h-grad-c': palette.glowC,
+                                            } as React.CSSProperties}
+                                          >
+                                            <span className="s4h-icon-spark s4h-spark-1" aria-hidden="true" />
+                                            <span className="s4h-icon-spark s4h-spark-2" aria-hidden="true" />
+                                            <div className="h-[74px] w-[84px]">
+                                              <StoryFourIcon iconKey={card.iconKey} />
+                                            </div>
+                                          </div>
+                                          <div className="mt-3 grid flex-1 grid-rows-[auto_1fr_auto] gap-2">
+                                            <span
+                                              className="s4h-pill inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-semibold leading-tight"
+                                              style={{ backgroundColor: palette.tint, color: palette.text }}
+                                            >
+                                              {aiText.stat}
+                                            </span>
+                                            <h4 className="line-clamp-3 text-base font-semibold leading-snug text-[#14201A] md:text-[15px]">
+                                              {card.title}
+                                            </h4>
+                                            <span className="s4h-hint text-xs text-[#5F6960]">tap to flip</span>
+                                          </div>
+                                        </div>
+                                        <div className="s4h-face s4h-back grid h-full grid-rows-[auto_1fr_auto] border border-[rgba(20,30,25,0.12)] bg-white p-3 shadow-sm">
+                                          <div className="s4h-label text-xs uppercase tracking-[0.1em] text-[#5F6960]">The evidence</div>
+                                          <p className="text-sm leading-relaxed text-[#14201A]">{aiText.detail}</p>
+                                          <span className="s4h-hint text-xs text-[#5F6960]">tap to flip back</span>
+                                        </div>
+                                      </div>
+                                    </button>
+                                  );
+                                })}
+                            </div>
+                          )}
+
+                          <br />
+
+                          {deepDiveImpactTexts[deepDiveMode] && (
+                            <div className="rounded-2xl border border-[rgba(20,30,25,0.12)] bg-white p-5 md:p-6">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h3 className="text-2xl font-bold text-[#14201A]">If This Happened Everywhere</h3>
+                                <OllamaTag />
+                              </div>
+                              <p className="mt-2 text-base leading-relaxed text-slate-700">{deepDiveNarrative[deepDiveMode]!.impact_intro}</p>
+
+                              <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
+                                {storyFourImpactStats.map((stat) => {
+                                  const aiText = deepDiveImpactTexts[deepDiveMode]!.find((item) => item.id === stat.id);
+                                  if (!aiText) {
+                                    return null;
+                                  }
+
+                                  const expanded = deepDiveExpandedImpactId === stat.id;
+                                  return (
+                                    <button
+                                      key={stat.id}
+                                      type="button"
+                                      onClick={() => setDeepDiveExpandedImpactId(expanded ? null : stat.id)}
+                                      className="rounded-2xl border border-[rgba(20,30,25,0.12)] p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2"
+                                      style={{ backgroundColor: deepDiveAccent.impactBg }}
+                                      aria-expanded={expanded}
+                                    >
+                                      <div className="flex items-start justify-between gap-3">
+                                        <div>
+                                          <div className="s4h-display text-3xl font-bold leading-none text-[#14201A]">{stat.value}</div>
+                                          <div className="mt-1 text-sm font-medium text-[#5F6960]">{stat.label}</div>
+                                        </div>
+                                        <span className="s4h-pill rounded-full bg-white px-2 py-1 text-[10px] uppercase tracking-[0.08em] text-[#5F6960]">
+                                          {expanded ? 'collapse' : 'expand'}
+                                        </span>
+                                      </div>
+                                      {expanded && (
+                                        <p className="mt-3 text-sm leading-relaxed text-[#14201A]">{aiText.detail}</p>
+                                      )}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          )}
+                          {deepDiveImpactLoading && !deepDiveImpactTexts[deepDiveMode] && (
+                            <p className="text-sm text-slate-600">Generating {deepDiveMode === 'agentic' ? 'emotionally intelligent' : 'AI'} impact text...</p>
+                          )}
+                          {deepDiveImpactError && !deepDiveImpactTexts[deepDiveMode] && (
+                            <p className="text-sm text-red-600">{deepDiveImpactError}</p>
+                          )}
+                        </section>
+                      </>
+                    )}
+                  </>
+                )}
 
                 {selectedTheme.id === 'aqi-and-decisions' && (
                   <section className="ss-structural w-full p-4 md:p-8">
@@ -2997,57 +3230,7 @@ export const DashboardPage: React.FC = () => {
 
               
                         </>
-                      ) : (
-                        <>
-                          <header className="rounded-2xl border border-[rgba(20,30,25,0.12)] bg-white p-6 md:p-8">
-                            <div className="s4h-eyebrow text-[11px] uppercase tracking-[0.18em] text-[#5F6960]">story 4 ollama generation</div>
-                            <h2 className="s4h-display mt-4 text-4xl font-bold leading-tight text-[#14201A] md:text-5xl">
-                              Future predictions and pathways to clean air
-                            </h2>
-                            <p className="mt-4 max-w-3xl text-base text-[#5F6960] md:text-lg">
-                              Generate Story 4 from this merged Story Studio page using the original Ollama payload and response flow.
-                            </p>
-                            <div className="mt-4 flex flex-wrap items-center gap-3">
-                              {hasGeneratedStoryFourAi && (
-                                <span className="rounded-full px-3 py-1 text-sm font-semibold border bg-emerald-50 text-emerald-700 border-emerald-200">
-                                  Generated by {storyFourAiProvider}
-                                </span>
-                              )}
-                              <button
-                                type="button"
-                                onClick={generateStoryFourAi}
-                                disabled={storyFourAiLoading || hasGeneratedStoryFourAi}
-                                className="inline-flex items-center justify-center gap-2 rounded-xl bg-sky-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-sky-700 disabled:cursor-not-allowed disabled:opacity-60"
-                              >
-                                {storyFourAiLoading ? 'Generating Story 4...' : hasGeneratedStoryFourAi ? 'Story 4 Generated' : 'Generate Story 4 AI'}
-                              </button>
-                            </div>
-                            {storyFourAiError && <p className="mt-3 text-sm text-red-600">{storyFourAiError}</p>}
-                            {hasGeneratedStoryFourAi && (
-                              <p className="mt-3 text-sm leading-relaxed text-[#5F6960]">{storyFourAiSummary}</p>
-                            )}
-                          </header>
-
-                          {hasGeneratedStoryFourAi && (
-                            <section className="grid grid-cols-1 gap-4 md:grid-cols-3">
-                              {storyFourAiSections.map((section, index) => (
-                                <article key={`${section.title}-${index}`} className="rounded-2xl border border-[rgba(20,30,25,0.12)] bg-white p-4">
-                                  <div className="s4h-label text-[10px] uppercase tracking-[0.1em] text-[#5F6960]">Story 4 AI section {index + 1}</div>
-                                  <h3 className="mt-2 text-lg font-bold text-[#14201A]">{section.title}</h3>
-                                  <p className="mt-3 text-sm leading-relaxed text-[#2f3a33]">{section.body}</p>
-                                  {section.bullets && section.bullets.length > 0 && (
-                                    <ul className="mt-3 space-y-2">
-                                      {section.bullets.slice(0, 4).map((bullet) => (
-                                        <li key={bullet} className="text-sm text-[#2f3a33]">- {bullet}</li>
-                                      ))}
-                                    </ul>
-                                  )}
-                                </article>
-                              ))}
-                            </section>
-                          )}
-                        </>
-                      )}
+                      ) : null}
                     </div>
           
                   </section>
@@ -3060,17 +3243,6 @@ export const DashboardPage: React.FC = () => {
                   </div>
                 )}
 
-                {isAiLikeMode && selectedTheme.status === 'ready' && aiLoading && (
-                  <div className="ss-section rounded-3xl border border-slate-200 bg-white p-6 text-slate-600 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
-                    Generating a new AI/Ollama story for this theme... this can take a moment on a local model.
-                  </div>
-                )}
-
-                {isAiLikeMode && selectedTheme.status === 'ready' && !aiLoading && !hasGeneratedAiStory && !aiError && (
-                  <div className="ss-section rounded-3xl border border-slate-200 bg-white p-6 text-slate-600 transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
-                    No AI story has been generated yet. Click the button above when you want Ollama to generate one.
-                  </div>
-                )}
               </main>
             </div>
           </div>
