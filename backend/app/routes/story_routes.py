@@ -1,4 +1,5 @@
 """Story routes for generated stories and theme-based AI storytelling."""
+import hashlib
 import json
 import re
 from datetime import datetime
@@ -688,6 +689,871 @@ Rules:
         return jsonify({
             'success': True,
             'data': {'provider': provider_used, 'mode': mode, 'impact_stats': impact_stats},
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+INVERSION_CHAMBER_SCENARIOS = {
+    'default': 'Default view, before the user has moved either slider',
+    'monsoon': 'Preset: Monsoon afternoon (a strong, deep, well-mixed atmosphere)',
+    'october': 'Preset: October evening (a moderate, settling atmosphere)',
+    'january': 'Preset: January morning (a shallow, trapped winter inversion)',
+}
+
+
+def _inversion_chamber_band(value):
+    if value <= 50:
+        return 'Good'
+    if value <= 100:
+        return 'Moderate'
+    if value <= 150:
+        return 'Unhealthy for sensitive groups'
+    if value <= 200:
+        return 'Unhealthy'
+    if value <= 300:
+        return 'Very unhealthy'
+    return 'Hazardous'
+
+
+@bp.route('/inversion-chamber-explain', methods=['POST'])
+def generate_inversion_chamber_explain():
+    """Generate the info-card copy for the Inversion Chamber interactive.
+
+    The concentration index shown to the user is always computed here from the
+    real emissions/mixing-height inputs - the model only writes the explanatory
+    copy around it, so it cannot hallucinate a different number.
+    """
+    try:
+        data = request.get_json() or {}
+        preset = str(data.get('preset', 'default')).strip().lower()
+        if preset not in INVERSION_CHAMBER_SCENARIOS:
+            preset = 'default'
+
+        try:
+            emissions = max(0, min(100, float(data.get('emissions', 50))))
+        except (TypeError, ValueError):
+            emissions = 50.0
+        try:
+            mixing_height = max(150, min(2000, float(data.get('mixing_height', 900))))
+        except (TypeError, ValueError):
+            mixing_height = 900.0
+
+        concentration = round((emissions / mixing_height) * 1000)
+        band = _inversion_chamber_band(min(500, concentration))
+
+        cache_key = f'inversion_chamber:{preset}'
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({
+                'success': True,
+                'data': {
+                    'provider': cached_provider,
+                    'preset': preset,
+                    'concentration': concentration,
+                    'band': band,
+                    'how_to_use': cached_payload.get('how_to_use'),
+                    'description': cached_payload.get('description'),
+                },
+            }), 200
+
+        prompt = f"""
+You are writing UI copy for an interactive air-pollution physics visualization called
+"The Inversion Chamber" on an air-quality dashboard. It has two sliders: Emissions
+(0-100, arbitrary units) and Mixing height (150-2000 meters, the depth of well-mixed
+air above the ground before a temperature inversion caps it). The displayed
+concentration index is calculated as (emissions / mixing_height) * 1000.
+
+Scenario: {INVERSION_CHAMBER_SCENARIOS[preset]}
+Emissions: {emissions:.0f}
+Mixing height: {mixing_height:.0f}m
+Resulting concentration index: {concentration} ({band})
+
+Return valid JSON only with this exact shape:
+{{
+  "how_to_use": "...",
+  "description": "..."
+}}
+
+Rules:
+- "how_to_use" is exactly one short sentence (under 15 words) telling a first-time
+  user how to interact with the two sliders.
+- "description" is 2-3 sentences (under 70 words total) explaining, for this specific
+  scenario's numbers, why the concentration comes out the way it does - grounded in
+  real atmospheric physics of mixing height and emissions, not generic filler.
+- No markdown fences, no extra keys.
+"""
+
+        provider_used = None
+        parsed = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=300,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            parsed = _safe_json_loads(response_text)
+        except Exception:
+            parsed = None
+
+        how_to_use = (parsed or {}).get('how_to_use')
+        description = (parsed or {}).get('description')
+        if not isinstance(how_to_use, str) or not how_to_use.strip() or \
+           not isinstance(description, str) or not description.strip():
+            return jsonify({
+                'success': False,
+                'error': 'The Ollama service did not return usable copy. Make sure Ollama is running and try again.',
+            }), 502
+
+        payload = {'how_to_use': how_to_use.strip(), 'description': description.strip()}
+        _set_cached_narrative(cache_key, payload, provider_used)
+
+        return jsonify({
+            'success': True,
+            'data': {
+                'provider': provider_used,
+                'preset': preset,
+                'concentration': concentration,
+                'band': band,
+                'how_to_use': payload['how_to_use'],
+                'description': payload['description'],
+            },
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+AGENTIC_CITIES = ['Delhi', 'Lahore', 'Dhaka', 'Kathmandu', 'Kolkata']
+AGENTIC_FOR_WHOM = ['Myself', 'My child', 'My parents', 'Someone with asthma']
+AGENTIC_CONCERNS = ['Going outside today', 'Sleeping better', 'Cooking at home', 'The long run']
+
+AGENTIC_TONE = (
+    'Write like a thoughtful friend, not a health authority. Never say PM2.5, AQI, particulate '
+    'matter, mixing height, or inversion. No percentages, no statistics, no numbers of any kind. '
+    'Short sentences, plain words. Warm, calm, honest - do not frighten the reader and do not '
+    'pretend the problem isn\'t real. Never use the word "unfortunately". Write in second person.'
+)
+
+
+def _agentic_inputs(data):
+    city = data.get('city') if data.get('city') in AGENTIC_CITIES else AGENTIC_CITIES[0]
+    for_whom = data.get('for_whom') if data.get('for_whom') in AGENTIC_FOR_WHOM else AGENTIC_FOR_WHOM[0]
+    concern = data.get('concern') if data.get('concern') in AGENTIC_CONCERNS else AGENTIC_CONCERNS[0]
+    return city, for_whom, concern
+
+
+def _agentic_cache_key(piece, city, for_whom, concern):
+    slug = f'{city}:{for_whom}:{concern}'.lower().replace(' ', '-')
+    return f'agentic_{piece}:{slug}'
+
+
+@bp.route('/agentic-meaning', methods=['POST'])
+def generate_agentic_meaning():
+    """'What this means today' - one warm, plain-language observation for the user's situation."""
+    try:
+        data = request.get_json() or {}
+        city, for_whom, concern = _agentic_inputs(data)
+        cache_key = _agentic_cache_key('meaning', city, for_whom, concern)
+
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({'success': True, 'data': {'provider': cached_provider, 'meaning': cached_payload.get('meaning')}}), 200
+
+        prompt = f"""{AGENTIC_TONE}
+
+Context: someone in {city} is asking on behalf of {for_whom.lower()}, thinking about "{concern.lower()}".
+
+Write one honest, gentle observation about their specific situation today - about 40 words, flowing
+prose, not a list.
+
+Return only the observation, no preamble, no quotation marks."""
+
+        provider_used = None
+        text = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=150,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            text = response_text.strip()
+        except Exception:
+            text = None
+
+        if not text:
+            return jsonify({'success': False, 'error': 'The Ollama service did not respond. Make sure Ollama is running and try again.'}), 502
+
+        _set_cached_narrative(cache_key, {'meaning': text}, provider_used)
+        return jsonify({'success': True, 'data': {'provider': provider_used, 'meaning': text}}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/agentic-action', methods=['POST'])
+def generate_agentic_action():
+    """'One small thing' - exactly one small, free, doable action."""
+    try:
+        data = request.get_json() or {}
+        city, for_whom, concern = _agentic_inputs(data)
+        cache_key = _agentic_cache_key('action', city, for_whom, concern)
+
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({'success': True, 'data': {'provider': cached_provider, 'action': cached_payload.get('action')}}), 200
+
+        prompt = f"""{AGENTIC_TONE}
+
+Context: someone in {city} is asking on behalf of {for_whom.lower()}, thinking about "{concern.lower()}".
+
+Suggest exactly one small, genuinely doable action for right now - about 25 words. It must be free
+and require no special equipment or appointment.
+
+Do not suggest: buying any product (including an air purifier), seeing a doctor, contacting
+officials or policy advocacy, or anything that costs money.
+
+Return only the single action, no preamble, no quotation marks, no numbering."""
+
+        provider_used = None
+        text = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=100,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            text = response_text.strip()
+        except Exception:
+            text = None
+
+        if not text:
+            return jsonify({'success': False, 'error': 'The Ollama service did not respond. Make sure Ollama is running and try again.'}), 502
+
+        _set_cached_narrative(cache_key, {'action': text}, provider_used)
+        return jsonify({'success': True, 'data': {'provider': provider_used, 'action': text}}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/agentic-neighbours', methods=['POST'])
+def generate_agentic_neighbours():
+    """'The Neighbour Comparison' - one warm sentence per nearby city, not a table."""
+    try:
+        data = request.get_json() or {}
+        city, for_whom, concern = _agentic_inputs(data)
+        others = [c for c in AGENTIC_CITIES if c != city][:3]
+        cache_key = _agentic_cache_key('neighbours', city, for_whom, concern)
+
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({'success': True, 'data': {'provider': cached_provider, 'comparisons': cached_payload.get('comparisons')}}), 200
+
+        prompt = f"""{AGENTIC_TONE}
+
+Someone in {city} is asking on behalf of {for_whom.lower()}, thinking about "{concern.lower()}".
+
+Write one warm, human sentence for each of these three other places, gently comparing their air and
+daily life to {city}'s in plain human terms (weather, geography, daily rhythms) - not statistics:
+{', '.join(others)}.
+
+Return valid JSON only with this exact shape:
+{{
+  "comparisons": [
+    {{"city": "{others[0]}", "line": "..."}},
+    {{"city": "{others[1]}", "line": "..."}},
+    {{"city": "{others[2]}", "line": "..."}}
+  ]
+}}
+
+Each "line" is one short sentence. No markdown fences, no extra keys."""
+
+        provider_used = None
+        parsed = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=300,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            parsed = _safe_json_loads(response_text)
+        except Exception:
+            parsed = None
+
+        comparisons = (parsed or {}).get('comparisons')
+        if not isinstance(comparisons, list) or len(comparisons) != 3 or not all(
+            isinstance(item, dict) and isinstance(item.get('city'), str) and isinstance(item.get('line'), str) and item.get('line').strip()
+            for item in comparisons
+        ):
+            return jsonify({'success': False, 'error': 'The Ollama service did not return usable comparisons. Make sure Ollama is running and try again.'}), 502
+
+        _set_cached_narrative(cache_key, {'comparisons': comparisons}, provider_used)
+        return jsonify({'success': True, 'data': {'provider': provider_used, 'comparisons': comparisons}}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/agentic-breath', methods=['POST'])
+def generate_agentic_breath():
+    """'The Breathing Circle' - a short plain-language phrase for how the air feels today."""
+    try:
+        data = request.get_json() or {}
+        city, for_whom, concern = _agentic_inputs(data)
+        cache_key = _agentic_cache_key('breath', city, for_whom, concern)
+
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({'success': True, 'data': {'provider': cached_provider, 'phrase': cached_payload.get('phrase')}}), 200
+
+        prompt = f"""{AGENTIC_TONE}
+
+Context: someone in {city} is asking on behalf of {for_whom.lower()}, thinking about "{concern.lower()}".
+
+Write one short, plain sentence (6-12 words) describing how the air feels today, in the form
+"Today the air here is ___." Do not include any numbers.
+
+Return only that one sentence, no preamble, no quotation marks."""
+
+        provider_used = None
+        text = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=60,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            text = response_text.strip()
+        except Exception:
+            text = None
+
+        if not text:
+            return jsonify({'success': False, 'error': 'The Ollama service did not respond. Make sure Ollama is running and try again.'}), 502
+
+        _set_cached_narrative(cache_key, {'phrase': text}, provider_used)
+        return jsonify({'success': True, 'data': {'provider': provider_used, 'phrase': text}}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/agentic-air-words', methods=['POST'])
+def generate_agentic_air_words():
+    """'Today's Air, In Words' - one plain-language sentence about a city's air today."""
+    try:
+        data = request.get_json() or {}
+        city = data.get('city') if data.get('city') in AGENTIC_CITIES else AGENTIC_CITIES[0]
+        cache_key = f'agentic_airwords:{city.lower()}'
+
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({'success': True, 'data': {'provider': cached_provider, 'sentence': cached_payload.get('sentence')}}), 200
+
+        prompt = f"""{AGENTIC_TONE}
+
+Write one or two sentences describing today's air in {city}, in the style of: "Today the air in
+{city} sits low and still. You'll feel it most in the early morning." Do not include any numbers.
+
+Return only the sentence(s), no preamble, no quotation marks."""
+
+        provider_used = None
+        text = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=80,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            text = response_text.strip()
+        except Exception:
+            text = None
+
+        if not text:
+            return jsonify({'success': False, 'error': 'The Ollama service did not respond. Make sure Ollama is running and try again.'}), 502
+
+        _set_cached_narrative(cache_key, {'sentence': text}, provider_used)
+        return jsonify({'success': True, 'data': {'provider': provider_used, 'sentence': text}}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+AGENTIC_HELP_SOURCES = {
+    'traffic': {'label': 'Traffic', 'share': 38},
+    'kilns': {'label': 'Kilns', 'share': 22},
+    'cooking': {'label': 'Cooking smoke', 'share': 18},
+    'crop-burning': {'label': 'Crop burning', 'share': 27},
+}
+
+
+@bp.route('/agentic-help', methods=['POST'])
+def generate_agentic_help():
+    """'What Would Actually Help Here' - one warm paragraph on what fixing a source would feel like."""
+    try:
+        data = request.get_json() or {}
+        source = data.get('source') if data.get('source') in AGENTIC_HELP_SOURCES else 'traffic'
+        source_info = AGENTIC_HELP_SOURCES[source]
+        cache_key = f'agentic_help:{source}'
+
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({
+                'success': True,
+                'data': {'provider': cached_provider, 'share': source_info['share'], 'paragraph': cached_payload.get('paragraph')},
+            }), 200
+
+        prompt = f"""{AGENTIC_TONE}
+
+The source is "{source_info['label']}", a major contributor to the air here.
+
+Write one short warm paragraph (about 40 words) on what fixing this would feel like for an ordinary
+person living here - not policy, not cost, not statistics. Style: "If the kilns switched over, the
+winter haze would thin a little. You'd notice it on the walk to work."
+
+Return only the paragraph, no preamble, no quotation marks."""
+
+        provider_used = None
+        text = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=120,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            text = response_text.strip()
+        except Exception:
+            text = None
+
+        if not text:
+            return jsonify({'success': False, 'error': 'The Ollama service did not respond. Make sure Ollama is running and try again.'}), 502
+
+        _set_cached_narrative(cache_key, {'paragraph': text}, provider_used)
+        return jsonify({
+            'success': True,
+            'data': {'provider': provider_used, 'share': source_info['share'], 'paragraph': text},
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/agentic-good-day', methods=['POST'])
+def generate_agentic_good_day():
+    """'One Good Day' - a short warm second-person scene of one ordinary day with clean air."""
+    try:
+        cache_key = 'agentic_good_day'
+
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({'success': True, 'data': {'provider': cached_provider, 'scene': cached_payload.get('scene')}}), 200
+
+        prompt = f"""{AGENTIC_TONE}
+
+Write a short, warm, second-person scene (about 60 words) of one ordinary day with clean air.
+Keep it concrete and small: an open window, a child outside, a clear view of something far away.
+
+Return only the scene, no preamble, no quotation marks."""
+
+        provider_used = None
+        text = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=180,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            text = response_text.strip()
+        except Exception:
+            text = None
+
+        if not text:
+            return jsonify({'success': False, 'error': 'The Ollama service did not respond. Make sure Ollama is running and try again.'}), 502
+
+        _set_cached_narrative(cache_key, {'scene': text}, provider_used)
+        return jsonify({'success': True, 'data': {'provider': provider_used, 'scene': text}}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/scale-ladder-identity', methods=['POST'])
+def generate_scale_ladder_identity():
+    """Generate the one persistent person the Scale Ladder tracks, once per session."""
+    try:
+        cache_key = 'scale_ladder_identity'
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload and cached_payload.get('name'):
+            return jsonify({'success': True, 'data': {'provider': cached_provider, **cached_payload}}), 200
+
+        prompt = """Invent one specific, ordinary South Asian woman as a character for a data
+visualization about air pollution.
+
+Return valid JSON only with this exact shape:
+{
+  "name": "...",
+  "age": 0,
+  "detail": "..."
+}
+
+Rules:
+- "name" is a common South Asian first name.
+- "age" is a whole number between 20 and 70.
+- "detail" is one concrete, ordinary detail about her daily life (a balcony, a walk to school, a
+  tea stall) - under 12 words.
+No markdown fences, no extra keys."""
+
+        provider_used = None
+        parsed = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=200,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            parsed = _safe_json_loads(response_text)
+        except Exception:
+            parsed = None
+
+        name = (parsed or {}).get('name')
+        age = (parsed or {}).get('age')
+        detail = (parsed or {}).get('detail')
+        if not isinstance(name, str) or not name.strip() or not isinstance(detail, str) or not detail.strip():
+            return jsonify({'success': False, 'error': 'The Ollama service did not return a usable identity. Make sure Ollama is running and try again.'}), 502
+
+        payload = {'name': name.strip(), 'age': age if isinstance(age, int) else 34, 'detail': detail.strip()}
+        _set_cached_narrative(cache_key, payload, provider_used)
+        return jsonify({'success': True, 'data': {'provider': provider_used, **payload}}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/scale-ladder-rung', methods=['POST'])
+def generate_scale_ladder_rung():
+    """Per-rung orientation caption (above canvas) + cold statistical line (below canvas)."""
+    try:
+        data = request.get_json() or {}
+        name = str(data.get('name') or 'She').strip()
+        age = data.get('age')
+        detail = str(data.get('detail') or '').strip()
+        rung_name = str(data.get('rung_name') or '').strip()
+        prev_rung_name = str(data.get('prev_rung_name') or '').strip()
+        population = data.get('population')
+        visible_count = data.get('visible_count')
+        radius = data.get('radius')
+        marker_findable = bool(data.get('marker_findable'))
+
+        cache_key = f'scale_ladder_rung:{name.lower()}:{rung_name.lower()}'
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({'success': True, 'data': {'provider': cached_provider, **cached_payload}}), 200
+
+        prompt = f"""You are generating captions for a data visualization about a specific person, {name}
+(age {age}, {detail}), becoming statistically invisible as the scale of a population grows.
+
+Current view: "{rung_name}" - population {population}, {visible_count} dots visible on screen, dot
+radius {radius}px, {name}'s marker is {'still findable' if marker_findable else 'no longer findable'}.
+Previous view: "{prev_rung_name or 'none - this is the first view'}".
+
+Return valid JSON only with this exact shape:
+{{
+  "orientation": "...",
+  "rung": "..."
+}}
+
+Rules:
+- "orientation" describes what is on screen right now and what changed from the previous view. One
+  or two sentences, under 30 words. Factual, neutral, no drama. You are a caption, not a narrator.
+- "rung" is about {name}. Get colder and more statistical as she becomes harder to see - rung 1 is
+  about a person, rung 6 is about a number. Under 20 words. Do not console, do not inspire, never
+  use the word "hope".
+No markdown fences, no extra keys."""
+
+        provider_used = None
+        parsed = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=280,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            parsed = _safe_json_loads(response_text)
+        except Exception:
+            parsed = None
+
+        orientation = (parsed or {}).get('orientation')
+        rung_text = (parsed or {}).get('rung')
+        if not isinstance(orientation, str) or not orientation.strip() or not isinstance(rung_text, str) or not rung_text.strip():
+            return jsonify({'success': False, 'error': 'The Ollama service did not return usable captions. Make sure Ollama is running and try again.'}), 502
+
+        payload = {'orientation': orientation.strip(), 'rung': rung_text.strip()}
+        _set_cached_narrative(cache_key, payload, provider_used)
+        return jsonify({'success': True, 'data': {'provider': provider_used, **payload}}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/agentic-day-ribbon', methods=['POST'])
+def generate_agentic_day_ribbon():
+    """'Today's air, in words' - the two hour labels for the Day Ribbon."""
+    try:
+        data = request.get_json() or {}
+        city = data.get('city') if data.get('city') in AGENTIC_CITIES else AGENTIC_CITIES[0]
+        cache_key = f'agentic_dayribbon:{city.lower()}'
+
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({'success': True, 'data': {'provider': cached_provider, **cached_payload}}), 200
+
+        prompt = f"""{AGENTIC_TONE}
+
+{city}'s air is heaviest in the early morning and eases by mid-afternoon, then thickens again at night.
+
+Return valid JSON only with this exact shape:
+{{
+  "easiest": "...",
+  "heaviest": "..."
+}}
+
+Rules:
+- "easiest" is a short phrase like "easiest around 3pm" naming the lightest hour.
+- "heaviest" is a short phrase like "heaviest at dawn" naming the heaviest hour.
+- No numbers beyond a simple time of day. No markdown fences, no extra keys."""
+
+        provider_used = None
+        parsed = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=150,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            parsed = _safe_json_loads(response_text)
+        except Exception:
+            parsed = None
+
+        easiest = (parsed or {}).get('easiest')
+        heaviest = (parsed or {}).get('heaviest')
+        if not isinstance(easiest, str) or not easiest.strip() or not isinstance(heaviest, str) or not heaviest.strip():
+            return jsonify({'success': False, 'error': 'The Ollama service did not return usable labels. Make sure Ollama is running and try again.'}), 502
+
+        payload = {'easiest': easiest.strip(), 'heaviest': heaviest.strip()}
+        _set_cached_narrative(cache_key, payload, provider_used)
+        return jsonify({'success': True, 'data': {'provider': provider_used, **payload}}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/agentic-good-day-timeline', methods=['POST'])
+def generate_agentic_good_day_timeline():
+    """'One Good Day' - four small ordinary things, one per time of day, in a single call."""
+    try:
+        cache_key = 'agentic_good_day_timeline'
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({'success': True, 'data': {'provider': cached_provider, 'timeline': cached_payload.get('timeline')}}), 200
+
+        prompt = f"""{AGENTIC_TONE}
+
+Write one small, ordinary thing that becomes possible at each time of day, on a day with clean air:
+morning, midday, evening, night.
+
+Return valid JSON only with this exact shape:
+{{
+  "timeline": [
+    {{"phase": "morning", "text": "..."}},
+    {{"phase": "midday", "text": "..."}},
+    {{"phase": "evening", "text": "..."}},
+    {{"phase": "night", "text": "..."}}
+  ]
+}}
+
+Each "text" is under 10 words, concrete and small (an open window, a walk, sleeping without
+coughing). No markdown fences, no extra keys."""
+
+        provider_used = None
+        parsed = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=320,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            parsed = _safe_json_loads(response_text)
+        except Exception:
+            parsed = None
+
+        timeline = (parsed or {}).get('timeline')
+        required_phases = {'morning', 'midday', 'evening', 'night'}
+        if not isinstance(timeline, list) or len(timeline) != 4 or {item.get('phase') for item in timeline if isinstance(item, dict)} != required_phases:
+            return jsonify({'success': False, 'error': 'The Ollama service did not return a usable timeline. Make sure Ollama is running and try again.'}), 502
+
+        _set_cached_narrative(cache_key, {'timeline': timeline}, provider_used)
+        return jsonify({'success': True, 'data': {'provider': provider_used, 'timeline': timeline}}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+AGENTIC_CLOUD_SOURCES = {
+    'traffic': {'label': 'Traffic', 'share': 34},
+    'kilns': {'label': 'Kilns', 'share': 20},
+    'cooking': {'label': 'Cooking smoke', 'share': 14},
+    'crop-burning': {'label': 'Crop burning', 'share': 22},
+    'dust': {'label': 'Dust', 'share': 10},
+}
+
+
+@bp.route('/agentic-cloud', methods=['POST'])
+def generate_agentic_cloud():
+    """'What's in the air' - one plain sentence about where a source comes from and who it touches."""
+    try:
+        data = request.get_json() or {}
+        source = data.get('source') if data.get('source') in AGENTIC_CLOUD_SOURCES else 'traffic'
+        source_info = AGENTIC_CLOUD_SOURCES[source]
+        cache_key = f'agentic_cloud:{source}'
+
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({
+                'success': True,
+                'data': {'provider': cached_provider, 'share': source_info['share'], 'line': cached_payload.get('line')},
+            }), 200
+
+        prompt = f"""{AGENTIC_TONE}
+
+The source is "{source_info['label']}".
+
+Write one plain sentence about where this comes from and who it touches. Style: "Most of this
+drifts in from the fields outside the city. It settles over everyone, whether or not they ever
+went near a farm."
+
+Return only the sentence, no preamble, no quotation marks."""
+
+        provider_used = None
+        text = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=80,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            text = response_text.strip()
+        except Exception:
+            text = None
+
+        if not text:
+            return jsonify({'success': False, 'error': 'The Ollama service did not respond. Make sure Ollama is running and try again.'}), 502
+
+        _set_cached_narrative(cache_key, {'line': text}, provider_used)
+        return jsonify({
+            'success': True,
+            'data': {'provider': provider_used, 'share': source_info['share'], 'line': text},
+        }), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/agentic-bubbles', methods=['POST'])
+def generate_agentic_bubbles():
+    """'Small things that hold' - six quiet, true, human facts about air, in a single call."""
+    try:
+        cache_key = 'agentic_bubbles'
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({'success': True, 'data': {'provider': cached_provider, 'facts': cached_payload.get('facts')}}), 200
+
+        prompt = f"""Return ONLY a JSON object, nothing else - no explanation, no markdown fences.
+Shape:
+{{"facts": ["...", "...", "...", "...", "...", "..."]}}
+
+Each of the 6 facts is one short, quiet, true, human sentence about air and the people living
+with it - not a tip or warning, just something that makes the problem feel human and shared.
+{AGENTIC_TONE}
+Example style: "The air you're breathing today was somewhere else last week."
+
+JSON:"""
+
+        provider_used = None
+        facts = None
+        for _attempt in range(3):
+            try:
+                response_text, provider_used = chat_provider_service.generate_local_answer(
+                    prompt,
+                    model=chat_provider_service.story_ollama_model,
+                    num_predict=400,
+                    timeout_seconds=chat_provider_service.story_timeout_seconds,
+                )
+                parsed = _safe_json_loads(response_text)
+            except Exception:
+                parsed = None
+
+            candidate = (parsed or {}).get('facts')
+            if isinstance(candidate, list) and len(candidate) == 6 and all(isinstance(f, str) and f.strip() for f in candidate):
+                facts = candidate
+                break
+
+        if not facts:
+            return jsonify({'success': False, 'error': 'The Ollama service did not return usable facts. Make sure Ollama is running and try again.'}), 502
+
+        _set_cached_narrative(cache_key, {'facts': facts}, provider_used)
+        return jsonify({'success': True, 'data': {'provider': provider_used, 'facts': facts}}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/agentic-fact-detail', methods=['POST'])
+def generate_agentic_fact_detail():
+    """'Small things that hold' - expand one clicked fact into a short detail, shown at the side."""
+    try:
+        data = request.get_json() or {}
+        fact = (data.get('fact') or '').strip()
+        if not fact:
+            return jsonify({'success': False, 'error': 'A fact is required.'}), 400
+
+        cache_key = f'agentic_fact_detail:{hashlib.sha1(fact.encode("utf-8")).hexdigest()[:16]}'
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({
+                'success': True,
+                'data': {'provider': cached_provider, 'detail': cached_payload.get('detail')},
+            }), 200
+
+        prompt = f"""{AGENTIC_TONE}
+
+The reader just clicked on this quiet observation about air pollution:
+"{fact}"
+
+Write 2 to 3 sentences that gently sit beside this thought - one more true, human detail that
+follows naturally from it. Not a statistic, not advice, not a warning. Just a small, honest
+continuation of the same feeling.
+
+Return only the sentences, no preamble, no quotation marks."""
+
+        provider_used = None
+        text = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=100,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            text = response_text.strip()
+        except Exception:
+            text = None
+
+        if not text:
+            return jsonify({'success': False, 'error': 'The Ollama service did not respond. Make sure Ollama is running and try again.'}), 502
+
+        _set_cached_narrative(cache_key, {'detail': text}, provider_used)
+        return jsonify({
+            'success': True,
+            'data': {'provider': provider_used, 'detail': text},
         }), 200
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500

@@ -28,6 +28,10 @@ import { AirshedHeroSection } from '../components/AirshedHeroSection';
 import { BestWorstAirQualitySection } from '../components/BestWorstAirQualitySection';
 import { RootCauseExplorerSection } from '../components/RootCauseExplorerSection';
 import { ReadingPatternSection } from '../components/ReadingPatternSection';
+import { InversionChamber } from '../components/InversionChamber';
+import { InterventionLedger } from '../components/InterventionLedger';
+import { ScaleLadder } from '../components/ScaleLadder';
+import { AgenticAiSection } from '../components/AgenticAiSection';
 import { DeepDivesWorstAffectedSection } from '../components/DeepDivesWorstAffectedSection';
 import { AirCanGetBetterSection } from '../components/AirCanGetBetterSection';
 
@@ -1049,10 +1053,10 @@ export const DashboardPage: React.FC = () => {
   }, [rankingCount, rankingType, rankingCache, selectedMode]);
 
   useEffect(() => {
-    if (isStoryThreeAiView) {
+    if (isStoryThreeAiView && selectedMode !== 'agentic') {
       void generateCityRankings();
     }
-  }, [isStoryThreeAiView, generateCityRankings]);
+  }, [isStoryThreeAiView, selectedMode, generateCityRankings]);
 
   const deepDiveMode: 'ai' | 'agentic' = selectedMode === 'agentic' ? 'agentic' : 'ai';
   const deepDiveAccent = deepDiveMode === 'agentic'
@@ -1183,10 +1187,10 @@ export const DashboardPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (isStoryThreeAiView && !deepDiveNarrative[deepDiveMode] && !deepDiveLoading) {
+    if (isStoryThreeAiView && selectedMode !== 'agentic' && !deepDiveNarrative[deepDiveMode] && !deepDiveLoading) {
       void generateDeepDiveNarrative(deepDiveMode);
     }
-  }, [isStoryThreeAiView, deepDiveMode, deepDiveNarrative, deepDiveLoading, generateDeepDiveNarrative]);
+  }, [isStoryThreeAiView, selectedMode, deepDiveMode, deepDiveNarrative, deepDiveLoading, generateDeepDiveNarrative]);
 
   useEffect(() => {
     if (isStoryThreeAiView && !deepDiveInterventions[deepDiveMode] && !deepDiveInterventionsLoading) {
@@ -2186,7 +2190,11 @@ export const DashboardPage: React.FC = () => {
                   ))}
                 </div>
 
-                {canShowStoryThreeAiSections && (
+                {canShowStoryThreeAiSections && selectedMode === 'agentic' && (
+                  <AgenticAiSection />
+                )}
+
+                {canShowStoryThreeAiSections && selectedMode !== 'agentic' && (
                     <div className="ss-section rounded-3xl border border-indigo-400/40 bg-gradient-to-br from-blue-600/15 via-indigo-500/10 to-purple-600/15 p-6 shadow-xl shadow-indigo-500/10 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl md:p-8">
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                         <div>
@@ -2652,211 +2660,27 @@ export const DashboardPage: React.FC = () => {
                     </div>
                   )}
 
-                {isStoryThreeAiView && (
+                {isStoryThreeAiView && selectedMode !== 'agentic' && (
                   <>
                     {deepDiveLoading && !deepDiveNarrative[deepDiveMode] && (
-                      <p className="text-base text-slate-600">Generating the {deepDiveMode === 'agentic' ? 'emotionally intelligent' : 'AI'} narrative...</p>
+                      <p className="text-base text-slate-600">Generating the AI narrative...</p>
                     )}
                     {deepDiveError && !deepDiveNarrative[deepDiveMode] && (
                       <p className="text-base text-red-600">{deepDiveError}</p>
                     )}
 
                     {deepDiveNarrative[deepDiveMode] && (
-                      <>
-                        <section className="ss-structural-section py-16 px-6 md:px-12 bg-transparent">
-                          <div className="mx-auto max-w-5xl bg-transparent">
-                            <div className="space-y-5">
-                              <div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <p className={`font-mono text-xs uppercase tracking-[0.2em] font-bold ${deepDiveAccent.eyebrow}`}>Reading the pattern</p>
-                                  <OllamaTag />
-                                </div>
-                              </div>
-
-                              <div className="grid grid-cols-1 gap-4 min-[820px]:grid-cols-[1fr_auto_1fr_auto_1fr] min-[820px]:items-stretch">
-                                {deepDiveNarrative[deepDiveMode]!.pattern_cards.map((card, index, cards) => (
-                                  <React.Fragment key={index}>
-                                    <article className={`rounded-2xl rounded-t-none border border-slate-200 border-t-4 ${deepDiveAccent.cardBorder} bg-white p-6 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md`}>
-                                      <p className={`text-xs font-semibold uppercase tracking-[0.2em] ${deepDiveAccent.eyebrow}`}>{card.eyebrow}</p>
-                                      <h3 className="mt-2 text-[1.05rem] font-semibold text-slate-950">{card.title}</h3>
-                                      <p className="mt-3 text-sm leading-relaxed text-slate-700">{card.body}</p>
-                                    </article>
-
-                                    {index < cards.length - 1 && (
-                                      <div className="hidden items-center justify-center min-[820px]:flex" aria-hidden="true">
-                                        <svg className="h-6 w-6 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                          <path d="M5 12h14" />
-                                          <path d="m13 6 6 6-6 6" />
-                                        </svg>
-                                      </div>
-                                    )}
-                                  </React.Fragment>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </section>
-
-                        <section className="ss-structural-section py-16 px-6 md:px-12">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className={`font-mono text-xs uppercase tracking-[0.2em] font-bold ${deepDiveAccent.eyebrow}`}>OUR DUTY</p>
-                            <OllamaTag />
-                          </div>
-
-                          <h2 className="mt-4 text-4xl font-black leading-[1.02] tracking-tight text-slate-950 md:text-6xl">
-                            The Air Can Get <span style={{ color: '#357A4A' }}>Better</span>. Here&apos;s How.
-                          </h2>
-                          <p className="mt-4 text-slate-700 leading-relaxed">{deepDiveNarrative[deepDiveMode]!.intervention_intro}</p>
-                        </section>
-
-                        <section className="ss-structural pt-4 pb-16 px-6 md:px-12">
-                          <div className="mb-6 flex flex-wrap items-center gap-3">
-                            {storyFourHumanCategoryTabs.map((tab) => {
-                              const active = deepDiveCategory === tab.id;
-                              const palette = storyFourHumanPalette[tab.id];
-                              return (
-                                <button
-                                  key={tab.id}
-                                  type="button"
-                                  onClick={() => setDeepDiveCategory(tab.id)}
-                                  className="s4h-pill rounded-full border px-8 py-4 text-[18px] font-semibold tracking-[0.08em] transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2"
-                                  style={
-                                    active
-                                      ? { backgroundColor: palette.accent, borderColor: palette.accent, color: '#ffffff', boxShadow: '0 8px 20px rgba(20,30,25,0.12)' }
-                                      : { backgroundColor: '#ffffff', borderColor: 'rgba(20,30,25,0.25)', color: '#14201A' }
-                                  }
-                                  aria-pressed={active}
-                                >
-                                  {tab.id} {tab.emoji}
-                                </button>
-                              );
-                            })}
-                          </div>
-
-                          {deepDiveInterventionsLoading && !deepDiveInterventions[deepDiveMode] && (
-                            <p className="text-sm text-slate-600">Generating {deepDiveMode === 'agentic' ? 'emotionally intelligent' : 'AI'} intervention text...</p>
-                          )}
-                          {deepDiveInterventionsError && !deepDiveInterventions[deepDiveMode] && (
-                            <p className="text-sm text-red-600">{deepDiveInterventionsError}</p>
-                          )}
-
-                          {deepDiveInterventions[deepDiveMode] && (
-                            <div className="grid gap-3 [grid-template-columns:repeat(auto-fit,minmax(240px,1fr))]">
-                              {storyFourHumanInterventions
-                                .filter((item) => item.category === deepDiveCategory)
-                                .map((card) => {
-                                  const aiText = deepDiveInterventions[deepDiveMode]!.find((item) => item.id === card.id);
-                                  if (!aiText) {
-                                    return null;
-                                  }
-
-                                  const palette = storyFourHumanPalette[card.category];
-                                  const flipped = Boolean(deepDiveFlippedCards[card.id]);
-
-                                  return (
-                                    <button
-                                      key={card.id}
-                                      type="button"
-                                      className={`s4h-flip-card s4h-flip-wrap min-h-[280px] w-full rounded-2xl text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 ${flipped ? 'is-flipped' : ''}`}
-                                      onClick={() => setDeepDiveFlippedCards((current) => ({ ...current, [card.id]: !current[card.id] }))}
-                                      aria-pressed={flipped}
-                                      aria-label={`${card.title}. ${flipped ? 'Tap to flip back' : 'Tap to flip for evidence'}`}
-                                    >
-                                      <div className="s4h-flip-inner">
-                                        <div className="s4h-face s4h-front flex h-full flex-col border border-[rgba(20,30,25,0.12)] bg-white p-3 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md">
-                                          <div
-                                            className="s4h-icon-stage flex h-[44%] items-center justify-center rounded-xl"
-                                            style={{
-                                              color: '#ffffff',
-                                              '--s4h-grad-a': palette.glowA,
-                                              '--s4h-grad-b': palette.glowB,
-                                              '--s4h-grad-c': palette.glowC,
-                                            } as React.CSSProperties}
-                                          >
-                                            <span className="s4h-icon-spark s4h-spark-1" aria-hidden="true" />
-                                            <span className="s4h-icon-spark s4h-spark-2" aria-hidden="true" />
-                                            <div className="h-[74px] w-[84px]">
-                                              <StoryFourIcon iconKey={card.iconKey} />
-                                            </div>
-                                          </div>
-                                          <div className="mt-3 grid flex-1 grid-rows-[auto_1fr_auto] gap-2">
-                                            <span
-                                              className="s4h-pill inline-flex w-fit rounded-full px-2.5 py-1 text-xs font-semibold leading-tight"
-                                              style={{ backgroundColor: palette.tint, color: palette.text }}
-                                            >
-                                              {aiText.stat}
-                                            </span>
-                                            <h4 className="line-clamp-3 text-base font-semibold leading-snug text-[#14201A] md:text-[15px]">
-                                              {card.title}
-                                            </h4>
-                                            <span className="s4h-hint text-xs text-[#5F6960]">tap to flip</span>
-                                          </div>
-                                        </div>
-                                        <div className="s4h-face s4h-back grid h-full grid-rows-[auto_1fr_auto] border border-[rgba(20,30,25,0.12)] bg-white p-3 shadow-sm">
-                                          <div className="s4h-label text-xs uppercase tracking-[0.1em] text-[#5F6960]">The evidence</div>
-                                          <p className="text-sm leading-relaxed text-[#14201A]">{aiText.detail}</p>
-                                          <span className="s4h-hint text-xs text-[#5F6960]">tap to flip back</span>
-                                        </div>
-                                      </div>
-                                    </button>
-                                  );
-                                })}
-                            </div>
-                          )}
-
-                          <br />
-
-                          {deepDiveImpactTexts[deepDiveMode] && (
-                            <div className="rounded-2xl border border-[rgba(20,30,25,0.12)] bg-white p-5 md:p-6">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <h3 className="text-2xl font-bold text-[#14201A]">If This Happened Everywhere</h3>
-                                <OllamaTag />
-                              </div>
-                              <p className="mt-2 text-base leading-relaxed text-slate-700">{deepDiveNarrative[deepDiveMode]!.impact_intro}</p>
-
-                              <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-                                {storyFourImpactStats.map((stat) => {
-                                  const aiText = deepDiveImpactTexts[deepDiveMode]!.find((item) => item.id === stat.id);
-                                  if (!aiText) {
-                                    return null;
-                                  }
-
-                                  const expanded = deepDiveExpandedImpactId === stat.id;
-                                  return (
-                                    <button
-                                      key={stat.id}
-                                      type="button"
-                                      onClick={() => setDeepDiveExpandedImpactId(expanded ? null : stat.id)}
-                                      className="rounded-2xl border border-[rgba(20,30,25,0.12)] p-4 text-left transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2"
-                                      style={{ backgroundColor: deepDiveAccent.impactBg }}
-                                      aria-expanded={expanded}
-                                    >
-                                      <div className="flex items-start justify-between gap-3">
-                                        <div>
-                                          <div className="s4h-display text-3xl font-bold leading-none text-[#14201A]">{stat.value}</div>
-                                          <div className="mt-1 text-sm font-medium text-[#5F6960]">{stat.label}</div>
-                                        </div>
-                                        <span className="s4h-pill rounded-full bg-white px-2 py-1 text-[10px] uppercase tracking-[0.08em] text-[#5F6960]">
-                                          {expanded ? 'collapse' : 'expand'}
-                                        </span>
-                                      </div>
-                                      {expanded && (
-                                        <p className="mt-3 text-sm leading-relaxed text-[#14201A]">{aiText.detail}</p>
-                                      )}
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          )}
-                          {deepDiveImpactLoading && !deepDiveImpactTexts[deepDiveMode] && (
-                            <p className="text-sm text-slate-600">Generating {deepDiveMode === 'agentic' ? 'emotionally intelligent' : 'AI'} impact text...</p>
-                          )}
-                          {deepDiveImpactError && !deepDiveImpactTexts[deepDiveMode] && (
-                            <p className="text-sm text-red-600">{deepDiveImpactError}</p>
-                          )}
-                        </section>
-                      </>
+                      <div className="flex flex-col gap-10">
+                        <div className="overflow-hidden rounded-3xl border border-slate-200 shadow-lg shadow-slate-200/60 transition-shadow duration-300 hover:shadow-xl">
+                          <InversionChamber />
+                        </div>
+                        <div className="overflow-hidden rounded-3xl border border-slate-200 shadow-lg shadow-slate-200/60 transition-shadow duration-300 hover:shadow-xl">
+                          <InterventionLedger />
+                        </div>
+                        <div className="overflow-hidden rounded-3xl border border-slate-200 shadow-lg shadow-slate-200/60 transition-shadow duration-300 hover:shadow-xl">
+                          <ScaleLadder />
+                        </div>
+                      </div>
                     )}
                   </>
                 )}
