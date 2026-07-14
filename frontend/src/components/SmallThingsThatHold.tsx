@@ -23,14 +23,26 @@ const FALLBACK_DETAILS = [
   "So on a good day, the quiet itself is the story - nothing to smell means there's nothing to notice.",
 ];
 
-const LAYOUT = [
-  { size: 150, top: '4%', left: '4%', fill: 'rgba(143,167,124,0.35)', duration: '9s' },
-  { size: 110, top: '2%', left: '58%', fill: 'rgba(201,168,106,0.35)', duration: '11s' },
-  { size: 130, top: '38%', left: '30%', fill: 'rgba(193,127,148,0.3)', duration: '10s' },
-  { size: 100, top: '46%', left: '68%', fill: 'rgba(143,180,194,0.35)', duration: '8s' },
-  { size: 120, top: '62%', left: '2%', fill: 'rgba(201,168,106,0.3)', duration: '12s' },
-  { size: 105, top: '74%', left: '56%', fill: 'rgba(143,167,124,0.3)', duration: '9.5s' },
+const NODE_COLORS = [
+  { fill: '#8fa77c', glow: 'rgba(143,167,124,0.35)' },
+  { fill: '#c9a86a', glow: 'rgba(201,168,106,0.35)' },
+  { fill: '#c17f5e', glow: 'rgba(193,127,94,0.32)' },
+  { fill: '#5b9aa8', glow: 'rgba(91,154,168,0.32)' },
+  { fill: '#c9a86a', glow: 'rgba(201,168,106,0.3)' },
+  { fill: '#8fa77c', glow: 'rgba(143,167,124,0.3)' },
 ];
+
+const HUB = { x: 50, y: 50 };
+const NODE_COUNT = 6;
+const RADIUS = 38;
+
+function nodePosition(index: number) {
+  const angle = (index / NODE_COUNT) * 2 * Math.PI - Math.PI / 2;
+  return {
+    x: HUB.x + RADIUS * Math.cos(angle),
+    y: HUB.y + RADIUS * Math.sin(angle),
+  };
+}
 
 const TypingDots: React.FC = () => (
   <span className="sttb-typing" aria-label="thinking">
@@ -41,8 +53,12 @@ const TypingDots: React.FC = () => (
 );
 
 export const SmallThingsThatHold: React.FC = () => {
-  const [facts, setFacts] = useState<string[]>([]);
-  const [visible, setVisible] = useState(false);
+  // Start populated with the fallback facts and already visible, so the graph (rings, hub, and
+  // bubbles) renders immediately instead of waiting on the Ollama round trip - a slow or queued
+  // generation used to leave only the centre hub on screen for several seconds. AI-generated
+  // facts quietly swap in over the fallback text once they arrive.
+  const [facts, setFacts] = useState<string[]>(FALLBACK_FACTS);
+  const [visible, setVisible] = useState(true);
   const [selected, setSelected] = useState<number | null>(null);
   const [details, setDetails] = useState<Record<number, string>>({});
   const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
@@ -55,13 +71,9 @@ export const SmallThingsThatHold: React.FC = () => {
         const res = await storyAPI.agenticBubbles({});
         if (!cancelled && res.data?.success) {
           setFacts(res.data.data.facts);
-        } else if (!cancelled) {
-          setFacts(FALLBACK_FACTS);
         }
       } catch {
-        if (!cancelled) setFacts(FALLBACK_FACTS);
-      } finally {
-        if (!cancelled) setVisible(true);
+        // Fallback facts are already showing - nothing further to do.
       }
     })();
     return () => {
@@ -97,27 +109,85 @@ export const SmallThingsThatHold: React.FC = () => {
 
   return (
     <div className="flex flex-col items-center gap-10 md:flex-row md:items-start">
-      <div className="relative mx-auto shrink-0" style={{ height: '420px', width: '100%', maxWidth: '460px' }}>
-        {LAYOUT.map((pos, index) => {
+      <div className="relative mx-auto shrink-0" style={{ height: '460px', width: '100%', maxWidth: '460px' }}>
+        <svg
+          viewBox="0 0 100 100"
+          className="pointer-events-none absolute inset-0 h-full w-full"
+          style={{ opacity: visible ? 1 : 0, transition: 'opacity 600ms' }}
+          aria-hidden="true"
+        >
+          {NODE_COLORS.map((_, index) => {
+            const pos = nodePosition(index);
+            const next = nodePosition((index + 1) % NODE_COUNT);
+            const isActiveSpoke = selected === index;
+            return (
+              <g key={`ring-${index}`}>
+                <line
+                  x1={pos.x}
+                  y1={pos.y}
+                  x2={next.x}
+                  y2={next.y}
+                  stroke="rgba(139,135,128,0.22)"
+                  strokeWidth={0.4}
+                />
+                <line
+                  x1={HUB.x}
+                  y1={HUB.y}
+                  x2={pos.x}
+                  y2={pos.y}
+                  stroke={isActiveSpoke ? NODE_COLORS[index].fill : 'rgba(139,135,128,0.28)'}
+                  strokeWidth={isActiveSpoke ? 0.9 : 0.4}
+                  className={isActiveSpoke ? 'sttb-spoke-active' : ''}
+                />
+              </g>
+            );
+          })}
+        </svg>
+
+        <button
+          type="button"
+          className="sttb-hub absolute flex items-center justify-center rounded-full text-center shadow-[0_6px_20px_rgba(58,55,51,0.18)]"
+          style={{
+            width: 96,
+            height: 96,
+            top: `${HUB.y}%`,
+            left: `${HUB.x}%`,
+            transform: 'translate(-50%, -50%)',
+            background: 'radial-gradient(circle at 35% 30%, #fff 0%, #eef0eb 70%)',
+            border: '1.5px solid rgba(58,55,51,0.15)',
+          }}
+          aria-label="Small things that hold - centre"
+        >
+          <span className="px-2 text-xs font-semibold uppercase tracking-[0.1em]" style={{ color: MUTED }}>
+            What holds
+          </span>
+        </button>
+
+        {NODE_COLORS.map((color, index) => {
+          const pos = nodePosition(index);
           const isSelected = selected === index;
           return (
             <button
               key={index}
               type="button"
               onClick={() => handleSelect(index)}
-              className="sttb-bubble absolute flex items-center justify-center rounded-full text-center transition-opacity"
+              className="sttb-bubble absolute flex items-center justify-center rounded-full text-center transition-all"
               style={{
-                width: pos.size,
-                height: pos.size,
-                top: pos.top,
-                left: pos.left,
-                backgroundColor: pos.fill,
-                animationDuration: pos.duration,
+                width: 118,
+                height: 118,
+                top: `${pos.y}%`,
+                left: `${pos.x}%`,
+                transform: 'translate(-50%, -50%)',
+                background: `radial-gradient(circle at 32% 28%, #fff 0%, ${color.glow} 55%, ${color.fill}55 100%)`,
                 opacity: visible ? 1 : 0,
                 transitionDuration: '600ms',
-                transitionDelay: `${index * 300}ms`,
-                border: isSelected ? '2px solid rgba(58,55,51,0.5)' : '2px solid transparent',
+                transitionDelay: `${index * 150}ms`,
+                border: isSelected ? `2px solid ${color.fill}` : '2px solid rgba(255,255,255,0.6)',
+                boxShadow: isSelected
+                  ? `0 10px 26px ${color.glow}`
+                  : '0 4px 14px rgba(58,55,51,0.1)',
                 cursor: 'pointer',
+                zIndex: isSelected ? 5 : 1,
               }}
             >
               <span
@@ -149,19 +219,34 @@ export const SmallThingsThatHold: React.FC = () => {
 
       <style>{`
         .sttb-bubble {
-          animation-name: sttb-float;
+          animation-name: sttb-pulse;
+          animation-duration: 5s;
           animation-timing-function: ease-in-out;
           animation-iteration-count: infinite;
         }
         .sttb-bubble:hover {
-          transform: translateY(-4px);
+          transform: translate(-50%, -50%) scale(1.06);
         }
         .sttb-bubble:hover .sttb-text {
           color: #14130f;
         }
-        @keyframes sttb-float {
-          0%, 100% { margin-top: 0px; }
-          50% { margin-top: -10px; }
+        @keyframes sttb-pulse {
+          0%, 100% { transform: translate(-50%, -50%) scale(1); }
+          50% { transform: translate(-50%, -50%) scale(1.03); }
+        }
+        .sttb-hub {
+          animation: sttb-hub-glow 3.5s ease-in-out infinite;
+        }
+        @keyframes sttb-hub-glow {
+          0%, 100% { box-shadow: 0 6px 20px rgba(58,55,51,0.18); }
+          50% { box-shadow: 0 8px 28px rgba(14,165,233,0.22); }
+        }
+        .sttb-spoke-active {
+          stroke-dasharray: 2 1.4;
+          animation: sttb-flow 1.2s linear infinite;
+        }
+        @keyframes sttb-flow {
+          to { stroke-dashoffset: -6.8; }
         }
         .sttb-typing { display: inline-flex; gap: 4px; align-items: center; height: 24px; }
         .sttb-typing span {

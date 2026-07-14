@@ -1,4 +1,5 @@
-import React, { useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
+import { storyAPI } from '../services/api';
 
 type Arc = {
   id: string;
@@ -69,51 +70,6 @@ const RADII = [46, 70, 94, 118];
 const HAZY = '#c9a86a';
 const CLEAR = ['#16a34a', '#22c55e', '#4ade80', '#86efac'];
 
-async function streamOllama(arc: Arc, onToken: (t: string) => void, onDone: () => void, onError: () => void) {
-  try {
-    const res = await fetch('http://localhost:11434/api/generate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'llama3.2:3b',
-        prompt: buildPrompt(arc),
-        stream: true,
-        options: { temperature: 0.6, top_p: 0.9, num_predict: 90 },
-      }),
-    });
-    if (!res.ok || !res.body) throw new Error('ollama request failed');
-
-    const reader = res.body.getReader();
-    const decoder = new TextDecoder();
-    let buffer = '';
-    let receivedToken = false;
-
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-      for (const line of lines) {
-        if (!line.trim()) continue;
-        const parsed = JSON.parse(line);
-        if (parsed.response) {
-          receivedToken = true;
-          onToken(parsed.response);
-        }
-        if (parsed.done) {
-          onDone();
-          return;
-        }
-      }
-    }
-    if (!receivedToken) throw new Error('empty stream');
-    onDone();
-  } catch {
-    onError();
-  }
-}
-
 const TypingDots: React.FC = () => (
   <span className="rc-typing" aria-label="thinking">
     <span />
@@ -128,32 +84,57 @@ export const RecoveryClock: React.FC = () => {
   const [status, setStatus] = useState<Record<string, ArcStatus>>({});
   const [activeArcId, setActiveArcId] = useState<string | null>(null);
   const requestIds = useRef<Record<string, number>>({});
+  const revealTimers = useRef<Record<string, number | undefined>>({});
+
+  useEffect(() => {
+    return () => {
+      Object.values(revealTimers.current).forEach((timerId) => {
+        if (timerId !== undefined) window.clearTimeout(timerId);
+      });
+    };
+  }, []);
 
   const activeCount = Object.values(activated).filter(Boolean).length;
   const activeArc = ARCS.find((a) => a.id === activeArcId) || null;
 
-  const runGeneration = (arc: Arc) => {
+  // Reveals the already-generated text a few characters at a time so it still reads like a
+  // typewriter, without needing a real streaming connection through the backend proxy.
+  const revealText = (arcId: string, myId: number, full: string) => {
+    let i = 0;
+    const tick = () => {
+      if (requestIds.current[arcId] !== myId) return;
+      i += 3;
+      setTexts((prev) => ({ ...prev, [arcId]: full.slice(0, i) }));
+      if (i < full.length) {
+        revealTimers.current[arcId] = window.setTimeout(tick, 16);
+      } else {
+        setStatus((prev) => ({ ...prev, [arcId]: 'done' }));
+      }
+    };
+    tick();
+  };
+
+  const runGeneration = async (arc: Arc) => {
     const myId = (requestIds.current[arc.id] || 0) + 1;
     requestIds.current[arc.id] = myId;
+    if (revealTimers.current[arc.id] !== undefined) {
+      window.clearTimeout(revealTimers.current[arc.id]);
+    }
     setStatus((prev) => ({ ...prev, [arc.id]: 'loading' }));
     setTexts((prev) => ({ ...prev, [arc.id]: '' }));
-    streamOllama(
-      arc,
-      (token) => {
-        if (requestIds.current[arc.id] !== myId) return;
-        setStatus((prev) => ({ ...prev, [arc.id]: 'streaming' }));
-        setTexts((prev) => ({ ...prev, [arc.id]: (prev[arc.id] || '') + token }));
-      },
-      () => {
-        if (requestIds.current[arc.id] !== myId) return;
-        setStatus((prev) => ({ ...prev, [arc.id]: 'done' }));
-      },
-      () => {
-        if (requestIds.current[arc.id] !== myId) return;
-        setTexts((prev) => ({ ...prev, [arc.id]: FALLBACKS[arc.id] }));
-        setStatus((prev) => ({ ...prev, [arc.id]: 'done' }));
-      }
-    );
+
+    try {
+      const res = await storyAPI.ollamaText({ prompt: buildPrompt(arc), num_predict: 90 });
+      if (requestIds.current[arc.id] !== myId) return;
+      const responseText = res.data?.success ? String(res.data.data?.text || '').trim() : '';
+      if (!responseText) throw new Error('empty response');
+      setStatus((prev) => ({ ...prev, [arc.id]: 'streaming' }));
+      revealText(arc.id, myId, responseText);
+    } catch {
+      if (requestIds.current[arc.id] !== myId) return;
+      setTexts((prev) => ({ ...prev, [arc.id]: FALLBACKS[arc.id] }));
+      setStatus((prev) => ({ ...prev, [arc.id]: 'done' }));
+    }
   };
 
   const handleArcClick = (arc: Arc) => {

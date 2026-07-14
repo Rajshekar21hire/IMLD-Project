@@ -28,16 +28,16 @@ const OptionButton: React.FC<{ opt: string; active: boolean; onSelect: (v: strin
     type="button"
     onClick={() => onSelect(opt)}
     style={{
-      color: active ? TEXT : MUTED,
-      textDecoration: active ? 'underline' : 'none',
-      textUnderlineOffset: '4px',
-      background: 'none',
-      border: 'none',
-      padding: 0,
+      color: active ? '#fff' : TEXT,
+      background: active ? ACCENT : '#fff',
+      border: `1.5px solid ${active ? ACCENT : '#e2ddd2'}`,
+      borderRadius: '999px',
+      padding: '8px 18px',
       cursor: 'pointer',
-      fontWeight: active ? 700 : 400,
+      fontWeight: active ? 700 : 500,
+      boxShadow: active ? '0 4px 14px rgba(14,165,233,0.28)' : '0 1px 2px rgba(0,0,0,0.03)',
     }}
-    className="text-lg transition-colors hover:underline"
+    className="text-base transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-300"
   >
     {opt}
   </button>
@@ -58,7 +58,7 @@ const Row: React.FC<{
       <div className="text-lg font-semibold" style={{ color: TEXT }}>
         {question}
       </div>
-      <div className="mt-3 flex flex-wrap gap-x-6 gap-y-3">
+      <div className="mt-3 flex flex-wrap items-center gap-3">
         {options.map((opt) => (
           <OptionButton key={opt} opt={opt} active={value === opt} onSelect={onSelect} />
         ))}

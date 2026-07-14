@@ -25,6 +25,10 @@ services:
       CHAT_PROVIDER: ${CHAT_PROVIDER:-ollama}
       OLLAMA_BASE_URL: ${OLLAMA_BASE_URL:-http://ollama:11434}
       OLLAMA_MODEL: ${OLLAMA_MODEL:-llama3.2:3b}
+      # Explicit, not left to fall back to whatever .env happened to be baked into the image at
+      # build time - the ollama container only ever has what OLLAMA_INIT_MODELS below pulls, so
+      # this must always name a model that's actually guaranteed to exist there.
+      OLLAMA_STORY_MODEL: ${OLLAMA_STORY_MODEL:-llama3.2:3b}
       # CPU-only inference with large story prompts needs more than the 120s default.
       OLLAMA_STORY_TIMEOUT_SECONDS: ${OLLAMA_STORY_TIMEOUT_SECONDS:-350}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
@@ -54,7 +58,31 @@ services:
     volumes:
       # Persist downloaded models so they survive container restarts
       - ollama_data:/root/.ollama
+    environment:
+      # Default keep-alive is 5 minutes - on a slow/virtualized disk, reloading a multi-GB model
+      # from scratch after every idle gap is what actually makes requests time out, not inference
+      # itself. Keep it resident once loaded so only the very first request per container start
+      # pays that cost.
+      OLLAMA_KEEP_ALIVE: ${OLLAMA_KEEP_ALIVE:--1}
     restart: unless-stopped
+    # A fresh `ollama/ollama` image has no models. Without this, every agentic-AI request 404s
+    # on "model not found" until someone manually `docker exec`s a pull - which is exactly the bug
+    # that made this whole feature look broken. Serve, poll until it's actually accepting
+    # connections (a fixed sleep isn't reliable when the disk is slow), then pull and run one
+    # throwaway generation so the model is resident in memory before anyone hits it for real.
+    # Pull/warmup failures are swallowed (|| true) so a flaky registry check or slow first load
+    # can never take the whole container down - `ollama serve` staying up is the only thing that
+    # matters for the container's lifecycle.
+    entrypoint:
+      - "/bin/sh"
+      - "-c"
+      - |
+        ollama serve &
+        SERVE_PID=$$!
+        until ollama list >/dev/null 2>&1; do sleep 1; done
+        ollama pull "${OLLAMA_MODEL:-llama3.2:3b}" || true
+        ollama run "${OLLAMA_MODEL:-llama3.2:3b}" hi >/dev/null 2>&1 || true
+        wait $$SERVE_PID
 
 volumes:
   db_data:

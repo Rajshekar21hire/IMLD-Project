@@ -9,6 +9,23 @@ const PHASE_ORDER = ['morning', 'midday', 'evening', 'night'];
 
 type TimelineItem = { phase: string; text: string };
 
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function withRetry<T>(fn: () => Promise<T>, attempts = 3): Promise<T> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      if (attempt < attempts) await delay(attempt * 1000);
+    }
+  }
+  throw lastError;
+}
+
 export const OneGoodDay: React.FC = () => {
   const [revealed, setRevealed] = useState(false);
   const [scene, setScene] = useState<string | null>(null);
@@ -22,8 +39,8 @@ export const OneGoodDay: React.FC = () => {
     setError(null);
     try {
       const [sceneRes, timelineRes] = await Promise.all([
-        storyAPI.agenticGoodDay({}),
-        storyAPI.agenticGoodDayTimeline({}),
+        withRetry(() => storyAPI.agenticGoodDay({})),
+        withRetry(() => storyAPI.agenticGoodDayTimeline({})),
       ]);
       if (sceneRes.data?.success) {
         setScene(sceneRes.data.data.scene);

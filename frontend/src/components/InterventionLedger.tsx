@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { storyAPI } from '../services/api';
 
 type Category = 'transport' | 'industry' | 'household' | 'agriculture';
 
@@ -63,9 +64,6 @@ const PLOT_H = VB_H - MARGIN.top - MARGIN.bottom;
 const xToPx = (years: number) => MARGIN.left + (years / X_MAX_YEARS) * PLOT_W;
 const yToPx = (aqi: number) => MARGIN.top + PLOT_H - (aqi / Y_MAX_AQI) * PLOT_H;
 const radiusFor = (cost: number) => 4 + (cost / MAX_COST) * 16;
-
-const OLLAMA_URL = 'http://localhost:11434/api/generate';
-const OLLAMA_MODEL = 'llama3.2:3b';
 
 export const InterventionLedger: React.FC = () => {
   const [selected, setSelected] = useState<string[]>([]);
@@ -146,14 +144,8 @@ Write a 90-word memo in exactly three parts:
 Be blunt. Avoid hedging language like "could" or "may help." Name one real, specific tradeoff instead of praising the plan. No headers, no markdown, just three short paragraphs.`;
 
     try {
-      const res = await fetch(OLLAMA_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ model: OLLAMA_MODEL, prompt, stream: false }),
-      });
-      if (!res.ok) throw new Error('bad response');
-      const data = await res.json();
-      const text = (data?.response || '').trim();
+      const res = await storyAPI.ollamaText({ prompt, num_predict: 220 });
+      const text = res.data?.success ? String(res.data.data?.text || '').trim() : '';
       if (!text) throw new Error('empty response');
       setDraftFull(text);
     } catch (err) {

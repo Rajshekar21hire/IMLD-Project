@@ -1,6 +1,17 @@
 """Provider client for chat responses from Ollama or Gemini."""
 import os
+import threading
+import time
 import requests
+
+# Ollama on typical local (often CPU-only) setups processes one generation at a time regardless
+# of how many requests arrive at once - a quick concurrency probe here showed 5 parallel requests
+# finishing in strict, evenly-spaced sequence rather than together. Sending more than one request
+# through at a time just means the extra ones sit inside Ollama's own queue while their HTTP
+# timeout clock keeps ticking, so they can time out before Ollama even starts on them. Serializing
+# at this layer instead means a queued request's timeout doesn't start until it actually gets sent.
+_OLLAMA_CONCURRENCY = max(1, int(os.getenv('OLLAMA_MAX_CONCURRENT', '1')))
+_ollama_semaphore = threading.Semaphore(_OLLAMA_CONCURRENCY)
 
 
 class ChatProviderService:
@@ -8,13 +19,18 @@ class ChatProviderService:
 
     def __init__(self):
         self.default_provider = os.getenv('CHAT_PROVIDER', 'ollama').strip().lower()
-        self.ollama_base_url = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434').rstrip('/')
+        # 127.0.0.1, not 'localhost': on this kind of Windows/Docker/WSL setup, 'localhost' can
+        # resolve to ::1 first, which Docker/WSL's port-forwarding intercepts with a stub that
+        # isn't the real Ollama server (it 404s on every model). 127.0.0.1 always reaches the
+        # real one.
+        self.ollama_base_url = os.getenv('OLLAMA_BASE_URL', 'http://127.0.0.1:11434').rstrip('/')
         self.ollama_model = os.getenv('OLLAMA_MODEL', 'llama3.2:3b')
         self.story_ollama_model = os.getenv('OLLAMA_STORY_MODEL', self.ollama_model)
-        self.story_timeout_seconds = float(os.getenv('OLLAMA_STORY_TIMEOUT_SECONDS', '120'))
+        self.story_timeout_seconds = float(os.getenv('OLLAMA_STORY_TIMEOUT_SECONDS', '180'))
         self.gemini_api_key = os.getenv('GEMINI_API_KEY') or os.getenv('GOOGLE_API_KEY')
         self.gemini_model = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
         self.timeout_seconds = float(os.getenv('CHAT_TIMEOUT_SECONDS', '60'))
+        self.ollama_retries = max(1, int(os.getenv('OLLAMA_RETRIES', '2')))
 
     def supported_providers(self):
         return ['ollama', 'gemini']
@@ -66,22 +82,37 @@ class ChatProviderService:
                 "num_predict": num_predict,
             }
 
-        try:
-            response = requests.post(url, json=payload, timeout=timeout_seconds or self.timeout_seconds)
-            response.raise_for_status()
-            data = response.json()
-        except requests.RequestException as exc:
-            raise RuntimeError(
-                f"Ollama request failed. Make sure Ollama is running at {self.ollama_base_url} and the model '{model or self.ollama_model}' is available. "
-                f"Details: {exc}"
-            ) from exc
+        request_timeout = timeout_seconds or self.timeout_seconds
+        last_error = None
 
-        message = data.get('message') or {}
-        content = message.get('content', '').strip()
-        if not content:
+        for attempt in range(1, self.ollama_retries + 1):
+            # Throttle how many generations this process sends to Ollama at once so a burst of
+            # agentic cards doesn't queue up inside Ollama and time each other out.
+            with _ollama_semaphore:
+                try:
+                    response = requests.post(url, json=payload, timeout=request_timeout)
+                    response.raise_for_status()
+                    data = response.json()
+                except requests.RequestException as exc:
+                    last_error = exc
+                    if attempt < self.ollama_retries:
+                        time.sleep(min(2 ** attempt, 8))
+                        continue
+                    raise RuntimeError(
+                        f"Ollama request failed after {self.ollama_retries} attempts. Make sure Ollama is running at "
+                        f"{self.ollama_base_url} and the model '{model or self.ollama_model}' is available. "
+                        f"Details: {last_error}"
+                    ) from last_error
+
+            message = data.get('message') or {}
+            content = message.get('content', '').strip()
+            if content:
+                return content
+
+            if attempt < self.ollama_retries:
+                time.sleep(min(2 ** attempt, 8))
+                continue
             raise RuntimeError("Ollama returned an empty response.")
-
-        return content
 
     def _ask_gemini(self, prompt):
         if not self.gemini_api_key:

@@ -1,12 +1,13 @@
 import { useEffect, useRef, useState } from 'react';
-
-// Same endpoint/model/`stream: false` pattern already used inline in InterventionLedger.tsx,
-// extracted here so both new AI-mode visualizations share one implementation.
-const OLLAMA_URL = 'http://localhost:11434/api/generate';
-const OLLAMA_MODEL = 'llama3.2:3b';
+import { storyAPI } from '../services/api';
 
 export type OllamaTextStatus = 'idle' | 'loading' | 'done' | 'error';
 
+// Routes through the backend's /stories/ollama-text proxy instead of calling Ollama directly
+// from the browser. A hardcoded 127.0.0.1:11434 in the browser only ever reaches Ollama on the
+// developer's own machine - it breaks for anyone else running this via Docker or a remote
+// deploy, and it bypasses the backend's shared concurrency throttle and Gemini fallback. The
+// backend already retries internally, so no client-side retry loop is needed here.
 export function useOllamaText(prompt: string | null, fallback: string, debounceMs = 400) {
   const [text, setText] = useState('');
   const [status, setStatus] = useState<OllamaTextStatus>('idle');
@@ -25,16 +26,10 @@ export function useOllamaText(prompt: string | null, fallback: string, debounceM
     const timer = setTimeout(() => {
       (async () => {
         try {
-          const res = await fetch(OLLAMA_URL, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ model: OLLAMA_MODEL, prompt, stream: false }),
-          });
-          if (!res.ok) throw new Error('bad response');
-          const data = await res.json();
-          const responseText = (data?.response || '').trim();
-          if (!responseText) throw new Error('empty response');
+          const res = await storyAPI.ollamaText({ prompt });
           if (requestId.current !== myId) return;
+          const responseText = res.data?.success ? String(res.data.data?.text || '').trim() : '';
+          if (!responseText) throw new Error('empty response');
           setText(responseText);
           setStatus('done');
         } catch {

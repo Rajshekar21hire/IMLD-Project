@@ -24,13 +24,13 @@ export const NeighbourComparison: React.FC<Props> = ({ city, forWhom, concern })
   return (
     <div className="text-center">
       <div
-        className="mx-auto flex max-w-xl flex-col gap-6 transition-opacity duration-700"
+        className="mx-auto grid w-full grid-cols-1 gap-6 transition-opacity duration-700 sm:grid-cols-2 lg:grid-cols-3"
         style={{ opacity: loading ? 0 : 1 }}
       >
         {error && <span style={{ color: LABEL }}>{error}</span>}
         {!error &&
           comparisons.map((item) => (
-            <div key={item.city}>
+            <div key={item.city} className="rounded-2xl bg-slate-50 p-5 text-left">
               <div className="text-sm font-semibold uppercase tracking-[0.15em]" style={{ color: LABEL }}>{item.city}</div>
               <div className="mt-1 text-xl leading-relaxed" style={{ fontFamily: SERIF, color: TEXT }}>
                 {item.line}

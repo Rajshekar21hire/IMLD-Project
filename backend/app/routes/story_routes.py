@@ -1559,6 +1559,98 @@ Return only the sentences, no preamble, no quotation marks."""
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+AGENTIC_CAPTION_SYSTEM_PROMPT = (
+    "You are writing captions for a data story about air pollution in South Asia. Write like "
+    "you're texting a close friend who's worried about their family's health today - warm, "
+    "simple, human. Use everyday words a ten-year-old could follow, never jargon or clinical "
+    "language. No \"moreover,\" no statistics dumped without meaning. If you mention a number, "
+    "immediately say what it feels like in real life. Be honest about the seriousness, but "
+    "never alarmist or preachy - stay gentle and reassuring in tone even when the facts are "
+    "hard. 2-3 short sentences maximum. Return only the caption text, no preamble, no markdown, "
+    "no quotes."
+)
+
+
+@bp.route('/agentic-caption', methods=['POST'])
+def generate_agentic_caption():
+    """Shared caption generator for the chart-based Agentic AI visualizations
+    (MechanismFlowDiagram, CityGridSmallMultiples, SeasonalityHeatmap,
+    ExposureImpactScrollytelling, CounterfactualSlider). Runs through the shared
+    ChatProviderService instead of the browser calling Ollama directly, so it picks up the
+    correct Docker-network Ollama URL, the shared concurrency throttle, retries, and Gemini
+    fallback. Captions are deterministic for a given chart message, so they're cached the same
+    way as the other agentic-* routes."""
+    try:
+        data = request.get_json() or {}
+        message = str(data.get('message', '')).strip()
+        if not message:
+            return jsonify({'success': False, 'error': 'A message is required.'}), 400
+        message = message[:4000]
+
+        cache_key = f'agentic_caption:{hashlib.sha1(message.encode("utf-8")).hexdigest()[:16]}'
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({'success': True, 'data': {'provider': cached_provider, 'text': cached_payload.get('text')}}), 200
+
+        prompt = f"{AGENTIC_CAPTION_SYSTEM_PROMPT}\n\n{message}"
+
+        provider_used = None
+        text = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(prompt, num_predict=140)
+            text = response_text.strip().strip('"')
+        except Exception:
+            text = None
+
+        if not text:
+            return jsonify({'success': False, 'error': 'The Ollama service did not respond. Make sure Ollama is running and try again.'}), 502
+
+        _set_cached_narrative(cache_key, {'text': text}, provider_used)
+        return jsonify({'success': True, 'data': {'provider': provider_used, 'text': text}}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/ollama-text', methods=['POST'])
+def generate_ollama_text():
+    """Generic Ollama proxy for prompts already fully composed on the frontend
+    (SourceMixComparator, InterventionImpactScenario, RecoveryClock, InterventionLedger).
+    These used to call Ollama directly from the browser at a hardcoded 127.0.0.1:11434, which
+    only ever worked on the developer's own machine and bypassed the shared concurrency
+    throttle and Gemini fallback entirely. Routing through here fixes both. Cached by prompt
+    hash so repeated prompts (e.g. the 4 fixed Recovery Clock arcs) don't re-hit Ollama."""
+    try:
+        data = request.get_json() or {}
+        prompt = str(data.get('prompt', '')).strip()
+        if not prompt:
+            return jsonify({'success': False, 'error': 'A prompt is required.'}), 400
+        prompt = prompt[:6000]
+
+        try:
+            num_predict = int(data.get('num_predict')) if data.get('num_predict') is not None else None
+        except (TypeError, ValueError):
+            num_predict = None
+
+        cache_key = f'ollama_text:{hashlib.sha1(f"{prompt}|{num_predict}".encode("utf-8")).hexdigest()[:16]}'
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({'success': True, 'data': {'provider': cached_provider, 'text': cached_payload.get('text')}}), 200
+
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(prompt, num_predict=num_predict)
+            text = response_text.strip()
+        except Exception as e:
+            return jsonify({'success': False, 'error': str(e)}), 502
+
+        if not text:
+            return jsonify({'success': False, 'error': 'The Ollama service did not respond. Make sure Ollama is running and try again.'}), 502
+
+        _set_cached_narrative(cache_key, {'text': text}, provider_used)
+        return jsonify({'success': True, 'data': {'provider': provider_used, 'text': text}}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
 def _validate_deep_dive_items(items, required_ids, required_text_fields):
     """Return items only if every required id is present with non-empty text fields."""
     if not isinstance(items, list):
