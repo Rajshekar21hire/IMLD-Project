@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { AlertTriangle, Globe, ShieldCheck, Users, Wind, HeartPulse, Megaphone, Quote } from 'lucide-react';
+import { Globe, Users, Wind, HeartPulse, Megaphone, Quote } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -28,11 +28,7 @@ import { AirshedHeroSection } from '../components/AirshedHeroSection';
 import { BestWorstAirQualitySection } from '../components/BestWorstAirQualitySection';
 import { RootCauseExplorerSection } from '../components/RootCauseExplorerSection';
 import { ReadingPatternSection } from '../components/ReadingPatternSection';
-import { InversionChamber } from '../components/InversionChamber';
-import { InterventionLedger } from '../components/InterventionLedger';
-import { ScaleLadder } from '../components/ScaleLadder';
-import { SourceMixComparator } from '../components/SourceMixComparator';
-import { InterventionImpactScenario } from '../components/InterventionImpactScenario';
+import { DeepDiveFlowSection } from '../components/DeepDiveFlowSection';
 import { AgenticAiSection } from '../components/AgenticAiSection';
 import { DeepDivesWorstAffectedSection } from '../components/DeepDivesWorstAffectedSection';
 import { AirCanGetBetterSection } from '../components/AirCanGetBetterSection';
@@ -55,31 +51,6 @@ interface CityRankingResult {
   provider: string;
   worst_cities: CityRankingRecord[];
   best_cities: CityRankingRecord[];
-}
-
-interface CityDetailsResult {
-  city: string;
-  country: string;
-  sample_count: number;
-  aqi_avg: number | null;
-  geo: {
-    latitude: number | null;
-    longitude: number | null;
-  };
-  pollutant_breakdown?: Array<{
-    key: string;
-    name: string;
-    value: number;
-  }>;
-  top_pollutants: Array<{
-    key: string;
-    name: string;
-    value: number;
-  }>;
-  reasons: string[];
-  problems: string[];
-  precautions: string[];
-  provider: string;
 }
 
 interface StoryThreeTestimonial {
@@ -497,11 +468,6 @@ export const DashboardPage: React.FC = () => {
   const [rankingLoading, setRankingLoading] = useState(false);
   const [rankingError, setRankingError] = useState('');
   const [rankingResult, setRankingResult] = useState<CityRankingResult | null>(null);
-  const [selectedCityLabel, setSelectedCityLabel] = useState('');
-  const [selectedCityBucket, setSelectedCityBucket] = useState<'best' | 'worst' | null>(null);
-  const [cityDetails, setCityDetails] = useState<CityDetailsResult | null>(null);
-  const [cityDetailsLoading, setCityDetailsLoading] = useState(false);
-  const [cityDetailsError, setCityDetailsError] = useState('');
   const [storyFourAiCategory, setStoryFourAiCategory] = useState('Personal');
   const [storyFourAiVoiceIndex, setStoryFourAiVoiceIndex] = useState(0);
   const [storyFourOutcomeFilter, setStoryFourOutcomeFilter] = useState<'All' | 'Health' | 'Economy' | 'Environment' | 'Technology'>('All');
@@ -984,10 +950,6 @@ export const DashboardPage: React.FC = () => {
     setStoryThreeAiTestimonials([]);
     setStoryThreeTestimonialsError('');
     setStoryThreeTestimonialsProvider('');
-    setSelectedCityLabel('');
-    setSelectedCityBucket(null);
-    setCityDetails(null);
-    setCityDetailsError('');
 
     try {
       const response = await storyAPI.generateCityRankings({
@@ -1047,8 +1009,12 @@ export const DashboardPage: React.FC = () => {
         throw new Error(response.data?.error || 'Failed to generate city rankings');
       }
     } catch (error: any) {
+      // The backend always returns generated-or-fallback content now (never a 502/error for
+      // Ollama being unavailable), so this only fires on a genuine network failure. Log it for
+      // debugging rather than surfacing red "not available" text - retrying on the next render
+      // is quieter and this state should be rare in practice.
+      console.error('City rankings request failed:', error);
       setRankingError(error.response?.data?.error || error.message || 'Failed to generate city rankings');
-      setRankingResult(null);
     } finally {
       setRankingLoading(false);
     }
@@ -1115,6 +1081,11 @@ export const DashboardPage: React.FC = () => {
         throw new Error(response.data?.error || 'Failed to generate the deep-dive narrative');
       }
     } catch (error: any) {
+      // Same reasoning as generateCityRankings' catch above: the backend always returns
+      // generated-or-fallback content now, so this is a genuine network failure, not an "AI not
+      // available" case - log it instead of showing red error text for a section that should
+      // always render something.
+      console.error('Deep-dive narrative request failed:', error);
       setDeepDiveError(error.response?.data?.error || error.message || 'Failed to generate the deep-dive narrative');
     } finally {
       setDeepDiveLoading(false);
@@ -1270,53 +1241,6 @@ export const DashboardPage: React.FC = () => {
     }
   }, [rankingResult]);
 
-  const loadCityDetails = useCallback(async (row: CityRankingRecord, bucket: 'best' | 'worst') => {
-    setSelectedCityLabel(formatRankingRowLabel(row));
-    setSelectedCityBucket(bucket);
-    setCityDetailsLoading(true);
-    setCityDetailsError('');
-
-    try {
-      const response = await storyAPI.getCityDetails({
-        city: row.city,
-        country: row.country,
-      });
-
-      if (response.data?.success) {
-        const payload = response.data.data || {};
-        const normalizedCityDetails: CityDetailsResult = {
-          city: toSafeText(payload?.city) || row.city,
-          country: toSafeText(payload?.country) || row.country,
-          sample_count: Number.isFinite(Number(payload?.sample_count)) ? Number(payload.sample_count) : 0,
-          aqi_avg: Number.isFinite(Number(payload?.aqi_avg)) ? Number(payload.aqi_avg) : null,
-          geo: {
-            latitude: Number.isFinite(Number(payload?.geo?.latitude)) ? Number(payload.geo.latitude) : null,
-            longitude: Number.isFinite(Number(payload?.geo?.longitude)) ? Number(payload.geo.longitude) : null,
-          },
-          pollutant_breakdown: Array.isArray(payload?.pollutant_breakdown)
-            ? payload.pollutant_breakdown
-            : [],
-          top_pollutants: Array.isArray(payload?.top_pollutants)
-            ? payload.top_pollutants
-            : [],
-          reasons: toSafeTextList(payload?.reasons, ['No city-specific reasons are available yet.']),
-          problems: toSafeTextList(payload?.problems, ['No city-specific risk summary is available yet.']),
-          precautions: toSafeTextList(payload?.precautions, ['No city-specific precautions are available yet.']),
-          provider: toSafeText(payload?.provider) || 'fallback',
-        };
-
-        setCityDetails(normalizedCityDetails);
-      } else {
-        throw new Error(response.data?.error || 'Failed to load city details');
-      }
-    } catch (error: any) {
-      setCityDetails(null);
-      setCityDetailsError(error.response?.data?.error || error.message || 'Failed to load city details');
-    } finally {
-      setCityDetailsLoading(false);
-    }
-  }, []);
-
   useEffect(() => {
     if (!sidebarThemes.some((theme) => theme.id === selectedThemeId)) {
       setSelectedThemeId(defaultThemeId);
@@ -1325,10 +1249,6 @@ export const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     setRankingError('');
-    setSelectedCityLabel('');
-    setSelectedCityBucket(null);
-    setCityDetails(null);
-    setCityDetailsError('');
     setStoryThreeAiTestimonials([]);
     setStoryThreeTestimonialsError('');
     setStoryThreeTestimonialsProvider('');
@@ -2197,7 +2117,7 @@ export const DashboardPage: React.FC = () => {
                 )}
 
                 {canShowStoryThreeAiSections && selectedMode !== 'agentic' && (
-                    <div className="ss-section rounded-3xl border border-indigo-400/40 bg-gradient-to-br from-blue-600/15 via-indigo-500/10 to-purple-600/15 p-6 shadow-xl shadow-indigo-500/10 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl md:p-8">
+                    <div className="mx-auto w-full max-w-[61rem] bg-transparent px-6 py-10 md:px-10">
                       <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                         <div>
                           <h4 className="text-2xl font-extrabold md:text-3xl" style={{ color: '#1e3a5f' }}>Best and worst cities by AQI</h4>
@@ -2238,7 +2158,6 @@ export const DashboardPage: React.FC = () => {
                       </div>
 
                       {rankingLoading && <p className="mt-4 text-sm text-slate-600">Generating city rankings...</p>}
-                      {rankingError && <p className="mt-4 text-sm text-red-600">{rankingError}</p>}
 
                       {rankingResult && (
                         <div className="mt-6 space-y-6">
@@ -2260,6 +2179,7 @@ export const DashboardPage: React.FC = () => {
                             <p className="mt-2 text-base leading-relaxed text-slate-700">{rankingResult.summary}</p>
                           </div>
 
+                          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                           <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
                               <h6 className="text-sm font-bold uppercase tracking-[0.2em]" style={{ color: '#1e3a5f' }}>
                                 PM2.5 vs standard comparison
@@ -2428,7 +2348,6 @@ export const DashboardPage: React.FC = () => {
                               )}
                           </div>
 
-                          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
                             <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
                               <h6 className="text-base font-bold" style={{ color: '#1e3a5f' }}>AI insights</h6>
                               <ul className="mt-3 space-y-2">
@@ -2440,222 +2359,20 @@ export const DashboardPage: React.FC = () => {
                                 ))}
                               </ul>
                             </div>
-
-                            <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
-                              <h6 className="text-base font-bold" style={{ color: '#1e3a5f' }}>Recommendations</h6>
-                              <ul className="mt-3 space-y-2">
-                                {rankingResult.recommendations.map((item) => (
-                                  <li key={item} className="flex gap-2 text-base text-slate-700 leading-relaxed">
-                                    <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
-                                    <span>{item}</span>
-                                  </li>
-                                ))}
-                              </ul>
-                            </div>
                           </div>
 
-                          <div className="mt-6 rounded-2xl border border-blue-100 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
-                            <h5 className="text-lg font-bold" style={{ color: '#1e3a5f' }}>City Ranking Details</h5>
-                            <p className="mt-1 text-sm text-slate-600">Explore ranked city rows and open city-level profiles in one place.</p>
-
-                            <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-2">
-                              {(rankingType === 'worst' || rankingType === 'both') && (
-                                <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
-                                  <h6 className="text-base font-bold text-slate-900">Worst city ranking details</h6>
-                                  <p className="mt-1 text-xs text-slate-500">Click a city row to view detailed city profile.</p>
-                                  <div className="mt-3 overflow-x-auto">
-                                    <table className="min-w-full text-sm">
-                                      <thead>
-                                        <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-[0.18em] text-slate-500">
-                                          <th className="px-2 py-2">Rank</th>
-                                          <th className="px-2 py-2">City</th>
-                                          <th className="px-2 py-2">Avg PM2.5</th>
-                                          <th className="px-2 py-2">Samples</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody>
-                                        {rankingResult.worst_cities.map((row) => (
-                                          <tr
-                                            key={`worst-${row.rank}-${formatRankingRowLabel(row)}`}
-                                            onClick={() => loadCityDetails(row, 'worst')}
-                                            className={`cursor-pointer border-b border-slate-100 text-slate-700 transition-colors hover:bg-sky-50 ${
-                                              selectedCityLabel === formatRankingRowLabel(row) ? 'bg-sky-50' : ''
-                                            }`}
-                                          >
-                                            <td className="px-2 py-2 font-semibold">#{row.rank}</td>
-                                            <td className="px-2 py-2">{formatRankingRowLabel(row)}</td>
-                                            <td className="px-2 py-2 font-medium text-red-700">{row.avg_pm25.toFixed(2)}</td>
-                                            <td className="px-2 py-2">{row.sample_count}</td>
-                                          </tr>
-                                        ))}
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                </div>
-                              )}
-
-                              {(rankingType === 'best' || rankingType === 'both') && (
-                                <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
-                                  <h6 className="text-base font-bold text-slate-900">Best city ranking details</h6>
-                                  <p className="mt-1 text-xs text-slate-500">Click a city row to view detailed city profile.</p>
-                                  <div className="mt-3 overflow-x-auto">
-                                    <table className="min-w-full text-sm">
-                                      <thead>
-                                        <tr className="border-b border-slate-200 text-left text-xs uppercase tracking-[0.18em] text-slate-500">
-                                          <th className="px-2 py-2">Rank</th>
-                                          <th className="px-2 py-2">City</th>
-                                          <th className="px-2 py-2">Avg PM2.5</th>
-                                          <th className="px-2 py-2">Samples</th>
-                                        </tr>
-                                      </thead>
-                                      <tbody>
-                                        {rankingResult.best_cities.map((row) => (
-                                          <tr
-                                            key={`best-${row.rank}-${formatRankingRowLabel(row)}`}
-                                            onClick={() => loadCityDetails(row, 'best')}
-                                            className={`cursor-pointer border-b border-slate-100 text-slate-700 transition-colors hover:bg-sky-50 ${
-                                              selectedCityLabel === formatRankingRowLabel(row) ? 'bg-sky-50' : ''
-                                            }`}
-                                          >
-                                            <td className="px-2 py-2 font-semibold">#{row.rank}</td>
-                                            <td className="px-2 py-2">{formatRankingRowLabel(row)}</td>
-                                            <td className="px-2 py-2 font-medium text-emerald-700">{row.avg_pm25.toFixed(2)}</td>
-                                            <td className="px-2 py-2">{row.sample_count}</td>
-                                          </tr>
-                                        ))}
-                                      </tbody>
-                                    </table>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-
-                            {(selectedCityLabel || cityDetailsLoading || cityDetails || cityDetailsError) && (
-                              <div className="mt-4 rounded-2xl border border-blue-100 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
-                                <div className="flex flex-wrap items-center justify-between gap-3">
-                                  <h6 className="text-lg font-bold" style={{ color: '#1e3a5f' }}>
-                                    City details {selectedCityLabel ? `- ${selectedCityLabel}` : ''}
-                                  </h6>
-                                  {cityDetails?.provider && (
-                                    <span className="rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
-                                      Guidance provider: {cityDetails.provider}
-                                    </span>
-                                  )}
-                                </div>
-
-                                {cityDetailsLoading && (
-                                  <p className="mt-4 text-sm text-slate-600">Loading city profile...</p>
-                                )}
-
-                                {cityDetailsError && (
-                                  <p className="mt-4 text-sm text-red-600">{cityDetailsError}</p>
-                                )}
-
-                                {cityDetails && (
-                                  <div className="mt-4 space-y-5">
-                                    {/** Use all pollutants for chart display and keep top list for reasoning logic. */}
-                                    {(() => {
-                                      const chartPollutants = cityDetails.pollutant_breakdown && cityDetails.pollutant_breakdown.length > 0
-                                        ? cityDetails.pollutant_breakdown
-                                        : cityDetails.top_pollutants;
-
-                                      return (
-                                        <>
-                                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                                      <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
-                                        <div className="text-xs uppercase tracking-[0.16em] text-slate-500">Average AQI</div>
-                                        <div className="mt-1 text-2xl font-bold" style={{ color: '#1e3a5f' }}>
-                                          {cityDetails.aqi_avg !== null ? cityDetails.aqi_avg.toFixed(2) : 'N/A'}
-                                        </div>
-                                      </div>
-                                      <div className="rounded-xl border border-blue-100 bg-blue-50/60 p-4">
-                                        <div className="text-xs uppercase tracking-[0.16em] text-slate-500">Data samples</div>
-                                        <div className="mt-1 text-2xl font-bold" style={{ color: '#1e3a5f' }}>{cityDetails.sample_count}</div>
-                                      </div>
-                                    </div>
-
-                                    <div className="rounded-2xl border border-blue-100 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
-                                      <h6 className="text-sm font-bold uppercase tracking-[0.2em]" style={{ color: '#1e3a5f' }}>
-                                        All pollutants (top 3 highlighted)
-                                      </h6>
-                                      <div className="mt-3 h-72">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                          <BarChart data={chartPollutants} margin={{ top: 8, right: 20, left: 10, bottom: 24 }}>
-                                            <CartesianGrid strokeDasharray="3 3" />
-                                            <XAxis dataKey="name" />
-                                            <YAxis />
-                                            <Tooltip formatter={(value: number) => [value.toFixed(2), 'Average concentration']} />
-                                            <Bar dataKey="value" radius={[8, 8, 0, 0]}>
-                                              {chartPollutants.map((pollutant, index) => (
-                                                <Cell
-                                                  key={`${pollutant.key}-${pollutant.value}`}
-                                                  fill={index < 3 ? '#0284c7' : '#94a3b8'}
-                                                />
-                                              ))}
-                                            </Bar>
-                                          </BarChart>
-                                        </ResponsiveContainer>
-                                      </div>
-                                    </div>
-
-                                    {selectedCityBucket !== 'best' && (
-                                      <div className="space-y-4">
-                                        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4">
-                                          <div className="flex items-center gap-2 text-base font-bold text-rose-800">
-                                            <AlertTriangle className="h-4 w-4" />
-                                            Reasons this city is highly polluted
-                                          </div>
-                                          <ul className="mt-3 space-y-2">
-                                            {cityDetails.reasons.map((reason) => (
-                                              <li key={reason} className="flex gap-2 text-sm text-rose-900">
-                                                <span className="mt-1 h-2 w-2 rounded-full bg-rose-500" />
-                                                <span>{reason}</span>
-                                              </li>
-                                            ))}
-                                          </ul>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-                                        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-                                          <div className="flex items-center gap-2 text-base font-bold text-amber-800">
-                                            <AlertTriangle className="h-4 w-4" />
-                                            Possible problems
-                                          </div>
-                                          <ul className="mt-3 space-y-2">
-                                            {cityDetails.problems.map((problem) => (
-                                              <li key={problem} className="flex gap-2 text-sm text-amber-900">
-                                                <span className="mt-1 h-2 w-2 rounded-full bg-amber-500" />
-                                                <span>{problem}</span>
-                                              </li>
-                                            ))}
-                                          </ul>
-                                        </div>
-
-                                        <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-                                          <div className="flex items-center gap-2 text-base font-bold text-emerald-800">
-                                            <ShieldCheck className="h-4 w-4" />
-                                            Precautions
-                                          </div>
-                                          <ul className="mt-3 space-y-2">
-                                            {cityDetails.precautions.map((item) => (
-                                              <li key={item} className="flex gap-2 text-sm text-emerald-900">
-                                                <span className="mt-1 h-2 w-2 rounded-full bg-emerald-500" />
-                                                <span>{item}</span>
-                                              </li>
-                                            ))}
-                                          </ul>
-                                        </div>
-                                        </div>
-                                      </div>
-                                    )}
-                                        </>
-                                      );
-                                    })()}
-                                  </div>
-                                )}
-                              </div>
-                            )}
+                          <div className="rounded-2xl border border-blue-100 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
+                            <h6 className="text-base font-bold" style={{ color: '#1e3a5f' }}>Recommendations</h6>
+                            <ul className="mt-3 space-y-2">
+                              {rankingResult.recommendations.map((item) => (
+                                <li key={item} className="flex gap-2 text-base text-slate-700 leading-relaxed">
+                                  <span className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-emerald-500" />
+                                  <span>{item}</span>
+                                </li>
+                              ))}
+                            </ul>
                           </div>
+
                         </div>
                       )}
 
@@ -2667,29 +2384,8 @@ export const DashboardPage: React.FC = () => {
                     {deepDiveLoading && !deepDiveNarrative[deepDiveMode] && (
                       <p className="text-base text-slate-600">Generating the AI narrative...</p>
                     )}
-                    {deepDiveError && !deepDiveNarrative[deepDiveMode] && (
-                      <p className="text-base text-red-600">{deepDiveError}</p>
-                    )}
 
-                    {deepDiveNarrative[deepDiveMode] && (
-                      <div className="flex flex-col gap-10">
-                        <div className="overflow-hidden rounded-3xl border border-slate-200 shadow-lg shadow-slate-200/60 transition-shadow duration-300 hover:shadow-xl">
-                          <InversionChamber />
-                        </div>
-                        <div className="overflow-hidden rounded-3xl border border-slate-200 shadow-lg shadow-slate-200/60 transition-shadow duration-300 hover:shadow-xl">
-                          <InterventionLedger />
-                        </div>
-                        <div className="overflow-hidden rounded-3xl border border-slate-200 shadow-lg shadow-slate-200/60 transition-shadow duration-300 hover:shadow-xl">
-                          <ScaleLadder />
-                        </div>
-                        <div className="overflow-hidden rounded-3xl border border-slate-200 shadow-lg shadow-slate-200/60 transition-shadow duration-300 hover:shadow-xl">
-                          <SourceMixComparator />
-                        </div>
-                        <div className="overflow-hidden rounded-3xl border border-slate-200 shadow-lg shadow-slate-200/60 transition-shadow duration-300 hover:shadow-xl">
-                          <InterventionImpactScenario />
-                        </div>
-                      </div>
-                    )}
+                    {deepDiveNarrative[deepDiveMode] && <DeepDiveFlowSection />}
                   </>
                 )}
 

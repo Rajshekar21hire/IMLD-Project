@@ -1,0 +1,3290 @@
+{
+  "agentic_action:cairo:my-child:cooking-at-home": {
+    "payload": {
+      "action": "You're thinking about cooking at home in Cairo with your child. \n\nFirst, take out the trash. It's a simple task that can make a big difference in keeping you both safe and healthy. Just grab some gloves and head out to collect the waste from around the house or neighborhood."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:cairo:my-child:going-outside-today": {
+    "payload": {
+      "action": "It's okay to think about taking care of your child when they ask about going outside today, but what can you do right now in this moment?"
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:cairo:my-child:sleeping-better": {
+    "payload": {
+      "action": "Just start by creating a comfortable sleep environment in your child's bedroom, making sure it is dark, quiet, and at a comfortable temperature."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:cairo:my-child:the-long-run": {
+    "payload": {
+      "action": "Find some fresh air by going outside for 10-15 minutes each day to breathe in some real air and get some sunlight on your face."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:cairo:my-parents:cooking-at-home": {
+    "payload": {
+      "action": "You could start by asking one of your parents to cook meals for you at home instead of ordering food from takeout or restaurants."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:cairo:my-parents:going-outside-today": {
+    "payload": {
+      "action": "Just go for a short walk in a nearby park after lunch."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:cairo:my-parents:sleeping-better": {
+    "payload": {
+      "action": "Take a few deep breaths in your room and then one more in a quiet spot outside before going to bed tonight."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:cairo:my-parents:the-long-run": {
+    "payload": {
+      "action": "plant trees around your neighborhood and community gardens."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:cairo:myself:cooking-at-home": {
+    "payload": {
+      "action": "Take out the trash and recycling bins on your designated collection day."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:cairo:myself:going-outside-today": {
+    "payload": {
+      "action": "Take a deep breath and step outside into the cool morning light. Sit on a bench under a tree and enjoy the gentle breeze rustling your hair."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:cairo:myself:sleeping-better": {
+    "payload": {
+      "action": "Be more mindful of your bedroom environment and the lighting you use in bed, which can help regulate your sleep patterns."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:cairo:myself:the-long-run": {
+    "payload": {
+      "action": "What can you do today to help right now?"
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:cairo:someone-with-asthma:cooking-at-home": {
+    "payload": {
+      "action": "When you cook at home, try turning off your stove when you're not using it and letting the flame go out in a pan."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:cairo:someone-with-asthma:going-outside-today": {
+    "payload": {
+      "action": "If you want to go outside today, take a few deep breaths of fresh air from the windowsill while the sun is shining, like you usually do."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:cairo:someone-with-asthma:sleeping-better": {
+    "payload": {
+      "action": "You know how your friend with asthma feels when they wake up in the morning and can't catch their breath after being asleep for hours? Maybe you've noticed it too, especially after a warm sleep. One small thing that might help is to open a window at night to let fresh air into their room while they're sleeping."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:cairo:someone-with-asthma:the-long-run": {
+    "payload": {
+      "action": "to think about how you can take care of yourself right now, because your friend is worried about their asthma and wants to feel better\n\ntry taking a few deep breaths in through your nose and out through your mouth while sitting comfortably, like this for as long as it feels comfortable for you."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:delhi:myself:going-outside-today": {
+    "payload": {
+      "action": "Take a few deep breaths and step outside into some natural light for a minute to clear your head before going out."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:helsinki:my-child:cooking-at-home": {
+    "payload": {
+      "action": "Cooking at home can be a great idea. What if you started by simply trying to reduce your use of plastics for packaging and wrapping leftovers?"
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:helsinki:my-child:going-outside-today": {
+    "payload": {
+      "action": "It's really up to you and your child right now. Just take a short walk around the block with them, breathe in some fresh air, and enjoy nature together."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:helsinki:my-child:sleeping-better": {
+    "payload": {
+      "action": "If you want to help your child sleep better, try putting their bed in a quiet, dark room for at least an hour before bedtime so they can relax and feel cozy with a soft blanket."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:helsinki:my-child:the-long-run": {
+    "payload": {
+      "action": "It's good to think about your child's long run while they're in Helsinki, isn't it? \n\nYou could talk to someone at the city's public library and ask if they have any books or resources that might help you understand what's happening with air quality and how to protect your child's health."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:helsinki:my-parents:cooking-at-home": {
+    "payload": {
+      "action": "You could start by using your oven to roast some vegetables and fruits, they will give off some fresh food smells and flavors for dinner."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:helsinki:my-parents:going-outside-today": {
+    "payload": {
+      "action": "Consider walking to your local library instead of heading out into the city streets."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:helsinki:my-parents:sleeping-better": {
+    "payload": {
+      "action": "To get some more rest and feel better in your bedroom, try keeping your room at a comfortable temperature between 18 and 20 degrees Celsius by closing curtains during the day."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:helsinki:my-parents:the-long-run": {
+    "payload": {
+      "action": "To think about what's going on in your city and how it might be affecting your parents - that can be overwhelming, but one small step you could take right now is to simply talk to them about their concerns and listen actively."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:helsinki:myself:cooking-at-home": {
+    "payload": {
+      "action": "Make your own cleaning products at home using common household items and natural ingredients like baking soda and lemon juice."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:helsinki:myself:going-outside-today": {
+    "payload": {
+      "action": "You're thinking of going outside today, aren't you?"
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:helsinki:myself:sleeping-better": {
+    "payload": {
+      "action": "Make your bedroom darker by closing curtains at night to block out sunlight, which can make it harder to fall asleep."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:helsinki:myself:the-long-run": {
+    "payload": {
+      "action": "take up a park bench and sit down next to it for 10 minutes when you feel stressed or overwhelmed."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:helsinki:someone-with-asthma:cooking-at-home": {
+    "payload": {
+      "action": "Cooking your own meals from scratch can be a good idea, especially if you have asthma. This way, you can control what goes into your food and avoid triggering reactions in your airways."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:helsinki:someone-with-asthma:going-outside-today": {
+    "payload": {
+      "action": "If you think about going outside today, start by taking a few deep breaths of fresh air. Sit on a bench outside and let your body relax while you inhale slowly through your nose and exhale gently through your mouth. This simple action can help calm your asthma and make it easier to breathe."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:helsinki:someone-with-asthma:sleeping-better": {
+    "payload": {
+      "action": "Make your bedroom a cooler space by closing your curtains at night and using thick curtains in the summer to block out warm sunlight."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:helsinki:someone-with-asthma:the-long-run": {
+    "payload": {
+      "action": "I think about you when I hear about Helsinki and wondering what it's like to live there with asthma, especially in the long run. What if you could take a short walk around your block during your lunch break today? Just step outside for 10 minutes at any time, breathe deeply, and see how that feels."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:jakarta:my-child:cooking-at-home": {
+    "payload": {
+      "action": "Maybe you could start by taking your child to a nearby grocery store and letting them help you buy some fresh fruits and vegetables for dinner."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:jakarta:my-child:going-outside-today": {
+    "payload": {
+      "action": "Go for a short walk in your neighborhood with your child if you have time and feel comfortable doing so."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:jakarta:my-child:sleeping-better": {
+    "payload": {
+      "action": "Let's make a plan together to help your child sleep better in Jakarta. \n\nHave you thought about creating a calming bedtime routine for them? This could include activities like reading a book, singing softly, or practicing gentle stretches with their body."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:jakarta:my-child:the-long-run": {
+    "payload": {
+      "action": "You can talk to your child's teacher about keeping their workspace clean and tidy before class starts every day."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:jakarta:my-parents:cooking-at-home": {
+    "payload": {
+      "action": "You could start by making your own cleaning products at home using common household ingredients like vinegar and lemon juice to clean dishes and surfaces."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:jakarta:my-parents:going-outside-today": {
+    "payload": {
+      "action": "You can take a short walk outside in your backyard with some fresh air and sunlight to get your blood flowing."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:jakarta:my-parents:sleeping-better": {
+    "payload": {
+      "action": "Try closing your curtains at night when you're in bed to help block out some of the city's evening glow."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:jakarta:my-parents:the-long-run": {
+    "payload": {
+      "action": "Talk to your parents about their concerns and listen to what they have to say before making any decisions."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:jakarta:myself:cooking-at-home": {
+    "payload": {
+      "action": "You could start by checking the expiration date of your spices and cooking oils to ensure they're fresh and not expired, which can affect their flavor and quality in your dishes."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:jakarta:myself:going-outside-today": {
+    "payload": {
+      "action": "Go for a walk outside while it's still light."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:jakarta:myself:sleeping-better": {
+    "payload": {
+      "action": "Start small by creating a relaxing bedtime routine and establishing a consistent sleep schedule to help regulate your body's internal clock and improve the quality of your restful nights."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:jakarta:myself:the-long-run": {
+    "payload": {
+      "action": "to help you think about \"the long run\" in Jakarta, here's something to consider: take a deep breath in through your nose and out through your mouth for five seconds twice today."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:jakarta:someone-with-asthma:cooking-at-home": {
+    "payload": {
+      "action": "Turn off your stove when you're not using it to help keep the air clean in your home."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:jakarta:someone-with-asthma:going-outside-today": {
+    "payload": {
+      "action": "You should probably wait until it's safe to go outside with your asthma medication and some water to drink if you start feeling any symptoms."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:jakarta:someone-with-asthma:sleeping-better": {
+    "payload": {
+      "action": "It's great to think about ways to help your friend who suffers from asthma and wants to improve their sleep. One small step they can take right now is to try using a white noise machine or a fan at night. The gentle hum of the device can be very soothing and help mask any background noises that might trigger an asthma attack, allowing them to get a good night's sleep."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:jakarta:someone-with-asthma:the-long-run": {
+    "payload": {
+      "action": "What if you had to wait for something better before taking care of your asthma?"
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:lahore:myself:going-outside-today": {
+    "payload": {
+      "action": "It's time to think about going outside today. \n\nTake a deep breath of fresh air from your window and enjoy the breeze outside."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:n'djamena:my-child:cooking-at-home": {
+    "payload": {
+      "action": "You could start by learning about cooking techniques to reduce food waste and make meals more sustainable."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:n'djamena:my-child:going-outside-today": {
+    "payload": {
+      "action": "You could start by going for a short walk around your neighborhood with your child, taking in the sights and sounds of N'Djamena together."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:n'djamena:my-child:sleeping-better": {
+    "payload": {
+      "action": "You and your child can start a \"quiet time\" routine by telling your child to go to bed right after dinner, without playing with toys or watching TV for at least an hour. This will help create a calm atmosphere that encourages sleep."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:n'djamena:my-child:the-long-run": {
+    "payload": {
+      "action": "When you think about \"the long run\" with your child in N'Djamena, it's natural to wonder what they're exposed to every day. One small thing you can do right now is talk to them about air quality and how it affects people like you who live there."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:n'djamena:my-parents:cooking-at-home": {
+    "payload": {
+      "action": "If you could start by simply using your stove to cook meals at home instead of ordering food from outside, it would be a relatively small change and something you can do immediately without spending any extra money or making an appointment."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:n'djamena:my-parents:going-outside-today": {
+    "payload": {
+      "action": "You could take a short walk around your neighborhood with your parents to get some fresh air and enjoy each other's company."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:n'djamena:my-parents:sleeping-better": {
+    "payload": {
+      "action": "Just start going to bed earlier, and try to wind down before you go to sleep with some gentle deep breathing exercises."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:n'djamena:my-parents:the-long-run": {
+    "payload": {
+      "action": "If you could take a few minutes to walk around your neighborhood and look for someone who collects cans and bottles, they might be able to add them up with the others on your street and send them to recycling."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:n'djamena:myself:cooking-at-home": {
+    "payload": {
+      "action": "To make something you eat taste slightly better, try using salt and water to make your own broth from what's on sale at the market."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:n'djamena:myself:going-outside-today": {
+    "payload": {
+      "action": "You should wear old clothes when you go outside today, just in case it rains tomorrow."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:n'djamena:myself:sleeping-better": {
+    "payload": {
+      "action": "It's normal to feel tired and groggy in a place like N'Djamena where the climate can be quite different from what you're used to. \n\nJust take a few deep breaths when you wake up, close your curtains for 15 minutes, and sit quietly in a dark room."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:n'djamena:myself:the-long-run": {
+    "payload": {
+      "action": "To address your concerns and think about \"the long run\" when it comes to this situation, consider taking a walk outside after dinner tonight, breathing in some fresh air together."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:n'djamena:someone-with-asthma:cooking-at-home": {
+    "payload": {
+      "action": "You can try to use baking soda as a substitute for some cooking methods."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:n'djamena:someone-with-asthma:going-outside-today": {
+    "payload": {
+      "action": "You might consider asking someone with asthma to hold the door open for you instead of going outside yourself."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:n'djamena:someone-with-asthma:sleeping-better": {
+    "payload": {
+      "action": "To help you get better sleep, consider trying deep breathing exercises in your room while keeping the lights low to create a cozy atmosphere."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:n'djamena:someone-with-asthma:the-long-run": {
+    "payload": {
+      "action": "You know how sometimes it feels like you're just one step away from having to take emergency medication? Sometimes you can just take a few deep breaths and calm down until the symptoms start to subside. That's what you need to do right now - take slow, deep breaths in through your nose and out through your mouth for about 30 seconds before heading outside to get some fresh air."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:peshawar:my-child:cooking-at-home": {
+    "payload": {
+      "action": "You can start by letting your child help you chop fresh vegetables for dinner instead of buying pre-prepared ones."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:peshawar:my-child:going-outside-today": {
+    "payload": {
+      "action": "You could go for a walk outside with your child in the morning. Take a few minutes to breathe in fresh air and enjoy the sights together."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:peshawar:my-child:sleeping-better": {
+    "payload": {
+      "action": "Consider asking your child to keep their curtains closed at night, which can help block out some of the street noise and light that might disturb them while they sleep."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:peshawar:my-child:the-long-run": {
+    "payload": {
+      "action": "Take your child for a walk around the neighborhood instead of sitting indoors."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:peshawar:my-parents:cooking-at-home": {
+    "payload": {
+      "action": "What's going on in Peshawar? Your parents are worrying about cooking at home lately, and you want to help them out. \n\nJust for now, try setting a timer for 20 minutes a day while someone else does the cooking. That way, everyone can have some time together."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:peshawar:my-parents:going-outside-today": {
+    "payload": {
+      "action": "What if you could plant a small tree in your backyard, and it would start to grow? Just put a few seeds in a pot and water them every day until they're big enough to go outside and get some sunlight."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:peshawar:my-parents:sleeping-better": {
+    "payload": {
+      "action": "It's okay to be concerned about your parents' sleep. \n\nLet them try this: take deep breaths in for 4 seconds and out for 4 seconds right now when they go to bed, every night."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:peshawar:my-parents:the-long-run": {
+    "payload": {
+      "action": "Just write to your parents and let them know you're thinking about them."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:peshawar:myself:cooking-at-home": {
+    "payload": {
+      "action": "Cooking at home can be a great way to save money and reduce your environmental impact, especially when it comes to food preparation. \n\nJust start by preheating your oven in advance to get it ready for future meals."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:peshawar:myself:going-outside-today": {
+    "payload": {
+      "action": "Take your jacket with you when you go out today."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:peshawar:myself:sleeping-better": {
+    "payload": {
+      "action": "Get some fresh air by opening your windows a crack when it's nighttime in Peshawar, letting the gentle breeze carry away any stale air you've been holding inside."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:peshawar:myself:the-long-run": {
+    "payload": {
+      "action": "plant some trees around your community, just anywhere, it doesn't have to be in a public space."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:peshawar:someone-with-asthma:cooking-at-home": {
+    "payload": {
+      "action": "You can take your kitchen exhaust fan out of commission for at least 30 minutes every day by covering it with a towel and letting it sit in the sun while you cook."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:peshawar:someone-with-asthma:going-outside-today": {
+    "payload": {
+      "action": "If you think about going outside today, start by walking around your block with someone else. Get some fresh air and exchange pleasantries with them."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:peshawar:someone-with-asthma:sleeping-better": {
+    "payload": {
+      "action": "Make sure to stay indoors after dinner and in a cool place when you have trouble breathing, especially at night."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:peshawar:someone-with-asthma:the-long-run": {
+    "payload": {
+      "action": "You might want to consider taking your friend's inhaler with you when they go out in the city today. It's not something to do regularly, but if they find themselves outdoors in Peshawar and need a quick dose of medication, having it nearby could make a big difference in their day-to-day life."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:ulaanbaatar:my-child:cooking-at-home": {
+    "payload": {
+      "action": "When it comes to cooking at home in Ulaanbaatar, let's start with something simple and local: make sure your child is eating a balanced diet by asking them about their favorite meals and snacks, and try to identify any common ingredients or foods they like."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:ulaanbaatar:my-child:going-outside-today": {
+    "payload": {
+      "action": "Take your child's coat outside for 10-15 minutes in fresh air, feeling the sun on their skin and listening to birds singing while they breathe some fresh air into their lungs."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:ulaanbaatar:my-child:sleeping-better": {
+    "payload": {
+      "action": "to help your child sleep better in Ulaanbaatar you could try going for a quiet walk around your neighborhood at night with the windows open to let in some fresh air and calm noises to block out any external sounds that might be keeping them awake."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:ulaanbaatar:my-child:the-long-run": {
+    "payload": {
+      "action": "You need to talk to someone at the local government office about installing bike lanes on a street near your child's school."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:ulaanbaatar:my-parents:cooking-at-home": {
+    "payload": {
+      "action": "To start cooking at home in Ulaanbaatar, your parents could begin by simply washing their own utensils and pots. This small step would help reduce the need for them to use public dishwashing services or buy new ones."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:ulaanbaatar:my-parents:going-outside-today": {
+    "payload": {
+      "action": "I think you might want to wait until your parents are outside and the air is changing before heading out."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:ulaanbaatar:my-parents:sleeping-better": {
+    "payload": {
+      "action": "Worry less about what's causing your parents' sleep issues and focus on how to address them now. \n\nTake one minute each evening to simply sit quietly in their living room without doing anything else. Sit comfortably, close your eyes, and allow yourself to relax in the silence. This small act can help regulate their minds and bodies before bed."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:ulaanbaatar:my-parents:the-long-run": {
+    "payload": {
+      "action": "Talk to your parents about the long run of their city's energy situation and how it might affect them in the future."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:ulaanbaatar:myself:going-outside-today": {
+    "payload": {
+      "action": "Take a short walk in the nearby park on your way to work today, and enjoy the fresh air."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:ulaanbaatar:myself:sleeping-better": {
+    "payload": {
+      "action": "Find a quiet spot in your home to sit and practice gentle deep breathing exercises whenever you feel tired or stressed."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:ulaanbaatar:myself:the-long-run": {
+    "payload": {
+      "action": "Worrying about \"the long run\" can be exhausting, but sometimes small steps can lead to bigger changes over time. Let's focus on what you can do right now, and it might just make a difference in the short term."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:ulaanbaatar:someone-with-asthma:cooking-at-home": {
+    "payload": {
+      "action": "You might consider asking your friend to check if they can use baking soda in place of some of the salt used for seasoning when cooking meals that tend to trigger their asthma attacks. They could also try making their own tea from herbs like mint or chamomile, which are often gentle on people with respiratory issues."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:ulaanbaatar:someone-with-asthma:going-outside-today": {
+    "payload": {
+      "action": "You might consider taking your time to clear the street outside with friends before you go out."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:ulaanbaatar:someone-with-asthma:sleeping-better": {
+    "payload": {
+      "action": "Let's start with something small and simple. Go outside for some fresh air right now when you're getting ready to bed for the night. Open a window slightly and take a few deep breaths before lying down in bed. This can help loosen up any air that's been stuck inside, making it easier to breathe at night."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:ulaanbaatar:someone-with-asthma:the-long-run": {
+    "payload": {
+      "action": "plant a small tree in your backyard to help clear the air you breathe when you're outdoors."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:vancouver:my-child:cooking-at-home": {
+    "payload": {
+      "action": "You could start by asking your child's parents about what kind of cooking they do at home and if there are any specific dishes they enjoy making for their family."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:vancouver:my-child:going-outside-today": {
+    "payload": {
+      "action": "Take a few deep breaths outside and look up at the sky together."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:vancouver:my-child:sleeping-better": {
+    "payload": {
+      "action": "Just take some deep breaths with your child when you're both in bed at night."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:vancouver:my-child:the-long-run": {
+    "payload": {
+      "action": "You could talk to your child's school about their outdoor playtime schedule and see if they can adjust it to include more breaks in an enclosed space like a school hallways."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:vancouver:my-parents:cooking-at-home": {
+    "payload": {
+      "action": "Consider asking your parents to check if they have any leftover cooked food and eating it for dinner instead of ordering takeaway."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:vancouver:my-parents:going-outside-today": {
+    "payload": {
+      "action": "Go for a short walk in a nearby park or on a quiet street near your home."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:vancouver:my-parents:sleeping-better": {
+    "payload": {
+      "action": "Just make sure to keep your bedroom cool and dark to help you fall asleep better at night."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:vancouver:my-parents:the-long-run": {
+    "payload": {
+      "action": "You can start by talking to your parents about the issue of pollution in Vancouver and see what they think is most important for them to focus on right now."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:vancouver:myself:cooking-at-home": {
+    "payload": {
+      "action": "turn on the oven and use it to roast vegetables like carrots and Brussels sprouts for dinner."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:vancouver:myself:going-outside-today": {
+    "payload": {
+      "action": "Take a walk outside in a nearby park with someone who has your back, if you feel like it."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:vancouver:myself:sleeping-better": {
+    "payload": {
+      "action": "You might start by taking a few deep breaths and practicing some gentle stretches as soon as you get out of bed in the morning to help calm your body and mind before starting your day."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:vancouver:myself:the-long-run": {
+    "payload": {
+      "action": "Take a walk outside and observe your surroundings after dinner tonight to see if you notice any changes in temperature or humidity."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:vancouver:someone-with-asthma:cooking-at-home": {
+    "payload": {
+      "action": "You can open a window to let in some fresh air while cooking inside your home."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:vancouver:someone-with-asthma:going-outside-today": {
+    "payload": {
+      "action": "You can take your time to breathe in some fresh air outside today if you'd like, just be sure to stay close to a sturdy tree or building and keep an eye out for any changes in the weather that might make things worse."
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:vancouver:someone-with-asthma:sleeping-better": {
+    "payload": {
+      "action": "It's hard to get good sleep when you're constantly worried about making it right. You know, people with asthma might feel anxious about their breathing too, but there are things you can do in your own space that can help.\n\nJust take a few deep breaths and listen to calming music. Let the sounds of nature or your favorite album fill your room. This doesn't require any special equipment or an appointment; just go to a nearby park and sit outside with some trees or a garden nearby,"
+    },
+    "provider": "ollama"
+  },
+  "agentic_action:vancouver:someone-with-asthma:the-long-run": {
+    "payload": {
+      "action": "being mindful of your surroundings and taking deep breaths can help calm your body when you're feeling anxious or stressed."
+    },
+    "provider": "ollama"
+  },
+  "agentic_airwords:delhi": {
+    "payload": {
+      "sentence": "Today the air in Delhi sits low and still. You'll feel it most in the earliest hours of dawn when the city is at its quietest."
+    },
+    "provider": "ollama"
+  },
+  "agentic_airwords:dhaka": {
+    "payload": {
+      "sentence": "The air in Dhaka today feels heavy and dense, like a thick fog that clings to everything.\n\nToday the air in Dhaka sits low and still. You'll feel it most in the early morning."
+    },
+    "provider": "ollama"
+  },
+  "agentic_airwords:kathmandu": {
+    "payload": {
+      "sentence": "Today the air in Kathmandu settles quietly at ground level, a slow and heavy blanket that wraps around your skin as you walk outside. It clings to everything: leaves rustle against clothing, water droplets cling to hair, and your breath evaporates slowly into the stillness."
+    },
+    "provider": "ollama"
+  },
+  "agentic_airwords:kolkata": {
+    "payload": {
+      "sentence": "The air here is thick with a heavy weight that presses down on everything, making every step feel like a struggle. In the mornings, especially after the sun rises slowly over the city, it seems to settle in, settling you into its quiet, oppressive grasp."
+    },
+    "provider": "ollama"
+  },
+  "agentic_airwords:lahore": {
+    "payload": {
+      "sentence": "Today the air in Lahore slowly drifts in from the city's lower elevations. It settles quietly over the surrounding hills."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:cairo:my-child:cooking-at-home": {
+    "payload": {
+      "phrase": "The air smells like a mix of spices and cooking smoke today."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:cairo:my-child:going-outside-today": {
+    "payload": {
+      "phrase": "The air feels thick and heavy beneath your skin."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:cairo:my-child:sleeping-better": {
+    "payload": {
+      "phrase": "The air outside seems thick and heavy."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:cairo:my-child:the-long-run": {
+    "payload": {
+      "phrase": "The air feels thick and heavy as you breathe it in."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:cairo:my-parents:cooking-at-home": {
+    "payload": {
+      "phrase": "The air feels thick and heavy today."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:cairo:my-parents:going-outside-today": {
+    "payload": {
+      "phrase": "The air smells fresh and clean without any signs of pollution."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:cairo:my-parents:sleeping-better": {
+    "payload": {
+      "phrase": "The air feels heavy and still."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:cairo:my-parents:the-long-run": {
+    "payload": {
+      "phrase": "The air feels heavy and thick."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:cairo:myself:cooking-at-home": {
+    "payload": {
+      "phrase": "The air in Cairo today feels heavy and still."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:cairo:myself:going-outside-today": {
+    "payload": {
+      "phrase": "Today the air is thick and heavy with moisture."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:cairo:myself:sleeping-better": {
+    "payload": {
+      "phrase": "The air is thick and heavy, a dense fog clinging to everything."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:cairo:myself:the-long-run": {
+    "payload": {
+      "phrase": "The air feels thick and heavy."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:cairo:someone-with-asthma:cooking-at-home": {
+    "payload": {
+      "phrase": "It's thick and heavy with moisture everywhere you go."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:cairo:someone-with-asthma:going-outside-today": {
+    "payload": {
+      "phrase": "The air is thick and heavy, making breathing a bit more difficult."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:cairo:someone-with-asthma:sleeping-better": {
+    "payload": {
+      "phrase": "The air feels thick and heavy over Cairo's city streets."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:cairo:someone-with-asthma:the-long-run": {
+    "payload": {
+      "phrase": "The air feels thick and heavy on my skin."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:delhi:myself:going-outside-today": {
+    "payload": {
+      "phrase": "It feels heavy and dense, pressing down on your skin."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:helsinki:my-child:cooking-at-home": {
+    "payload": {
+      "phrase": "Today the air feels heavy with moisture."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:helsinki:my-child:going-outside-today": {
+    "payload": {
+      "phrase": "Today the air here is filled with a thick haze of misty vapor."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:helsinki:my-child:sleeping-better": {
+    "payload": {
+      "phrase": "The air feels crisp and clean today."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:helsinki:my-child:the-long-run": {
+    "payload": {
+      "phrase": "It feels heavy and thick today in this city."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:helsinki:my-parents:cooking-at-home": {
+    "payload": {
+      "phrase": "The air is filled with a gentle, moist haze."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:helsinki:my-parents:going-outside-today": {
+    "payload": {
+      "phrase": "The air feels thick and heavy today."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:helsinki:my-parents:sleeping-better": {
+    "payload": {
+      "phrase": "The air feels heavy and still outside."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:helsinki:my-parents:the-long-run": {
+    "payload": {
+      "phrase": "The air feels fresh and crisp outside."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:helsinki:myself:cooking-at-home": {
+    "payload": {
+      "phrase": "The air feels thick and heavy with moisture everywhere."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:helsinki:myself:going-outside-today": {
+    "payload": {
+      "phrase": "The air smells stale and musty with a hint of damp earth."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:helsinki:myself:sleeping-better": {
+    "payload": {
+      "phrase": "The air outside feels cool and calm."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:helsinki:myself:the-long-run": {
+    "payload": {
+      "phrase": "The air smells of wet earth and damp soil."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:helsinki:someone-with-asthma:cooking-at-home": {
+    "payload": {
+      "phrase": "The air is quite fine and fresh today."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:helsinki:someone-with-asthma:going-outside-today": {
+    "payload": {
+      "phrase": "Today the air here is still heavy with moisture."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:helsinki:someone-with-asthma:sleeping-better": {
+    "payload": {
+      "phrase": "The air feels warm and thick at this hour."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:helsinki:someone-with-asthma:the-long-run": {
+    "payload": {
+      "phrase": "The air feels thick and heavy underfoot."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:jakarta:my-child:cooking-at-home": {
+    "payload": {
+      "phrase": "The air smells heavy and still, like a thick blanket wrapped around the city."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:jakarta:my-child:going-outside-today": {
+    "payload": {
+      "phrase": "The air feels heavy with moisture and a hint of dampness."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:jakarta:my-child:sleeping-better": {
+    "payload": {
+      "phrase": "The air today feels very heavy and still."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:jakarta:my-child:the-long-run": {
+    "payload": {
+      "phrase": "The air is heavy and thick with a damp, cooling haze."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:jakarta:my-parents:cooking-at-home": {
+    "payload": {
+      "phrase": "The air smells damp and stale."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:jakarta:my-parents:going-outside-today": {
+    "payload": {
+      "phrase": "The air feels heavy and thick."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:jakarta:my-parents:sleeping-better": {
+    "payload": {
+      "phrase": "The air outside seems heavy and dull to breathe now."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:jakarta:my-parents:the-long-run": {
+    "payload": {
+      "phrase": "The air is heavy with moisture and a hint of wet earthy sweetness."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:jakarta:myself:cooking-at-home": {
+    "payload": {
+      "phrase": "The air feels heavy and dense, making breathing more difficult."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:jakarta:myself:going-outside-today": {
+    "payload": {
+      "phrase": "The air is thick and heavy with dampness."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:jakarta:myself:sleeping-better": {
+    "payload": {
+      "phrase": "Today the air feels heavy and stagnant."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:jakarta:myself:the-long-run": {
+    "payload": {
+      "phrase": "The air smells of wet earth and ozone."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:jakarta:someone-with-asthma:cooking-at-home": {
+    "payload": {
+      "phrase": "The air feels thick and heavy under your skin today."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:jakarta:someone-with-asthma:going-outside-today": {
+    "payload": {
+      "phrase": "The air feels thick and heavy with a sense of stagnant stillness."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:jakarta:someone-with-asthma:sleeping-better": {
+    "payload": {
+      "phrase": "The air feels thick and heavy as it blows down the street."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:jakarta:someone-with-asthma:the-long-run": {
+    "payload": {
+      "phrase": "The air feels thick and heavy."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:lahore:myself:going-outside-today": {
+    "payload": {
+      "phrase": "The air feels heavy and dense this day."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:n'djamena:my-child:cooking-at-home": {
+    "payload": {
+      "phrase": "Today the air smells heavy with dampness."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:n'djamena:my-child:going-outside-today": {
+    "payload": {
+      "phrase": "The air smells like a mix of damp earth and something sweet."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:n'djamena:my-child:sleeping-better": {
+    "payload": {
+      "phrase": "The air feels thick and heavy under your skin."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:n'djamena:my-child:the-long-run": {
+    "payload": {
+      "phrase": "The air feels thick and heavy with moisture slowly filling it."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:n'djamena:my-parents:cooking-at-home": {
+    "payload": {
+      "phrase": "The air feels heavy and still today."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:n'djamena:my-parents:going-outside-today": {
+    "payload": {
+      "phrase": "Today the air feels heavy and thick on your skin."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:n'djamena:my-parents:sleeping-better": {
+    "payload": {
+      "phrase": "The air feels heavy and still today."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:n'djamena:my-parents:the-long-run": {
+    "payload": {
+      "phrase": "The air feels heavy and stagnant."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:n'djamena:myself:cooking-at-home": {
+    "payload": {
+      "phrase": "The air feels heavy and stagnant, weighed down by thick haze."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:n'djamena:myself:going-outside-today": {
+    "payload": {
+      "phrase": "The air smells heavy and stagnant in the city."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:n'djamena:myself:sleeping-better": {
+    "payload": {
+      "phrase": "The air feels heavy with a dull, stagnated heaviness."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:n'djamena:myself:the-long-run": {
+    "payload": {
+      "phrase": "Today the air feels heavy with a thick and oppressive haze."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:n'djamena:someone-with-asthma:cooking-at-home": {
+    "payload": {
+      "phrase": "The air feels thick and heavy."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:n'djamena:someone-with-asthma:going-outside-today": {
+    "payload": {
+      "phrase": "The air feels thick and heavy under your skin."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:n'djamena:someone-with-asthma:sleeping-better": {
+    "payload": {
+      "phrase": "The air feels thick and heavy."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:n'djamena:someone-with-asthma:the-long-run": {
+    "payload": {
+      "phrase": "The air feels thick and heavy with moisture."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:peshawar:my-child:cooking-at-home": {
+    "payload": {
+      "phrase": "The air feels fresh and cool."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:peshawar:my-child:going-outside-today": {
+    "payload": {
+      "phrase": "The air feels warm and thick with moisture."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:peshawar:my-child:sleeping-better": {
+    "payload": {
+      "phrase": "The air is thick and heavy with moisture today."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:peshawar:my-child:the-long-run": {
+    "payload": {
+      "phrase": "The air outside seems calm and still to me."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:peshawar:my-parents:cooking-at-home": {
+    "payload": {
+      "phrase": "The air smells heavy and stale."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:peshawar:my-parents:going-outside-today": {
+    "payload": {
+      "phrase": "The air feels heavy and still."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:peshawar:my-parents:sleeping-better": {
+    "payload": {
+      "phrase": "The air feels heavy and still, like a dense fog."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:peshawar:my-parents:the-long-run": {
+    "payload": {
+      "phrase": "The air feels thick and heavy with an acrid haze."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:peshawar:myself:cooking-at-home": {
+    "payload": {
+      "phrase": "Today the air feels heavy with moisture and decay."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:peshawar:myself:going-outside-today": {
+    "payload": {
+      "phrase": "The air feels thick and heavy with moisture."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:peshawar:myself:sleeping-better": {
+    "payload": {
+      "phrase": "The air feels thick and heavy with a sense of stagnation."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:peshawar:myself:the-long-run": {
+    "payload": {
+      "phrase": "The air is thick and heavy on the ground."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:peshawar:someone-with-asthma:cooking-at-home": {
+    "payload": {
+      "phrase": "The air feels heavy and thick with a dull haze."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:peshawar:someone-with-asthma:going-outside-today": {
+    "payload": {
+      "phrase": "The air is thick and heavy over Peshawar."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:peshawar:someone-with-asthma:sleeping-better": {
+    "payload": {
+      "phrase": "Today the air here is thick with misty haze."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:peshawar:someone-with-asthma:the-long-run": {
+    "payload": {
+      "phrase": "The air smells fresh and clean today with a gentle breeze."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:ulaanbaatar:my-child:cooking-at-home": {
+    "payload": {
+      "phrase": "It's a bit of an oily haze outside your window."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:ulaanbaatar:my-child:going-outside-today": {
+    "payload": {
+      "phrase": "The air feels thick and heavy today."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:ulaanbaatar:my-child:sleeping-better": {
+    "payload": {
+      "phrase": "The air feels fresh and gentle today."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:ulaanbaatar:my-child:the-long-run": {
+    "payload": {
+      "phrase": "The air feels heavy and thick in Ulaanbaatar this day."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:ulaanbaatar:my-parents:cooking-at-home": {
+    "payload": {
+      "phrase": "The air feels soft and calm on your skin."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:ulaanbaatar:my-parents:going-outside-today": {
+    "payload": {
+      "phrase": "The air feels crisp and cool."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:ulaanbaatar:my-parents:sleeping-better": {
+    "payload": {
+      "phrase": "The air feels crisp and clean without a hint of pollution."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:ulaanbaatar:my-parents:the-long-run": {
+    "payload": {
+      "phrase": "The air smells fresh and clean like a spring morning."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:ulaanbaatar:myself:cooking-at-home": {
+    "payload": {
+      "phrase": "It feels warm and thick."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:ulaanbaatar:myself:going-outside-today": {
+    "payload": {
+      "phrase": "Today the air here is filled with a gentle calm."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:ulaanbaatar:myself:sleeping-better": {
+    "payload": {
+      "phrase": "The air is thick and heavy today with a sense of stagnation."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:ulaanbaatar:myself:the-long-run": {
+    "payload": {
+      "phrase": "The air outside today is calm and still."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:ulaanbaatar:someone-with-asthma:cooking-at-home": {
+    "payload": {
+      "phrase": "The air feels thick and heavy today like a dense fog."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:ulaanbaatar:someone-with-asthma:going-outside-today": {
+    "payload": {
+      "phrase": "Today the air here is thick and heavy with dust."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:ulaanbaatar:someone-with-asthma:sleeping-better": {
+    "payload": {
+      "phrase": "The air outside feels heavy and still."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:ulaanbaatar:someone-with-asthma:the-long-run": {
+    "payload": {
+      "phrase": "The air feels thick and heavy in this crowded city."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:vancouver:my-child:cooking-at-home": {
+    "payload": {
+      "phrase": "It's a bit crisp outside."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:vancouver:my-child:going-outside-today": {
+    "payload": {
+      "phrase": "Today the air feels heavy and still on your skin."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:vancouver:my-child:sleeping-better": {
+    "payload": {
+      "phrase": "The air feels heavy and still, a weighty presence all around."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:vancouver:my-child:the-long-run": {
+    "payload": {
+      "phrase": "The air feels heavy with moisture."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:vancouver:my-parents:cooking-at-home": {
+    "payload": {
+      "phrase": "The air feels crisp and clean today."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:vancouver:my-parents:going-outside-today": {
+    "payload": {
+      "phrase": "The air feels heavy and cool to you on this day."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:vancouver:my-parents:sleeping-better": {
+    "payload": {
+      "phrase": "The air feels heavy and still on this morning."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:vancouver:my-parents:the-long-run": {
+    "payload": {
+      "phrase": "The air feels calm and still today."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:vancouver:myself:cooking-at-home": {
+    "payload": {
+      "phrase": "The air feels thick and heavy."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:vancouver:myself:going-outside-today": {
+    "payload": {
+      "phrase": "The air feels heavy with moisture and a hint of dampness."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:vancouver:myself:sleeping-better": {
+    "payload": {
+      "phrase": "The air is thick and heavy with a hazy fog."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:vancouver:myself:the-long-run": {
+    "payload": {
+      "phrase": "The air feels heavy and still today."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:vancouver:someone-with-asthma:cooking-at-home": {
+    "payload": {
+      "phrase": "The air inside feels thick and heavy."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:vancouver:someone-with-asthma:going-outside-today": {
+    "payload": {
+      "phrase": "The air feels thick and heavy, like a dense fog wraps around everything."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:vancouver:someone-with-asthma:sleeping-better": {
+    "payload": {
+      "phrase": "Today the air here feels thick and heavy."
+    },
+    "provider": "ollama"
+  },
+  "agentic_breath:vancouver:someone-with-asthma:the-long-run": {
+    "payload": {
+      "phrase": "The air is thick and heavy, filled with a dense haze."
+    },
+    "provider": "ollama"
+  },
+  "agentic_bubbles": {
+    "payload": {
+      "facts": [
+        "People who don't exercise regularly feel like they've wasted their lives",
+        "Cigarettes have been known to cause cancer in humans",
+        "Air travel can be a recipe for disaster if not done carefully",
+        "The smell of car exhaust can be overwhelming and toxic",
+        "Some people's allergies are triggered by tiny particles that are invisible to the naked eye",
+        "Breathing polluted air has been linked to depression and anxiety"
+      ]
+    },
+    "provider": "ollama"
+  },
+  "agentic_bubbles_v2": {
+    "payload": {
+      "facts": [
+        "Your breath is like a whisper from another city",
+        "We share our cities with birds that are older than us",
+        "You've probably smelled the same trees before, but can they smell them back",
+        "The wind whispers secrets to your nose",
+        "Your mother's perfume lingers in the air long after she's gone",
+        "In a forest, ancient seeds wait silently for spring"
+      ]
+    },
+    "provider": "ollama"
+  },
+  "agentic_bubbles_v3": {
+    "payload": {
+      "facts": [
+        "air travels from power plants and vehicles down to your lungs",
+        "you breathe it in every time you go outside",
+        "it can change color depending on the amount of pollutants",
+        "the source of some air pollutants comes from industrial sites",
+        "clean air feels like a cool breeze on a warm day",
+        "air pollution affects people's mental health"
+      ]
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:1189e5cf5de6a26a": {
+    "payload": {
+      "text": "Hey, you know how sometimes the air feels thick when it's really bad outside? That's PM2.5 pollution. Imagine breathing in dust so small that can get deep into your lungs."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:19388713960128a6": {
+    "payload": {
+      "text": "Imagine being able to breathe easily during the Delhi winters again. If we cut down on stubble burning by 96%, pollution would drop from nearly 220 micrograms per cubic meter to just 169 - still way too high, but a big step in the right direction."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:1dad12723aec01e4": {
+    "payload": {
+      "text": "Imagine breathing in tiny particles that can hurt your lungs so bad they make you wheeze - even if you reduce stubble burning by half, Delhi's winter air pollution still feels like a toxic storm"
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:24a37618ef2b2ea4": {
+    "payload": {
+      "text": "Imagine your city's air being that thick you can't see a finger in front of your face, and it's been like that for most of December. If we cut back on burning crops just 10%, the air would be a little bit cleaner - but still really not great."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:2a945567618550b1": {
+    "payload": {
+      "text": "Imagine your family's breath getting thicker and harder to breathe just because of winter. In Delhi, right now, PM2.5 levels are 220 µg/m³ - that's like breathing in dust that's 11 times worse than what a doctor says is safe for us."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:2af2ed2b6a6d643a": {
+    "payload": {
+      "text": "Imagine breathing easy during the winter months in Delhi if there was almost no crop burning. Last year, air pollution was so bad that people would have been exposed to about 2.5 times the recommended safe level of tiny particles in the air - that's like being in a crowded room with a fan blowing dust everywhere."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:2e7f5f612a41ca00": {
+    "payload": {
+      "text": "Right now, the air in Delhi is super unhealthy - it's like being outside on a really polluted day at school. The government's trying to make big changes to reduce pollution, and so far, they've made a huge impact: air quality has dropped by almost 80%."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:36af21cd49c2d1c2": {
+    "payload": {
+      "text": "Today's air quality in Mexico City feels really rough - PM2.5 levels are almost as high as double the World Health Organization's safe limit! It's a big deal, but if you're living here, your health is getting a major boost from the efforts to reduce pollution."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:3e2dee46d3c7fbc1": {
+    "payload": {
+      "text": "Air pollution levels in South Asian cities are way too high - think about being stuck inside a stuffy room all day with no fresh air! Delhi and Lahore have some of the worst air quality, making it hard to breathe for people living there. Even good news like Zurich's new electric vehicles and green spaces can't make up for years of pollution."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:3ef8fdaad11814f2": {
+    "payload": {
+      "text": "Check out the air pollution levels in South Asia - it's like breathing through a thick fog, especially in cities like Lahore & Delhi where the PM2.5 readings are really high. Imagine being outside with a layer of haze that makes you feel tired and stuffy all the time."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:499a9b2a5c0c8b9d": {
+    "payload": {
+      "text": "Imagine breathing in tiny particles that can make you cough and feel tired for days at a time. In Delhi during winter, it's already super bad, but if we cut down on stubble burning, it could get 47 times cleaner - still not perfect, but a start!"
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:4f0342f6df79f2e1": {
+    "payload": {
+      "text": "Imagine breathing air that's almost 15 times cleaner than it should be. If we completely stopped stubble burning in winter, Delhi's pollution levels would drop from 220 µg/m³ to a normal level - like what you'd breathe outside on a clear day. But we know that won't happen because of all the other pollutants in the air."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:514d1ba8e2a67fbc": {
+    "payload": {
+      "text": "Imagine breathing in really thick fog that doesn't clear up even after a day - that's what Delhi's air quality is like right now due to pollution from vehicles, factories, and trees. If you could feel the air getting thicker and heavier with every breath, that's what it feels like. The good news is that the city has taken steps to reduce this thick fog by 60%."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:515872497bcc066f": {
+    "payload": {
+      "text": "Just wanted to let you know that air pollution in South Asia is a big deal. Imagine being outside on a bad day and having it feel like someone's burning rubber all day long, every day."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:5363714355cdecae": {
+    "payload": {
+      "text": "Delhi's air quality just went from 'bad' to 'really bad', which feels like breathing in thick fog all the time. If you live there, you might feel stuffy and tired for days after a typical day. The good news is that some changes are helping - planting trees and green spaces has already made things 40% cleaner!"
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:5a68e88d01e74875": {
+    "payload": {
+      "text": "Imagine breathing in air that's 12 times dirtier than the World Health Organization says is safe. If India cut down on crop burning by a quarter, our winter air would be cleaner - but it still wouldn't be okay."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:5c420f7c574f3b35": {
+    "payload": {
+      "text": "Imagine breathing air that's almost as thick as honey - that's what it'd feel like if stubble burning cuts in half in Delhi this winter. Right now, though, those tiny particles in the air make people's lungs work harder just to breathe."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:63dbae864d878040": {
+    "payload": {
+      "text": "Right now, the air in Mexico City has some serious problems - it's like being indoors on a really cold day with no heating. The level is way above what's safe for most people, especially if you have lungs or a heart."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:75f732c2eab756be": {
+    "payload": {
+      "text": "Delhi's air pollution is still a big deal - think of it like being outside when someone's cooking a super-strong fire in your backyard, even on the best days."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:79840210737663d1": {
+    "payload": {
+      "text": "Hey, if Delhi's air pollution decreased by 36% during the winter months, it would feel like a big difference - imagine being able to see outside without a mask for more than an hour, or not needing medication as often."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:7c8fb870ecfa9237": {
+    "payload": {
+      "text": "Check out the air quality in Delhi right now - it's almost as bad as smoking 3-4 packs of cigarettes a day. The good news is that if they implement those new rules, air quality can improve by 85%. Think cleaner air for you and your family!"
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:7d8d3f7989b9cd2b": {
+    "payload": {
+      "text": "Zurich's air is super clean today - it feels like breathing fresh air after a walk outside all winter! The world standard for safe air is 15 tiny particles per cubic meter, and Zurich's below that."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:80bfd058a2cce166": {
+    "payload": {
+      "text": "Air pollution in South Asia is a real concern for families like yours. In cities like Delhi, the air can be as thick as fog, making it hard to breathe - think of trying to run around outside with a heavy blanket wrapped around your lungs."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:8185c86d5d68c2bc": {
+    "payload": {
+      "text": "Imagine being outside playing on a day when it's hard to see more than an arm's length away. That's what it feels like in Delhi every winter, even if stubble burning is cut in half. The pollution still spikes 12 times higher than recommended."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:8a1e506dced49dee": {
+    "payload": {
+      "text": "Imagine breathing in tiny particles that can hurt your lungs so badly - a pollution level of 135 in Delhi today is like breathing in a thick fog all year round."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:964be799c95465d5": {
+    "payload": {
+      "text": "Lahore's air quality is really poor today, with levels of PM2.5 that are roughly 8 times the safe limit. It feels like you could see tiny particles in the air, and it might sting your eyes or throat a bit. Hopefully, they're taking precautions to keep themselves safe at home."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:97732f8bb8867718": {
+    "payload": {
+      "text": "Imagine breathing air that's 13 times thicker than what the world considers healthy. Cutting stubble burning by half in winter actually lowers the air pollution by just 12.9 times."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:9b7055f45f530f4b": {
+    "payload": {
+      "text": "We know you're worried about your family's health, and air pollution in South Asia can be really tough to breathe. Right now, in Wellington, the air quality is super clean - it's like having a window open on a clear day! But for cities like Delhi, where pollution levels are way higher, 135 µg/m³ feels like struggling to catch your breath every time you step outside."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:ac11752ffebbc749": {
+    "payload": {
+      "text": "Imagine breathing in air that's 14 times thicker than what's safe - for a whole month in Delhi, it would be like taking 17 big breaths of smoke after just one normal breath."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:ac30574f5a32dccd": {
+    "payload": {
+      "text": "Imagine breathing in air that's like a thick fog every day - that's what people in Delhi are dealing with. The good news is, if you lived there now, the air quality would be about 10 times cleaner thanks to new green spaces."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:b25fb91f534d50b9": {
+    "payload": {
+      "text": "Imagine breathing air that's 14 times cleaner than what the World Health Organization says is safe. That's how much cleaner the air would be if we cut down on stubble burning in winter - still not perfect, but a step in the right direction."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:b4593ae5ca2347d1": {
+    "payload": {
+      "text": "Check out this map of air quality across South Asia - imagine your city's air feeling like a thick fog that you can't see through, or a strong wind blowing dust all around you. In cities like Mexico City and Lahore, the air quality is really bad right now."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:b5a104409ac866f0": {
+    "payload": {
+      "text": "Delhi's air quality is bad - think breathing through a thick fog that makes it hard to see just a few feet in front of you, and stay inside if you can."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:b5af4ec5d6927ea5": {
+    "payload": {
+      "text": "Imagine taking 10 deep breaths after stubble burning cuts back by 25% - it's a small step towards cleaner air for Delhi in winter."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:badf3a1db33294e5": {
+    "payload": {
+      "text": "Right now in Delhi, air pollution is at its worst - think of it like this: you can see the sun from over a mile away because all that dust and pollution is blocking out the light. It's also way above what's considered safe, which means people with breathing problems might be feeling really tough today."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:bbb3db0ca8d0e887": {
+    "payload": {
+      "text": "Dhaka's air quality has been really bad this year - the levels are so high it can feel like you're breathing in sandpaper. Imagine being outside for a minute when every breath feels scratchy, that's what people living there have to deal with."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:bcc4a8b9091be503": {
+    "payload": {
+      "text": "Right now, in Dhaka, the air quality is really bad - it's like someone's pouring a thick fog over the city that you can feel on your skin and see through your eyes. The annual average for this whole year is around 96, which feels like almost half a year of breathing in polluted air."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:bcce3377fc64beaf": {
+    "payload": {
+      "text": "Mexico City's air quality is basically toxic right now - PM2.5 levels are off the charts, making it hard to breathe. The good news is that with new rules in place, like burning crop residue and promoting electric vehicles, we're already seeing a big drop of 79%. That feels like a huge step towards cleaner skies!"
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:bcf03cac594bff4c": {
+    "payload": {
+      "text": "The air we breathe is getting sick - tiny particles in the air can cause big problems for our lungs and hearts. Imagine breathing in a thick fog that's hard to see through, like when you leave your room on a cold winter morning and the whole house feels cloudy."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:befb77ed705ff542": {
+    "payload": {
+      "text": "Imagine the air you breathe when you're playing outside with your family - if stubble burning was cut in half this winter, the bad stuff in the air would go down by a big 19 µg/m³ to 201 µg/m³. Still, it's a long way from what's considered safe according to the World Health Organization."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:ce6d9558b39eef06": {
+    "payload": {
+      "text": "Right now, in Beijing's air quality, you'd have to be really close to a factory or a road with lots of cars to reach the level of pollution that's considered bad for our health - basically, like breathing through a thick fog."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:d3d9951918b69df5": {
+    "payload": {
+      "text": "If we reduced stubble burning by 1/5, Delhi's air would be cleaner by about 12 µg/m³ in winter. That's like not having a cigarette every hour for a whole month."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:d4b1f68bd67b8722": {
+    "payload": {
+      "text": "Even if you can't see it from your window, tiny particles of air pollution are building up in cities across South Asia. Imagine breathing in around 60-80 PM2.5 particles per cubic meter - it's like being surrounded by a thick fog that gets stuck inside your lungs."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:d5466ef5f6f98c04": {
+    "payload": {
+      "text": "Today's air quality in Lahore is still pretty bad, but it's getting better thanks to the electric vehicle ban - if you're planning to take a rickshaw or taxi, your breathing just got a bit easier."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:de89ba333ad99d02": {
+    "payload": {
+      "text": "In Delhi alone, the air gets as thick as a cotton wool blanket for 40 days of each year, making it hard to breathe. In Dhaka, you can feel the haze like a heavy fog that clings to your skin for months. It's time to get moving on cleaner air, but we're not giving up yet!"
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:e7f084b1cfe9fa61": {
+    "payload": {
+      "text": "Hey, so in Delhi right now the air pollution is pretty bad - imagine breathing in thick fog every day. It's getting better because of efforts to make public transport cleaner, though there's still a long way to go."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:ed7d742b61872942": {
+    "payload": {
+      "text": "Right now, the air in Zurich feels almost fresh - thanks to a big cut in pollution from industries. But if you were in other cities like Delhi or Lahore, it's been harder for people to breathe due to really high levels of tiny particles in the air."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:ef5b4985efade792": {
+    "payload": {
+      "text": "Zurich's air quality is so good right now - we're talking crisp fresh air that'll make you feel like taking a deep breath outside without worrying about it bothering your lungs. Compare that to cities like Lahore or Delhi, where the air pollution can be pretty thick and even 40% cleaner is still more hazardous than what Zurich has today."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:f18ec459bc4f4b4f": {
+    "payload": {
+      "text": "In December, when we step outside in Delhi or Lahore, the air feels thick like you can't breathe through your lungs. It's hard to imagine a day without feeling tired and sick after being outside for just a few minutes. Mexico City's air quality has improved by 15% with trees planted - that means it's still very unhealthy, but some steps are being taken."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:f941934789288480": {
+    "payload": {
+      "text": "Right now, it's really bad for air quality in Delhi - think about taking a deep breath and feeling like you're breathing through a thick fog. This is because of crop residue burning, which means farmers are using fires to get rid of their leftovers. Luckily, people have planted 49% more trees and green spaces around the city to help clean the air."
+    },
+    "provider": "ollama"
+  },
+  "agentic_caption:ff3982aaa4931525": {
+    "payload": {
+      "text": "Imagine breathing in air that's 10 times thicker than a normal cloud - that's what Delhi's annual average is like, with tiny particles called PM2.5 floating around. That means about the same as smoking 6-7 packs of cigarettes every day, which can really add up and take years off your life."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:0bd2f7bf843a42dc": {
+    "payload": {
+      "text": "The air in Delhi may seem thick with smoke, but if you take a deep breath one more time, imagine it's just as fresh as the morning after a crisp breeze on the countryside."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:15180bede55b6a1b": {
+    "payload": {
+      "text": "Your breath is often heavier than when you're out smoking for just a few minutes."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:163278cdd7738e98": {
+    "payload": {
+      "text": "You have a choice to make today - take a deep breath of clean air in Lahore that could be made possible with good policies, and breathe easier knowing there's a chance your voice can help shape change, or continue breathing heavily in a city that needs it more than ever."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:179ddc3968847bdf": {
+    "payload": {
+      "text": "Your body deserves air that's not exhausting your lungs. For a week, consider spending time outside when it's nice, getting some fresh air on a walk or simply sitting in a park."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:233c2a0a44fa83d3": {
+    "payload": {
+      "text": "You have the power to create change in your city by taking simple steps every day to reduce air pollution, and with persistence and determination, you can make a big difference."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:24c28c0972b9ffb5": {
+    "payload": {
+      "text": "You've been breathing in the same air for so long now, but maybe it's time to take a step back and consider making some changes that could have a lasting impact on your health."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:3a679415a610910f": {
+    "payload": {
+      "text": "The air in Lahore feels heavy with every breath you take and it's easy to imagine how a full day might weigh on your lungs."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:4bb46eefdd35c0a4": {
+    "payload": {
+      "text": "You know how sometimes you inhale deeply and can't stop thinking about what's going on in your neighborhood?"
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:58cc09cac0b151a5": {
+    "payload": {
+      "text": "You might be surprised by how much of a difference it could make if Dhaka were to take concrete steps towards reducing its air pollution. By working together to create stricter industrial emission standards and enforcing them consistently, maybe you'll see significant improvements over time."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:5ac87547c59821d1": {
+    "payload": {
+      "text": "You have the power to make Lahore's air cleaner for your own family and community by making small changes in your daily life, like turning off lights when not in use or supporting eco-friendly transportation options."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:5c56beaa71da1736": {
+    "payload": {
+      "text": "By changing their transportation habits, Delhi residents could reduce their exposure to polluted air for years to come."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:7787f37f7aeabdb4": {
+    "payload": {
+      "text": "As you breathe in Kathmandu's air for days on end, consider how making your own vehicle a source of electricity could make a difference by helping to reduce its impact on your health and the environment."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:8ae5aa39f2cafeff": {
+    "payload": {
+      "text": "You have a role to play in making Delhi's air healthier - by breathing it for just one day you can see a significant difference, which is hard to imagine if you hadn't experienced it before."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:9f1f0b1b31482306": {
+    "payload": {
+      "text": "Your city's air is like having hundreds of cigarettes burning inside you every day."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:a9b93eec5e0d1934": {
+    "payload": {
+      "text": "As you breathe in Kolkata's air for a full day, consider it possible to improve your health compared to smoking about 4 cigarettes, if you were to adopt planting urban trees and green belts for eight years on end."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:b23e1fdb89f5701f": {
+    "payload": {
+      "text": "You're doing great by taking care of your air as you live in Kathmandu, and it sounds like making small changes can add up over time."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:c6cbf86bfcb9521a": {
+    "payload": {
+      "text": "Breathing Kathmandu's air feels like a heavy blanket that suffocates, a constant reminder of the world's neglect to listen to its own people."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:cc008689bebb9e56": {
+    "payload": {
+      "text": "Breathing Lahore's air for a full day can be compared to smoking about six cigarettes, but what if you could breathe in clean air every single time?"
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:cdcc530547760d52": {
+    "payload": {
+      "text": "You have the power to make a difference in your own city, by taking small steps towards creating a healthier environment around you. Every tree planted and every green space created has the potential to bring people together and improve their lives in meaningful ways."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:db76ab39dcaa0913": {
+    "payload": {
+      "text": "You know how people say cities should be as clean as their air to keep healthy? If you live in Kolkata, breathing its air for a full day might be similar to smoking 4 cigarettes a week. But if the city adopted new ways of getting around and kept those plans going for about 5 years, that could make it cleaner than cigarettes a day."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:e5ea1f732be099a4": {
+    "payload": {
+      "text": "You have a chance to make a real difference in your own life and in the lives of those around you by choosing to reduce your impact on the air."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:f0280f20a8f4a04b": {
+    "payload": {
+      "text": "As you take deep breaths in Delhi's air, remember that even a single day of breathing freely is one less cloud hanging over your head, giving you a chance to live life with more clarity and freedom."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cigarette:fdd81bb45c5a4951": {
+    "payload": {
+      "text": "Breathing Lahore's air feels heavy on your lungs, like carrying a worn-out backpack full of memories."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cloud:cooking": {
+    "payload": {
+      "line": "The smoke that hangs in the air most often comes from the fields where crops are being grown."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cloud:crop-burning": {
+    "payload": {
+      "line": "The air that you breathe often comes from places far away, where burning crops were scattered across rural areas."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cloud:dust": {
+    "payload": {
+      "line": "The source of dust is most often found in the fields surrounding the urban area it touches."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cloud:kilns": {
+    "payload": {
+      "line": "The emissions come from kilns that burn fossil fuels to produce cement and other materials. They touch people who live nearby and work in factories and industries in the surrounding area."
+    },
+    "provider": "ollama"
+  },
+  "agentic_cloud:traffic": {
+    "payload": {
+      "line": "Traffic is drawn from the fields that are just beyond the edge of the city, where crops and livestock are grown and raised."
+    },
+    "provider": "ollama"
+  },
+  "agentic_dayribbon:delhi": {
+    "payload": {
+      "easiest": "2am-4am",
+      "heaviest": "dawn-3pm"
+    },
+    "provider": "ollama"
+  },
+  "agentic_dayribbon:dhaka": {
+    "payload": {
+      "easiest": "...around 9am",
+      "heaviest": "...dawn"
+    },
+    "provider": "ollama"
+  },
+  "agentic_dayribbon:kathmandu": {
+    "payload": {
+      "easiest": "... around 9am",
+      "heaviest": "... at dawn"
+    },
+    "provider": "ollama"
+  },
+  "agentic_dayribbon:kolkata": {
+    "payload": {
+      "easiest": "early morning",
+      "heaviest": "dawn"
+    },
+    "provider": "ollama"
+  },
+  "agentic_dayribbon:lahore": {
+    "payload": {
+      "easiest": "dawn",
+      "heaviest": "night"
+    },
+    "provider": "ollama"
+  },
+  "agentic_explain:cigarette-equivalence:b94a527a9e2a059c": {
+    "payload": {
+      "description": "This visualization compares air quality across cities and shows how different actions could improve it.",
+      "how_to_use": "Tap on any city to see its air quality."
+    },
+    "provider": "ollama"
+  },
+  "agentic_explain:city-simulation:7f55ada5493a1b65": {
+    "payload": {
+      "description": "This simulation helps you explore how different factors can affect air quality in your area.",
+      "how_to_use": "Click or drag and drop on the map to view different scenarios."
+    },
+    "provider": "ollama"
+  },
+  "agentic_explain:city-simulation:9c7ffdfe8940202f": {
+    "payload": {
+      "description": "Watch how pollution affects a city and its people.",
+      "how_to_use": "Click or drag on a city to see it change."
+    },
+    "provider": "ollama"
+  },
+  "agentic_explain:monthly-particle-bars:41dc5fe3144d70c8": {
+    "payload": {
+      "description": "This visualization shows how pollution affects our environment over time.",
+      "how_to_use": "Click or drag to move the bar to the top of its group."
+    },
+    "provider": "ollama"
+  },
+  "agentic_explain:monthly-particle-bars:afd1da644a739e62": {
+    "payload": {
+      "description": "This interactive dashboard shows the severity of air quality in a chosen city over the course of one year, highlighting the highest and lowest concentrations for each month.",
+      "how_to_use": "Click or drag any bar to view its particle density value."
+    },
+    "provider": "ollama"
+  },
+  "agentic_explain:monthly-particle-bars:c9db5639846e751e": {
+    "payload": {
+      "description": "This visualization tells you how polluted a city is in a given month and what interventions might help reduce it.",
+      "how_to_use": "Click a bar to find its exact PM2.5 value."
+    },
+    "provider": "ollama"
+  },
+  "agentic_fact_detail:040e18b03070c75c": {
+    "payload": {
+      "detail": "Your body is designed to move and be active in ways that bring you joy and fulfillment. People who don't exercise regularly often feel restless or anxious about their physical health. This can make it hard for them to relax and unwind at home after a long day."
+    },
+    "provider": "ollama"
+  },
+  "agentic_fact_detail:29e450e1100a45fa": {
+    "payload": {
+      "detail": "Your breath is warm against your skin.\nIt's like a gentle hug on a chilly day.\nInhaling that air makes you feel cozy."
+    },
+    "provider": "ollama"
+  },
+  "agentic_fact_detail:3219e7749a47cf1b": {
+    "payload": {
+      "detail": "You think about how air travels down to your lungs and then suddenly you feel tired or your head hurts. You remember how when you were little, before all the cars and factories nearby, you could play outside without getting winded easily. \n\nIt makes you wonder if that's because your body was just less tired back then."
+    },
+    "provider": "ollama"
+  },
+  "agentic_fact_detail:7b7ea96fff796abe": {
+    "payload": {
+      "detail": "You know how sometimes you get caught up in a rush and forget to take care of your own well-being, too? That's what happens when people focus so much on getting where they need to go that they don't think about what's going on in their own lives.\n\nIt's like trying to pack a whole meal into a small bag - it's just not possible."
+    },
+    "provider": "ollama"
+  },
+  "agentic_fact_detail:92a2c060a8608941": {
+    "payload": {
+      "detail": "You know how you've been getting your morning coffee from that café down the street? That's because their beans are grown nearby and have been exposed to similar conditions as the surrounding environment.\n\nYour skin has a natural ability to release sweat after exercising or being in warm weather - it's just one of those things we all do."
+    },
+    "provider": "ollama"
+  },
+  "agentic_fact_detail:93f69fdcb83b0af9": {
+    "payload": {
+      "detail": "Your eyes are sensitive to dust and pollen on a warm summer day.\n\nIt's easy to forget that you're breathing in more than just air when you're already tired or stressed.\n\nThe quiet moments between sounds can be just as revealing as the loudest ones."
+    },
+    "provider": "ollama"
+  },
+  "agentic_fact_detail:a92dd15282e64501": {
+    "payload": {
+      "detail": "It's interesting to think about how those industrial sites can be far removed from the urban areas where people live and work.\n\nThe factories are often located in rural or remote areas where the air is cleaner, but sometimes this difference can lead to a disconnect between what happens inside the factory and what happens outside.\n\nAs you consider the source of these pollutants, it might also be worth thinking about how they affect the communities that depend on them."
+    },
+    "provider": "ollama"
+  },
+  "agentic_fact_detail:b514455da99f707d": {
+    "payload": {
+      "detail": "Your car smells like something else when you're driving through town.\nIt's hard to focus on anything when your head is filled with that scent.\nSometimes it feels like the city itself has a constant presence in your thoughts."
+    },
+    "provider": "ollama"
+  },
+  "agentic_fact_detail:b7e7d3fe280d35d3": {
+    "payload": {
+      "detail": "Her scent can be calming to those who are grieving, like a reminder of warmth and love that remains long after she's gone. This kind of fragrance might also bring back memories of their time together, like a gentle echo in your mind. Even if you've never been particularly fond of perfume, its power to evoke feelings of comfort could be a balm for your own heartache."
+    },
+    "provider": "ollama"
+  },
+  "agentic_fact_detail:da36bbecc9aa3488": {
+    "payload": {
+      "detail": "You've made a good point about cigarettes causing cancer in humans. It's interesting to consider how our bodies respond to these substances and what might happen to them when we're exposed to smoke. This is one more way that our daily lives can reveal hidden truths about ourselves and the world around us."
+    },
+    "provider": "ollama"
+  },
+  "agentic_fact_detail:f277b7bbdafdbeb0": {
+    "payload": {
+      "detail": "it's worth noting how we can often notice changes in our surroundings without even realizing it - like when you wash your windows and they turn from dull to sparkling clean after a while.\n\nthe way light behaves with particles also gets interesting when you look at it through the lens of urban development, for example."
+    },
+    "provider": "ollama"
+  },
+  "agentic_good_day": {
+    "payload": {
+      "scene": "You stand at your open window, letting in the warm sunlight through the cracks. Outside, a little girl is playing near the park, her blonde pigtails bouncing with each step. The tree behind her casts dappled shadows on the grass. You watch as she waves at a butterfly fluttering around the flowers by the bench. The world seems bright and beautiful in this moment, free from worry or care."
+    },
+    "provider": "ollama"
+  },
+  "agentic_good_day_timeline": {
+    "payload": {
+      "timeline": [
+        {
+          "phase": "morning",
+          "text": "Take a short walk outside"
+        },
+        {
+          "phase": "midday",
+          "text": "Open an open window to let in sunlight"
+        },
+        {
+          "phase": "evening",
+          "text": "Sit on your balcony or patio without masks"
+        },
+        {
+          "phase": "night",
+          "text": "Get ready for bed without using air purifiers"
+        }
+      ]
+    },
+    "provider": "ollama"
+  },
+  "agentic_help:cooking": {
+    "payload": {
+      "paragraph": "Being in this place for more than five years now means you're used to a thick layer of smoke hanging over your head during winter mornings. If the kilns switched over, you might start noticing that haze lifting ever so slightly. It's not like it'll change your life or anything, but just something to look forward to on gray days."
+    },
+    "provider": "ollama"
+  },
+  "agentic_help:crop-burning": {
+    "payload": {
+      "paragraph": "If you woke up this morning and breathed in deeply, you might feel a slight change in how you smell as you go about your day. The air might not be as thick or heavy, like it is right now, which can make a big difference for people who live here."
+    },
+    "provider": "ollama"
+  },
+  "agentic_help:kilns": {
+    "payload": {
+      "paragraph": "The air around you might clear slightly when the kilns shut down, and you'd feel a gentle warmth spreading through your lungs as you breathe out. It's not about fixing the problem in a grand or dramatic way, it's just about stopping for a little while and allowing your body to take care of itself."
+    },
+    "provider": "ollama"
+  },
+  "agentic_help:traffic": {
+    "payload": {
+      "paragraph": "When you go about your day, noticing the winter haze that clings to everything like a damp mist, you'll see how much less dull and gray the world looks without the traffic congestion. The air feels thicker, heavier than usual, but when it starts to clear, the sunlight catches the dust and debris on the roads, illuminating them in a way that makes everything feel fresh and new again."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:cairo:my-child:cooking-at-home": {
+    "payload": {
+      "meaning": "Your little one might be planning to cook something delicious at home in Cairo today, perhaps something familiar from childhood memories or a favorite family recipe. Perhaps you're looking forward to spending time together over a homemade meal that brings warmth and comfort to your household."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:cairo:my-child:going-outside-today": {
+    "payload": {
+      "meaning": "It seems to me that your child is in for an interesting day today, especially considering the warm weather and the fact that they're being asked to go outside. The gentle breeze from the desert may bring relief from the heat, while also carrying with it a hint of the scents and sounds of the city - perhaps a mix of jasmine, spices, and exhaust fumes?"
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:cairo:my-child:sleeping-better": {
+    "payload": {
+      "meaning": "It's been a long day for your child, hasn't it? They've had to navigate through crowded streets and busy traffic, adding extra stress to an already challenging morning routine. The heat outside might be feeling oppressive as well, making every step feel like climbing up a mountain."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:cairo:my-child:the-long-run": {
+    "payload": {
+      "meaning": "They're carrying a heavy load on their shoulders right now, with school and work and all the other responsibilities weighing heavily on their mind. But they're thinking about your child's long run too, wondering what the future holds for them."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:cairo:my-parents:cooking-at-home": {
+    "payload": {
+      "meaning": "It's probably warm enough outside for you to be able to safely cook your meals in your own kitchen, and the sunlight streaming through the windows can make cooking feel more pleasant than it often does indoors."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:cairo:my-parents:going-outside-today": {
+    "payload": {
+      "meaning": "It's going to be a warm and sunny day in Cairo, perfect for getting some fresh air and taking a stroll outside with your parents. The city is already feeling lively as people start to emerge from their homes and businesses, eager to enjoy the outdoors after a long week of work or school."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:cairo:my-parents:sleeping-better": {
+    "payload": {
+      "meaning": "Your parents are probably feeling a bit worn out today after a morning of driving in Cairo's congested streets. The stress of navigating through crowded roads and time-wasting traffic can take its toll on anyone. As they settle into their daily routine, it might be helpful to prioritize self-care tonight, perhaps taking some time to relax before bed."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:cairo:my-parents:the-long-run": {
+    "payload": {
+      "meaning": "The streets of Cairo are still buzzing with life, but beneath the constant din and chaos, you can feel the weight of tradition and routine. It's as if your parents' daily routines are a ritual, a way to ground themselves in the world and find peace in the midst of all that energy."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:cairo:myself:cooking-at-home": {
+    "payload": {
+      "meaning": "Your kitchen is filled with the warm, comforting smells of cooking spices and herbs. The air is thick with the scent of slow-cooked stews and fragrant rice, transporting you to a place of warmth and comfort away from the bustling streets outside your window."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:cairo:myself:going-outside-today": {
+    "payload": {
+      "meaning": "You're considering going out today in Cairo. You might want to think about the dry air and how it can make your lungs feel tight when you breathe in too deeply, making every step feel like a struggle."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:cairo:myself:sleeping-better": {
+    "payload": {
+      "meaning": "It seems like you're feeling a bit worn out after a long day in Cairo. Maybe the heat is making you feel sluggish, or perhaps your eyes are getting tired from adjusting to the bright sunlight. Whatever it is, taking care of yourself now might help you relax and get some rest sooner rather than later."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:cairo:myself:the-long-run": {
+    "payload": {
+      "meaning": "Your city is always bustling, but sometimes it feels like time seems to be standing still in the crowded streets. The sun beats down on the pavement, warming your skin, and the sounds of vendors calling out their daily offerings fill the air, creating a cacophony that's both overwhelming and endearing at the same time."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:cairo:someone-with-asthma:cooking-at-home": {
+    "payload": {
+      "meaning": "You're preparing to cook dinner in Cairo and have asthma, which means you'll be breathing in a lot of smoke from burning food or gas stoves. The air quality in your city might seem fine today, but it could quickly deteriorate as the sun starts to shine more brightly."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:cairo:someone-with-asthma:going-outside-today": {
+    "payload": {
+      "meaning": "The air in Cairo today feels thick and heavy, a dense fog that clings to everything it touches, making every breath feel like a struggle against an invisible weight. Even walking outside can be exhausting, with each step seeming to exhaust you even further as the city's steel and concrete landscape blurs together into a haze of pollution."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:cairo:someone-with-asthma:sleeping-better": {
+    "payload": {
+      "meaning": "Your friend's thoughts are likely fueled by the early morning air in Cairo, with the city still waking up and coming to life as the sun rises slowly over the Nile River. The gentle mist that clings to the buildings might remind you of the haze they're trying to clear out, but it won't be enough to lift their breathing troubles just yet."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:cairo:someone-with-asthma:the-long-run": {
+    "payload": {
+      "meaning": "Your friend's concerns are valid and understandable given your friend's asthma symptoms and the current weather conditions in Cairo. Considering you're asking about \"the long run,\" it might be worth thinking about how the dry air could potentially exacerbate your friend's breathing difficulties today, especially if they haven't taken any medication or have been experiencing increased sensitivity to dust."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:delhi:myself:going-outside-today": {
+    "payload": {
+      "meaning": "It's going to be another sweltering day in Delhi, isn't it? The sun is shining brightly overhead, casting long shadows across the city streets, and the humidity feels oppressive as you step out into the air. It might be tempting to grab your sunglasses and hit the streets, but let's not forget that the heat can take a toll on your skin and energy levels too."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:helsinki:my-child:cooking-at-home": {
+    "payload": {
+      "meaning": "Your concern for your child's cooking activities in Helsinki is understandable given the city's chilly weather and possible indoor gatherings with family."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:helsinki:my-child:going-outside-today": {
+    "payload": {
+      "meaning": "You're considering taking your child outside today in Helsinki, given the chill in the air and the sunshine breaking through the clouds. As you step out into the crisp morning light, you notice the way the frost has formed on the grass, delicate crystals etched into its surface like tiny, intricate patterns."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:helsinki:my-child:sleeping-better": {
+    "payload": {
+      "meaning": "Your child's sleep may be affected by the grey skies over Helsinki today. The early morning sunlight is still strong, casting long shadows on the city's streets. Perhaps their bedtime routine has been disrupted or the sound of construction in the distance isn't as soothing to their young ears."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:helsinki:my-child:the-long-run": {
+    "payload": {
+      "meaning": "You're spending time with your little one in Helsinki today, and while it's lovely that you get to experience all the city has to offer, I want you to remember that this moment is fleeting, like a winter sunset on a quiet lake. Take care of yourself too, so you can enjoy every second with your child."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:helsinki:my-parents:cooking-at-home": {
+    "payload": {
+      "meaning": "It seems like your parents are likely to be preparing a meal in their own kitchen today, surrounded by the familiar sights and smells of home cooking, creating a warm and inviting atmosphere that feels comforting and intimate."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:helsinki:my-parents:going-outside-today": {
+    "payload": {
+      "meaning": "You're considering going outside today in Helsinki? It might be nice to take a walk through the forest or along the sea shore. The trees are starting to change color, and the sunlight catches the way the leaves reflect it, casting dappled shadows on the ground."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:helsinki:my-parents:sleeping-better": {
+    "payload": {
+      "meaning": "It seems like today was probably a bit too chilly and calm for you, with the sun shining brightly at low angle in the sky. This can make it harder to fall asleep, especially if your bedroom isn't exactly cozy or dark enough."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:helsinki:my-parents:the-long-run": {
+    "payload": {
+      "meaning": "Your parents are probably feeling overwhelmed by all the little things they need to do and remember, and it's taking them a while to get everything sorted out."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:helsinki:myself:cooking-at-home": {
+    "payload": {
+      "meaning": "Your kitchen seems cozy and inviting, with all the ingredients laid out in front of you. The warmth and comfort that comes from cooking at home can be especially appealing when it's raining outside and the windows are closed, but maybe right now your thoughts are more on how to prepare a hearty meal than how to keep things from getting too messy inside."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:helsinki:myself:going-outside-today": {
+    "payload": {
+      "meaning": "It's going to be a crisp day in Helsinki. The morning sunlight is still warm on your skin as you prepare for the outside world, and the air feels alive with possibility. It might just be a perfect day to take a walk or run some errands, breathe in some fresh air, and see what catches your eye."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:helsinki:myself:sleeping-better": {
+    "payload": {
+      "meaning": "Your day has likely been filled with the usual rhythm of Helsinki's streets and homes, from the bustling markets in the old town to the quiet parks along the seafront. You've probably eaten a meal that was both nourishing and satisfying, and perhaps you're feeling a little more grounded after rising early for your evening workout or work commute."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:helsinki:myself:the-long-run": {
+    "payload": {
+      "meaning": "Your concerns are very real to consider when thinking about your daily life in Helsinki. The sounds of nature outside your window are a constant reminder that this place is home, and you're here for a reason."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:helsinki:someone-with-asthma:cooking-at-home": {
+    "payload": {
+      "meaning": "As you're cooking at home, I want to remind you that the air quality can still be a concern even when you're indoors. You might notice a slight increase in humidity or moisture after cooking, which could potentially exacerbate your asthma symptoms in some cases."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:helsinki:someone-with-asthma:going-outside-today": {
+    "payload": {
+      "meaning": "You've been breathing in all that fresh air lately, haven't you? That can be kind of wonderful when it's nice outside, but for someone with asthma, even gentle breezes can trigger their symptoms and make them feel really lousy."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:helsinki:someone-with-asthma:sleeping-better": {
+    "payload": {
+      "meaning": "You've had a bit of a rough morning so far. It's clear you're feeling a bit frazzled and overwhelmed by all the things on your plate at once. The fact that it's almost midday might also be contributing to your fatigue, as if everything feels just a little heavier than usual."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:helsinki:someone-with-asthma:the-long-run": {
+    "payload": {
+      "meaning": "You're dealing with some pretty unpredictable weather in Helsinki right now, aren't you? It's days like this that make you wonder what will happen to your poor asthma when it starts raining again, and how long it'll take for the city to dry out after a good soaking."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:jakarta:my-child:cooking-at-home": {
+    "payload": {
+      "meaning": "It's quiet and still outside your window right now, isn't it? You're thinking about what you can cook at home for dinner tonight, maybe trying something new with your child in mind. The air inside feels steady and calm after a gentle breeze earlier, like the soft hum of a refrigerator."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:jakarta:my-child:going-outside-today": {
+    "payload": {
+      "meaning": "You're considering taking your kid outside today in Jakarta's heat and humidity. The sun is shining brightly overhead, casting long shadows across the city streets as people scurry to finish their daily tasks."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:jakarta:my-child:sleeping-better": {
+    "payload": {
+      "meaning": "It's been a long day in Jakarta and your child must be exhausted just thinking about going to sleep right now. The sounds of traffic and construction outside their window are already starting to wear them down as they try to get some rest."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:jakarta:my-child:the-long-run": {
+    "payload": {
+      "meaning": "Your child might be looking at you with hopeful eyes when they ask about Jakarta's future, considering all the efforts to improve air quality and clean up pollution in their city. It's natural for young people like them to wonder if progress will continue or slow down."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:jakarta:my-parents:cooking-at-home": {
+    "payload": {
+      "meaning": "Your parents might be feeling a bit overwhelmed by the thought of cooking at home in Jakarta, where the air quality is relatively stable and you're used to being indoors most days. The smell of food from street vendors or cooking on a gas stove could still make your senses tingle, even if it's not as common here as it is back home."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:jakarta:my-parents:going-outside-today": {
+    "payload": {
+      "meaning": "You're considering going outside with your parents in Jakarta today. The sun is shining brightly through the clouds, casting a warm glow over the city streets. Even on days like this, the heat from the pavement and buildings can be intense, especially in the mid-morning hours."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:jakarta:my-parents:sleeping-better": {
+    "payload": {
+      "meaning": "It's just that your parents are probably feeling the heat today in Jakarta, which can make it harder to get some rest. The city is still warm and humid after the recent rain, and it might be more challenging for them to sleep tonight."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:jakarta:my-parents:the-long-run": {
+    "payload": {
+      "meaning": "I think to you often, as do I with your family's well-being. Today in Jakarta, people are walking and cycling while cars speed by, creating a cacophony of sounds that seem almost a blur."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:jakarta:myself:cooking-at-home": {
+    "payload": {
+      "meaning": "As you spend your day cooking in Jakarta, I can imagine how it feels to be surrounded by so much life and activity outside your kitchen window. The sounds of motorbikes and chatter carry through the air as you work, and the smell of sizzling food wafts out into the neighborhood. It's a sensory feast that's both energizing and exhausting at the same time."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:jakarta:myself:going-outside-today": {
+    "payload": {
+      "meaning": "It might be a bit too sunny for your taste, considering you've had a few chilly mornings recently and are probably feeling like staying indoors where it's cool and cozy."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:jakarta:myself:sleeping-better": {
+    "payload": {
+      "meaning": "You've had a long day and now you're looking forward to some rest, isn't that what everyone needs? Jakarta can be a bit overwhelming sometimes, especially with the sounds of traffic and construction always there in the background. It's like the city is just going on around you, pulling everything towards it."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:jakarta:myself:the-long-run": {
+    "payload": {
+      "meaning": "The air feels thick with the weight of days passed in Jakarta. The city's energy is palpable, like a living thing that pulses through every breath you take. It's easy to get caught up in the rhythm of your own life, and forget about the world around you, but being here now reminds you of how precious it is to be present."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:jakarta:someone-with-asthma:cooking-at-home": {
+    "payload": {
+      "meaning": "It might be tricky to cook at home in Jakarta with all the chaos that's going on outside your window, but you're probably able to focus for a bit now, and it could be a nice break from dealing with the traffic and noise, so let's see how it goes."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:jakarta:someone-with-asthma:going-outside-today": {
+    "payload": {
+      "meaning": "It might be tricky for you to enjoy a walk in Jakarta's gardens today, considering how sensitive your airways are right now. The scent of blooming flowers and fresh-cut grass can sometimes trigger asthma symptoms, especially when it's windy or dry outside."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:jakarta:someone-with-asthma:sleeping-better": {
+    "payload": {
+      "meaning": "Your sleep might be affected by the heavy traffic in the city and the constant noise that seems to linger even after you get home. This could make it harder for your body to relax and recharge at night."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:jakarta:someone-with-asthma:the-long-run": {
+    "payload": {
+      "meaning": "Your friend's concerns are valid as they navigate Jakarta today. They're probably feeling the effects of another dry day in the city, with the sun beating down on their skin and making it harder to breathe. It's easy to get caught up in the hustle and bustle, but it's also a good reminder to take care of themselves, especially when they're already struggling."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:lahore:myself:going-outside-today": {
+    "payload": {
+      "meaning": "Lahore can be quite different in weather today, considering it's usually much warmer than this time of year. Your walk outside might feel like stepping into a slightly cooler space or opening up to some fresh air after all that warmth has been inside."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:n'djamena:my-child:cooking-at-home": {
+    "payload": {
+      "meaning": "Your concern for your child's well-being in N'Djamena is understandable as they prepare to cook at home. It's worth noting that the city has a high population density and limited access to public transportation or cooking facilities, which may make it more challenging to maintain safe food handling practices."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:n'djamena:my-child:going-outside-today": {
+    "payload": {
+      "meaning": "I think you should be careful outside today. The dry air feels more bitter than usual, and it's possible that your child's skin could get irritated if they're exposed to too much sun without proper protection."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:n'djamena:my-child:sleeping-better": {
+    "payload": {
+      "meaning": "Your child's bedroom might be too bright in the morning and afternoon due to the direct sunlight that enters through windows, which could affect their sleep quality."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:n'djamena:my-child:the-long-run": {
+    "payload": {
+      "meaning": "It seems like you're thinking ahead for your child as they navigate the challenges of N'Djamena. The way the sunlight filters through the city's buildings can make it feel like the sun is hiding behind a veil of shadows, which might affect how you interact with them in certain situations."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:n'djamena:my-parents:cooking-at-home": {
+    "payload": {
+      "meaning": "Your parents may be planning to cook dinner for you in N'Djamena today, considering the weather forecast they just read which mentions plenty of sunshine and warm temperatures throughout the day."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:n'djamena:my-parents:going-outside-today": {
+    "payload": {
+      "meaning": "Your parents are probably feeling the weight of a long day at work, and you're considering taking advantage of some fresh air, but be mindful that they've had to deal with the heat and humidity for most of their lives here in N'Djamena."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:n'djamena:my-parents:sleeping-better": {
+    "payload": {
+      "meaning": "It's been another busy day in N'Djamena, and your parents are likely feeling exhausted from all they've done to help them get through it. The sun is high overhead, casting long shadows across their small apartment, making it feel even smaller and more confining than usual."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:n'djamena:my-parents:the-long-run": {
+    "payload": {
+      "meaning": "You're thinking about your parents and their daily lives in N'Djamena. I notice how they've been adapting to the city's rhythms over the years, finding ways to thrive despite the challenges that come with living amidst so much change. Their resilience is admirable, and it's easy to feel grateful for the people who bring joy and stability into your life."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:n'djamena:myself:cooking-at-home": {
+    "payload": {
+      "meaning": "In your kitchen in N'Djamena, you're probably using a cooking oil with a high smoke point to prevent burning and smoke, which can be a relief when cooking at home but might also affect the flavor of some dishes."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:n'djamena:myself:going-outside-today": {
+    "payload": {
+      "meaning": "Your thoughts are probably consumed by what you'll do while outside today, and how it might fit into your plans for the day. It's natural to feel that way when you're thinking about going out, especially if you've been cooped up inside all morning."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:n'djamena:myself:sleeping-better": {
+    "payload": {
+      "meaning": "You're sitting in your small apartment with the sound of distant chatter and laughter from the streets outside, but somehow you feel a sense of calm that comes from being close to nature."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:n'djamena:myself:the-long-run": {
+    "payload": {
+      "meaning": "You're sitting in the middle of N'Djamena with its crowded streets and chaotic traffic, but despite it all, you're able to enjoy a warm breeze rustling through the palms on your windowsill, carrying the scent of frangipani."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:n'djamena:someone-with-asthma:cooking-at-home": {
+    "payload": {
+      "meaning": "Your friend in N'Djamena is thinking carefully about cooking at home because you have asthma and may be concerned about the air quality around your meals. It's understandable that you would want to be mindful of this issue when preparing food from scratch."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:n'djamena:someone-with-asthma:going-outside-today": {
+    "payload": {
+      "meaning": "You're planning to go out today. It's going to be sunny and bright in N'Djamena, which can make it harder for someone with asthma to breathe."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:n'djamena:someone-with-asthma:sleeping-better": {
+    "payload": {
+      "meaning": "You're feeling stressed and anxious before bed tonight, huh? Maybe it's the noise from outside or the crowds in the city that's making your asthma symptoms worse, but you want to make sure you're doing everything you can to get a good night's sleep, right?"
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:n'djamena:someone-with-asthma:the-long-run": {
+    "payload": {
+      "meaning": "It's going to be another hot day in N'Djamena, and you're probably getting ready for your asthma medication anyway, so it's just another thing to worry about as you head out into the heat."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:peshawar:my-child:cooking-at-home": {
+    "payload": {
+      "meaning": "It's going to be one of those days where cooking from scratch feels like a luxury they might not even have access to, and that can be overwhelming when you're trying to make something meaningful for your child."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:peshawar:my-child:going-outside-today": {
+    "payload": {
+      "meaning": "Your friend's concerns are clear in the way they're thinking about taking your child outside today, isn't it? They seem to be considering the weather, possibly looking for something that will make it feel safe and comfortable for them to go out, which is a natural response given their location and circumstances."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:peshawar:my-child:sleeping-better": {
+    "payload": {
+      "meaning": "Your kid's day started early with heavy rain. The streets are wet and muddy, making it hard to navigate barefoot or on slippery surfaces. This could be challenging for them as they try to get to school without slipping or falling."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:peshawar:my-child:the-long-run": {
+    "payload": {
+      "meaning": "Your child's school is likely dealing with crowded conditions and heavy backpacks for them to carry around, which can make it harder to focus during lessons. The noise from their classmates may be overwhelming at times, especially in a building that seems to hum with the sounds of other children's chatter and occasional loud announcements."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:peshawar:my-parents:cooking-at-home": {
+    "payload": {
+      "meaning": "In your family's kitchen in Peshawar, you're probably doing everything right by cooking at home on this sunny day, but perhaps you can also ask yourself if there might be any reason why your energy levels could be slightly off or just a bit slower than usual today, as the warmth of the sun and the gentle breeze outside might be having an unusual effect on your body."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:peshawar:my-parents:going-outside-today": {
+    "payload": {
+      "meaning": "It's going to be a tough day for you and your family, especially in Peshawar where the weather is usually quite warm. The sun will likely still be shining brightly as you head outside, but it's probably not going to feel like a typical summer morning."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:peshawar:my-parents:sleeping-better": {
+    "payload": {
+      "meaning": "Your parents are probably struggling to get comfortable in their beds tonight because it's been another day of being woken up by the sound of artillery fire and airstrikes in Peshawar. The constant rumble and boom make it hard to relax, especially when they're trying to settle in for a good night's sleep."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:peshawar:my-parents:the-long-run": {
+    "payload": {
+      "meaning": "I can tell you're getting caught up in your parents' concerns. They sound like they're feeling stuck in this cycle of worry and uncertainty that's been going on for a long time now. You know how it is when someone you care about is struggling to make decisions or take action - sometimes the weight of all those thoughts and feelings can feel overwhelming."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:peshawar:myself:cooking-at-home": {
+    "payload": {
+      "meaning": "Your kitchen feels cozy and quiet as you begin preparing lunch, but perhaps that's partly because all the noise outside is muffled by the thick air inside your home, creating a sense of stillness that's been a familiar comfort in Peshawar lately."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:peshawar:myself:going-outside-today": {
+    "payload": {
+      "meaning": "Your day ahead looks uncertain due to the current conditions in Peshawar. I can sense that it's been a while since you've ventured outside, and that thought might be weighing on your mind as you prepare for your outdoor plans today."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:peshawar:myself:sleeping-better": {
+    "payload": {
+      "meaning": "You're feeling stressed and tired, aren't you? Today was quite an eventful day in Peshawar. The dust and debris from the previous day's bombing attempt have settled into your home. It's easy to feel like everything is weighing on you."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:peshawar:myself:the-long-run": {
+    "payload": {
+      "meaning": "You're considering your loved ones and how they might feel in this place that's so different from home. I think it's natural to worry about their well-being when you live where there are so many things affecting them - buildings crumbling, markets bursting with noise, children playing under cars, families living in shelters."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:peshawar:someone-with-asthma:cooking-at-home": {
+    "payload": {
+      "meaning": "Your friend's kitchen in Peshawar is filled with a mixture of scents from various cooking methods, including the savory aroma of roasted vegetables and the sweet smell of freshly brewed tea. The air is also infused with the faint hint of spices, which might help calm their sensitive lungs if they're feeling unwell today."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:peshawar:someone-with-asthma:going-outside-today": {
+    "payload": {
+      "meaning": "The morning air in Peshawar is crisp and cool, carrying the scent of freshly cut grass and blooming flowers. As you step outside with your asthma inhaler, take a deep breath and notice how it feels to be connected to nature's gentle caress, as if the world around you is slowly awakening from its winter slumber."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:peshawar:someone-with-asthma:sleeping-better": {
+    "payload": {
+      "meaning": "It seems like you're feeling a bit overwhelmed in your current environment and it's making it harder for you to catch some Zs tonight which can affect asthma symptoms if left unmanaged but try to remember that you have control over how much sleep you get and what helps you relax."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:peshawar:someone-with-asthma:the-long-run": {
+    "payload": {
+      "meaning": "Your friend in Peshawar is thinking about your condition and wondering what the future holds for you. They're aware that daily life can be challenging for people with asthma, especially in areas where air quality might fluctuate significantly from day to day."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:ulaanbaatar:my-child:cooking-at-home": {
+    "payload": {
+      "meaning": "It's clear that your friend is concerned about cooking at home in Ulaanbaatar for you and your child. They seem to be thinking about how the crowded streets might affect you and your child's ability to shop for ingredients safely."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:ulaanbaatar:my-child:going-outside-today": {
+    "payload": {
+      "meaning": "The temperature in Ulaanbaatar is expected to rise significantly this afternoon, casting a warm glow over the city as it prepares for another day of sunlight and gentle breeze."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:ulaanbaatar:my-child:sleeping-better": {
+    "payload": {
+      "meaning": "You've been having trouble winding down lately, and it might be affecting your child's sleep too. It sounds like they're feeling cooped up in this big city you live in, and that can make it hard to relax when you're tired yourself."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:ulaanbaatar:my-child:the-long-run": {
+    "payload": {
+      "meaning": "It's going to be a tough day in Ulaanbaatar for you and your child as the city is already feeling the effects of a new weather system that's bringing heavy rain and strong winds, which might make travel more challenging and potentially affect outdoor activities that could otherwise bring some much-needed joy."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:ulaanbaatar:my-parents:cooking-at-home": {
+    "payload": {
+      "meaning": "They might be feeling overwhelmed by all the reminders and expectations that come with cooking at home in Ulaanbaatar, especially on days like today when there's an extra layer of noise and activity outside their apartment."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:ulaanbaatar:my-parents:going-outside-today": {
+    "payload": {
+      "meaning": "It's going to be a pretty mellow day outside. The sun will likely stay hidden behind the clouds for most of it, and even when it does break through, its warmth might be muted by the dampness in the air. Your parents might want to dress warmly anyway, considering how chilly it can get even in the middle of summer in Ulaanbaatar."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:ulaanbaatar:my-parents:sleeping-better": {
+    "payload": {
+      "meaning": "They're probably feeling overwhelmed by all the changes in Ulaanbaatar right now, like there's so much to take in and adjust to that they're just trying to get through their daily routines without too much stress and tension building up inside them."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:ulaanbaatar:my-parents:the-long-run": {
+    "payload": {
+      "meaning": "As you sit with your parents in Ulaanbaatar, perhaps taking time to breathe in the crisp air, think about how this current day might be just another chapter in their journey of navigating the city's rhythms and complexities together."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:ulaanbaatar:myself:cooking-at-home": {
+    "payload": {
+      "meaning": "As you head to the kitchen to cook dinner, notice how the sunlight streams in through the windows, casting a warm glow on the space and making it feel cozy and inviting."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:ulaanbaatar:myself:going-outside-today": {
+    "payload": {
+      "meaning": "You might want to consider it as you step out into the Ulaanbaatar air today. The sun is shining, but you can feel the gentle coolness of the mountain air on your skin as you breathe in. It's a beautiful morning, full of promise and possibility, even if there are some people outside who are breathing deeply to compensate for the crisp freshness."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:ulaanbaatar:myself:sleeping-better": {
+    "payload": {
+      "meaning": "As you're getting ready for bed tonight, I want to gently point out that it's likely your evening routine is creating an environment that might be disrupting your sleep. Maybe your light is still on when you should have gone dark, or your phone is buzzing quietly in the background, casting a gentle glow over your face and making it harder to relax."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:ulaanbaatar:myself:the-long-run": {
+    "payload": {
+      "meaning": "As you walk through the city, I notice how the sunlight filters through the narrow alleys and onto the wet stone sidewalks, casting a warm glow on the crowded streets below, like a gentle reminder that even in the midst of chaos, there is still beauty to be found."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:ulaanbaatar:someone-with-asthma:cooking-at-home": {
+    "payload": {
+      "meaning": "In your kitchen, the air feels stale and heavy, like it's holding its breath, waiting for something to stir up again."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:ulaanbaatar:someone-with-asthma:going-outside-today": {
+    "payload": {
+      "meaning": "You're planning to go outside today, and your friend's eyes are already watering just thinking about it. It might be a good idea to grab an inhaler before you leave, and make sure you have some medication on hand in case symptoms flare up."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:ulaanbaatar:someone-with-asthma:sleeping-better": {
+    "payload": {
+      "meaning": "It seems like you're having trouble sleeping tonight due to the city's air quality being pretty stable at this time of day. It might be helpful to talk to your doctor about ways to manage your asthma while still getting some rest."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:ulaanbaatar:someone-with-asthma:the-long-run": {
+    "payload": {
+      "meaning": "You're feeling a bit worn out from the morning commute, and your asthma symptoms seem to be running a bit low-key compared to usual. The sun is shining through the city's gray windows, casting a gentle warmth on everything it touches."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:vancouver:my-child:cooking-at-home": {
+    "payload": {
+      "meaning": "You're considering cooking at home with your child in Vancouver, which can be a great way to spend quality time together and teach them about healthy habits. Today's weather is mild and sunny, perfect for stepping outside and enjoying some fresh air, but it might also mean the kitchen will get a bit warmer than usual as you prep lunch and snacks."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:vancouver:my-child:going-outside-today": {
+    "payload": {
+      "meaning": "You're considering taking your child out into Vancouver's beautiful outdoors today, but you want to make sure they'll have enough energy for fun and play after a busy morning of school or activities. They might be especially drawn to the scenery on that particularly green day this week, with all the lush foliage making it feel fresh and revitalizing."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:vancouver:my-child:sleeping-better": {
+    "payload": {
+      "meaning": "You and your child seem to be having a bit of an early morning routine today, as you're both already up and getting ready for the day. The quiet streets of Vancouver are still calm and peaceful after a gentle night."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:vancouver:my-child:the-long-run": {
+    "payload": {
+      "meaning": "Your city's air quality can be quite different depending on when you go out and what activities you do. Sometimes it feels fresher near the ocean, while other times it's more hazy indoors. Even with all the green spaces, there are still plenty of ways to get outside and enjoy nature in Vancouver, even if the weather isn't cooperating."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:vancouver:my-parents:cooking-at-home": {
+    "payload": {
+      "meaning": "You're considering cooking at home for your parents, which can be a great way to show you care and want to make them happy. I think it's lovely that you've been thinking about how to spend quality time together in their own kitchen - it might be nice to have some extra space and energy to create something special just for the two of you."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:vancouver:my-parents:going-outside-today": {
+    "payload": {
+      "meaning": "You're considering heading out today in Vancouver? I think you might want to consider whether your route will take you through some particularly hazy areas of the city, given what's been going on with the air quality lately."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:vancouver:my-parents:sleeping-better": {
+    "payload": {
+      "meaning": "Your parents have been dealing with some extra stress lately, and it's clear they're trying to find a way to unwind before bed. They've started having trouble relaxing on their couch after a long day, and I can sense that they just want to be able to sink in and feel calm again."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:vancouver:my-parents:the-long-run": {
+    "payload": {
+      "meaning": "Your parents are probably feeling a bit overwhelmed right now as they navigate the complexities of Vancouver's weather and infrastructure. It can be really tough to balance competing demands on their time and energy when something feels stuck or uncertain."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:vancouver:myself:cooking-at-home": {
+    "payload": {
+      "meaning": "It's quiet and still this morning in Vancouver as you go about your day, maybe cooking something up at home with the warmth of the oven filling the air with a comforting scent that seems to match the calm atmosphere outside."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:vancouver:myself:going-outside-today": {
+    "payload": {
+      "meaning": "Your route to work or school might be more enjoyable with fresh air and sunlight in Vancouver's mild winter days. The crisp morning mist still lingers on the waterways, creating a serene atmosphere that might make it easier for you to step outside and take a breath of that invigorating Pacific air."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:vancouver:myself:sleeping-better": {
+    "payload": {
+      "meaning": "As you lay in bed tonight, I notice how your body seems to have settled into a quiet rhythm, like the gentle lapping of waves against the shore on a still day. It's as if your muscles are releasing any tension they've been holding onto, and your breath has slowed down to a peaceful pause."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:vancouver:myself:the-long-run": {
+    "payload": {
+      "meaning": "Your city has been living with air quality that's a little bit of a challenge for you to deal with on your daily commute, and it's clear how that affects your mood today, isn't it?"
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:vancouver:someone-with-asthma:cooking-at-home": {
+    "payload": {
+      "meaning": "You might feel like you're already navigating the challenges of cooking at home in Vancouver's climate, but it sounds like your asthma is getting more tricky lately too. You must be careful with the air that circulates around you, and perhaps consider a way to ventilate or open windows when you're cooking to help keep the air moving freely."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:vancouver:someone-with-asthma:going-outside-today": {
+    "payload": {
+      "meaning": "Your friend's mind might be made up by all the reminders to stay indoors, but it's worth considering what's been going on for them lately. They may have noticed some minor changes in their energy levels or difficulty breathing, even if they don't seem like much at first glance. Maybe there are other factors that could be contributing to these feelings, or perhaps something else entirely is causing the discomfort."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:vancouver:someone-with-asthma:sleeping-better": {
+    "payload": {
+      "meaning": "Your body might be feeling coiled and ready to spring into action, even in a calm moment like this. The tension in your chest could be a sign that your airways are bracing for something. It's as if you're always on edge, waiting for the next challenge, and it's natural to feel that way when you have asthma."
+    },
+    "provider": "ollama"
+  },
+  "agentic_meaning:vancouver:someone-with-asthma:the-long-run": {
+    "payload": {
+      "meaning": "Your friend might feel a bit more anxious when it's still morning in Vancouver, especially if you've been experiencing these symptoms lately and they seem to be worse than usual today."
+    },
+    "provider": "ollama"
+  },
+  "agentic_neighbours:cairo:my-parents:going-outside-today": {
+    "payload": {
+      "comparisons": [
+        {
+          "city": "Ulaanbaatar",
+          "line": "..."
+        },
+        {
+          "city": "N'Djamena",
+          "line": "..."
+        },
+        {
+          "city": "Peshawar",
+          "line": "..."
+        }
+      ]
+    },
+    "provider": "ollama"
+  },
+  "agentic_neighbours:delhi:myself:going-outside-today": {
+    "payload": {
+      "comparisons": [
+        {
+          "city": "Lahore",
+          "line": "You'll feel the heat, like a thick blanket wrapped around you."
+        },
+        {
+          "city": "Dhaka",
+          "line": "Your streets will seem endless, with buildings towering above."
+        },
+        {
+          "city": "Kathmandu",
+          "line": "The air will be thick and heavy, making every step feel like a journey."
+        }
+      ]
+    },
+    "provider": "ollama"
+  },
+  "agentic_neighbours:helsinki:someone-with-asthma:going-outside-today": {
+    "payload": {
+      "comparisons": [
+        {
+          "city": "Ulaanbaatar",
+          "line": "It's been really cold lately, but the sun is shining"
+        },
+        {
+          "city": "N'Djamena",
+          "line": "The dry desert air can be a challenge for people with asthma"
+        },
+        {
+          "city": "Peshawar",
+          "line": "You'll have to deal with more dust and heat in Peshawar than you would in Helsinki"
+        }
+      ]
+    },
+    "provider": "ollama"
+  },
+  "agentic_neighbours:n'djamena:my-child:going-outside-today": {
+    "payload": {
+      "comparisons": [
+        {
+          "city": "Ulaanbaatar",
+          "line": "..."
+        },
+        {
+          "city": "Peshawar",
+          "line": "..."
+        },
+        {
+          "city": "Cairo",
+          "line": "..."
+        }
+      ]
+    },
+    "provider": "ollama"
+  },
+  "agentic_neighbours:n'djamena:my-parents:going-outside-today": {
+    "payload": {
+      "comparisons": [
+        {
+          "city": "Ulaanbaatar",
+          "line": "It's a lot colder here than N'Djamena. You can feel it in your bones."
+        },
+        {
+          "city": "Peshawar",
+          "line": "The heat is intense, like standing outside for hours without cooling down."
+        },
+        {
+          "city": "Cairo",
+          "line": "You'll get used to the dust and sand, but you'll still need sunscreen."
+        }
+      ]
+    },
+    "provider": "ollama"
+  },
+  "agentic_neighbours:peshawar:my-parents:sleeping-better": {
+    "payload": {
+      "comparisons": [
+        {
+          "city": "Ulaanbaatar",
+          "line": "In the summer, the sun beats down relentlessly."
+        },
+        {
+          "city": "N'Djamena",
+          "line": "The scorching sun can leave you feeling drained in the heat of the day."
+        },
+        {
+          "city": "Cairo",
+          "line": "Even in winter, the cold air can be biting and unforgiving."
+        }
+      ]
+    },
+    "provider": "ollama"
+  },
+  "agentic_neighbours:peshawar:someone-with-asthma:sleeping-better": {
+    "payload": {
+      "comparisons": [
+        {
+          "city": "Ulaanbaatar",
+          "line": "It might be hard to sleep at night without the cool air from the mountains."
+        },
+        {
+          "city": "N'Djamena",
+          "line": "The dry desert air can make it harder to breathe, especially for someone with asthma."
+        },
+        {
+          "city": "Cairo",
+          "line": "The heat and humidity in Cairo might be overwhelming for people who are sensitive to these conditions."
+        }
+      ]
+    },
+    "provider": "ollama"
+  },
+  "agentic_neighbours:ulaanbaatar:my-child:going-outside-today": {
+    "payload": {
+      "comparisons": [
+        {
+          "city": "N'Djamena",
+          "line": "Ulaanbaatar's days can be hot and dry but have a gentle breeze that brings shade from the sun"
+        },
+        {
+          "city": "Peshawar",
+          "line": "The streets are lined with markets where people gather, sharing stories and laughter"
+        },
+        {
+          "city": "Cairo",
+          "line": "You'll notice Cairo has a more defined daily rhythm, with early mornings for prayer and breakfast"
+        }
+      ]
+    },
+    "provider": "ollama"
+  },
+  "agentic_neighbours:ulaanbaatar:my-child:the-long-run": {
+    "payload": {
+      "comparisons": [
+        {
+          "city": "N'Djamena",
+          "line": "The hot desert air can make daily activities like shopping feel dry and uncomfortable."
+        },
+        {
+          "city": "Peshawar",
+          "line": "The cooler climate means you might be able to enjoy outdoor spaces in the evenings without feeling too hot or cold."
+        },
+        {
+          "city": "Cairo",
+          "line": "You may find that Cairo feels busier and more crowded than N'Djamena, especially during peak tourist season."
+        }
+      ]
+    },
+    "provider": "ollama"
+  },
+  "agentic_simulation:339d7841860d3296": {
+    "payload": {
+      "text": "As you imagine yourself walking through Delhi on a sunny day, the air is fresh and clean, with birdsong replacing the cacophony of horns honking in the distance."
+    },
+    "provider": "ollama"
+  },
+  "agentic_simulation:889226f52e9a53d3": {
+    "payload": {
+      "text": "The air quality would slowly become more comfortable and fresh as the simulation shows people breathing easier in a healthier environment free of pollution and smoke from burning crops and vehicles that emit greenhouse gases."
+    },
+    "provider": "ollama"
+  },
+  "agentic_simulation:8feed8c2deb43330": {
+    "payload": {
+      "text": "As you imagine yourself living in Lahore with air that feels unhealthy every day now, your movements and activities would be affected by the changes: you might have to take more frequent breaks, wear masks all day, and avoid strenuous outdoor work or sports."
+    },
+    "provider": "ollama"
+  },
+  "agentic_simulation:9332db02d88bd066": {
+    "payload": {
+      "text": "As you imagine Delhi breathing a lighter air, it would be harder to notice dust and pollution in your own home and school, making everyday tasks more manageable but still affecting children's health and energy levels too slowly."
+    },
+    "provider": "ollama"
+  },
+  "agentic_simulation:b4010a97e23d622a": {
+    "payload": {
+      "text": "As Dhaka's air quality improves it becomes easier to walk or bike through the city without having to hold your breath."
+    },
+    "provider": "ollama"
+  },
+  "agentic_simulation:b8e1d9192f8e66c5": {
+    "payload": {
+      "text": "The air in Lahore would feel stale and flat after just a decade, without ever being fresh or clean, making it hard to breathe and affecting everything from the way you smell your clothes to the taste of water."
+    },
+    "provider": "ollama"
+  },
+  "agentic_simulation:f65a9d959ddfeee9": {
+    "payload": {
+      "text": "As a result of these changes, people's expectations and behaviors in Zurich have shifted to prioritize cleanliness and comfort, leading to a greater emphasis on leisure activities and a stronger sense of community."
+    },
+    "provider": "ollama"
+  },
+  "agentic_simulation:fa55107881c3eaf0": {
+    "payload": {
+      "text": "The air in Delhi would become cleaner and fresher, but the smell of smoke from burning crops would still linger and be noticed by everyone, even those who are sensitive to it."
+    },
+    "provider": "ollama"
+  },
+  "deep_dive_impact:ai": {
+    "payload": [
+      {
+        "detail": "Meeting WHO 2030 clean air targets could remove most population-level pollution deaths; South Asia could gain around 5 additional years of life expectancy in the highest-burden regions.",
+        "id": "lives"
+      },
+      {
+        "detail": "China cut PM2.5 by 35% within five years through industrial regulation and enforcement; London's ULEZ also produced major roadside NO2 cuts in a similarly short time frame.",
+        "id": "years"
+      },
+      {
+        "detail": "Moving from wood fire to clean cookstoves can lower indoor PM2.5 by more than 90% from day one; children in clean-cooking households report far fewer respiratory infections.",
+        "id": "indoor"
+      },
+      {
+        "detail": "Machine learning systems now forecast city-level AQI up to 72 hours ahead with over 90% accuracy, enabling schools and health systems to act before hazardous episodes peak.",
+        "id": "warning"
+      }
+    ],
+    "provider": "ollama"
+  },
+  "deep_dive_interventions:agentic": {
+    "payload": [
+      {
+        "detail": "NO2 cut 60-100% per vehicle. Road transport is the largest single contributor to urban NO2; switching from petrol removes tailpipe PM2.5 entirely.",
+        "id": "personal-ev",
+        "stat": "Switch to an electric or hybrid vehicle"
+      },
+      {
+        "detail": "Every trip shifted from car to bike removes a vehicle from the road and cuts time spent in high-traffic exposure zones.",
+        "id": "personal-bike",
+        "stat": "Zero tailpipe emissions per trip. Every trip shifted from car to bike removes a vehicle from the road and cuts time spent in high-traffic exposure zones."
+      },
+      {
+        "detail": "Gas hobs release NO2 and PM2.5 directly into the kitchen; induction is zero emission at point of use.",
+        "id": "household-induction",
+        "stat": "Indoor NO2 cut up to 40%. Gas hobs release NO2 and PM2.5 directly into the kitchen; induction is zero emission at point of use."
+      },
+      {
+        "detail": "Open fires and wood stoves are a major source of indoor PM2.5.",
+        "id": "household-flame",
+        "stat": "Indoor PM2.5 cut 50-90%. Open fires and wood stoves are a major source of indoor PM2.5."
+      },
+      {
+        "detail": "A HEPA purifier in a bedroom lowers overnight PM2.5 exposure during the 8+ hours people sleep.",
+        "id": "household-purifier",
+        "stat": "Indoor PM2.5 cut 70-90% overnight. A HEPA purifier in a bedroom lowers overnight PM2.5 exposure during the 8+ hours people sleep."
+      },
+      {
+        "detail": "Coal power remains a leading global source of SO2; shifting demand to renewables reduces pressure on the dirtiest generation.",
+        "id": "household-solar",
+        "stat": "SO2 and PM demand eliminated. Coal power remains a leading global source of SO2; shifting demand to renewables reduces pressure on the dirtiest generation."
+      },
+      {
+        "detail": "Mandatory scrubbers, fuel switching, and real-time stack monitoring with penalties reduced PM2.5 by 35% in China.",
+        "id": "policy-factory",
+        "stat": "PM2.5 cut 35% in China over 5 years (2014-2019) via mandatory scrubbers, fuel switching, and real-time stack monitoring with penalties."
+      },
+      {
+        "detail": "Shenzhen deployed about 16,000 electric buses and reduced bus-linked PM2.5 in major travel corridors by 48%.",
+        "id": "policy-bus",
+        "stat": "PM2.5 cut 48% in corridors. Shenzhen deployed about 16,000 electric buses and reduced bus-linked PM2.5 in major travel corridors by 48%."
+      },
+      {
+        "detail": "Subsidised mechanical harvesters and no-burn payments work better than bans alone to reduce Delhi winter AQI.",
+        "id": "policy-field",
+        "stat": "Delhi winter AQI down ~30% potential. Seasonal stubble burning in Punjab and Haryana drives severe winter events; subsidised mechanical harvesters and no-burn payments work better than bans alone."
+      },
+      {
+        "detail": "Street trees absorb NO2 through leaf stomata and trap particulates on canopy surfaces.",
+        "id": "community-tree",
+        "stat": "PM2.5 cut 15-25% on tree-lined streets. Street trees absorb NO2 through leaf stomata and trap particulates on canopy surfaces."
+      },
+      {
+        "detail": "London ULEZ lowered roadside NO2 by 44% and helped reduce childhood asthma hospitalisations; 320+ low-emission zones now operate across Europe.",
+        "id": "community-zone",
+        "stat": "NO2 cut 30-50% in zone. London ULEZ lowered roadside NO2 by 44% and helped reduce childhood asthma hospitalisations; 320+ low-emission zones now operate across Europe."
+      },
+      {
+        "detail": "Cities cannot manage what they do not measure; public monitoring and transparent data make interventions enforceable.",
+        "id": "community-monitor",
+        "stat": "Foundation for all other action. Cities cannot manage what they do not measure; public monitoring and transparent data make interventions enforceable."
+      }
+    ],
+    "provider": "ollama"
+  },
+  "inversion_chamber:default": {
+    "payload": {
+      "description": "The concentration index reflects how much pollutants are trapped in the atmosphere when mixing is optimal, based on ideal mixing times and emission rates.",
+      "how_to_use": "Adjust Emissions (0-100) and Mixing height (150-2000) to find the Inversion Chamber's moderate air pollution concentration index."
+    },
+    "provider": "ollama"
+  },
+  "inversion_chamber:monsoon": {
+    "payload": {
+      "description": "This visualization shows the relationship between emissions and mixing height in a well-mixed atmosphere during a monsoon afternoon. When you adjust both sliders, your concentration index will reflect the idealized scenario where good air quality is maintained under these specific conditions.",
+      "how_to_use": "Adjust Emissions & Mixing Height to see how different conditions affect air quality."
+    },
+    "provider": "ollama"
+  },
+  "inversion_chamber:october": {
+    "payload": {
+      "description": "In October evenings, moderate air pollution leads to inversion at a high altitude, where poor mixing of emissions reduces pollutant levels.",
+      "how_to_use": "Adjust Emissions and Mixing Height to Simulate Temperature Inversion"
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:14219cb780a57b9e": {
+    "payload": {
+      "text": "The shift towards electric vehicles and industry regulation in Delhi has resulted in a notable reduction in PM2.5 levels, with projections indicating a decrease from 170 µg/m³ to 130 µg³/m³. However, this combination of interventions still falls short of the WHO guideline of 5 µg/m³, suggesting that additional measures are needed to fully mitigate the effects of air pollution in the city. The reduction is still substantial, but not yet sufficient to meet international health standards."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:27347eb52455ee62": {
+    "payload": {
+      "text": "This plan allocates $3270M over 5 years to reduce air quality index (AQI) points by 56.1. It buys a modest improvement in public health and environmental sustainability.\n\nIt leaves untouched the emissions from private vehicles, which will continue to contribute significantly to the city's air pollution problem despite this intervention. The plan does not address the root cause of AQI points, only symptoms.\n\nThe one political obstacle most likely to kill this plan is the opposition from industrial stakeholders who may resist the mandate for stack scrubbers, a costly and complex solution that would require significant investment and coordination with the private sector."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:27a3856fed34c70f": {
+    "payload": {
+      "text": "The unique contribution of crop burning to Ghaziabad's pollution profile stands out as a significant factor, highlighting the need for targeted interventions during harvest seasons to mitigate this avoidable source of air pollution. In contrast to other cities, brick kilns and transport are relatively minor contributors to Ghaziabad's pollution mix, suggesting opportunities for alternative solutions or policy adjustments to prioritize these sources. This city's profile also underscores the importance of monitoring crop burning emissions across different regions during peak agricultural seasons."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:36c87ad126e8cffa": {
+    "payload": {
+      "text": "This step ensures that only accurate and thoughtful responses are stored, making the Q&A platform more reliable and trustworthy over time."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:508883fe0c8bf786": {
+    "payload": {
+      "text": "The current scenario does not address the severe air pollution issue in Lahore, as the projected PM2.5 levels remain above the WHO guideline despite no interventions being activated. This combination of inaction fails to mitigate the existing health risks associated with high PM2.5 concentrations, suggesting a lack of effort to reduce emissions or implement measures to improve air quality."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:6c0f8d0a2669b85f": {
+    "payload": {
+      "text": "When cities take action to reduce air pollution, people's health starts to improve. China saw a 35% cut in PM2.5 in major cities over five years, and London reduced roadside NO2 by 44%. These small victories give us hope for cleaner skies ahead."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:741ac2ea3545e79f": {
+    "payload": {
+      "text": "This step matters because it ensures that the information produced is clear, accessible, and easy to understand, making it more trustworthy and useful for users."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:78961a19bb78a8f1": {
+    "payload": {
+      "text": "The current PM2.5 level in Delhi is reduced by 29 µg/m³ when electric vehicles are shifted, which represents a significant decrease but still falls short of the WHO guideline of 5 µg/m³. This intervention primarily targets emissions from transportation and does not directly address other major sources of pollution such as industrial activities or agricultural burning."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:7ee76a997dfc1032": {
+    "payload": {
+      "text": "Delhi's high concentration of crop burning as a root cause of pollution stands out, suggesting that agricultural practices may be playing a disproportionate role in exacerbating air quality issues in the city. This is notable given that crop burning is a relatively minor contributor in other cities on this list, highlighting Delhi's unique environmental challenges."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:8250d6be4c258748": {
+    "payload": {
+      "text": "When a computer system is waiting for an answer from a complex model or algorithm, it shows a progress indicator to let you know that something is happening, and if the response takes too long, it will display a placeholder message like a handwritten line instead of leaving an empty space."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:88fa7f31f4ec573c": {
+    "payload": {
+      "text": "The current scenario has led to a significant reduction in PM2.5 levels, from 45 µg/m³ to 34 µg/m³, mainly attributed to the shift to electric vehicles which is expected to minimize emissions. However, this decrease still falls short of the WHO's guideline of 5 µg/m³, suggesting that other pollutants and sources remain a concern. The effectiveness of the EV shift in addressing air pollution remains limited by its partial mitigation effect."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:895a3ab7354a23bc": {
+    "payload": {
+      "text": "The significant contribution of crop burning to New Delhi's pollution burden stands out as a notable trend, underscoring the country's extensive agricultural sector and its impact on air quality. This is particularly concerning given that all five cities share similar root causes, highlighting the critical need for targeted interventions in the agricultural sector to mitigate emissions. Furthermore, the relatively low proportion of transport-related pollution in New Delhi suggests opportunities for policy shifts or infrastructure investments that could lead to more substantial reductions."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:8d58fcafdb7b81a6": {
+    "payload": {
+      "text": "This step is crucial because it's where the information you requested actually gets processed by the server, allowing the website or application to display the correct content, respond to your query, or take any subsequent action."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:972f131e34f3eb71": {
+    "payload": {
+      "text": "This step is important because it's the very beginning of how you interact with an online website or service, and it shows how simple and straightforward the process is before any complex technology like AI models get involved."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:9b7aff2b9996e4e6": {
+    "payload": {
+      "text": "Clicking, hovering, or moving a slider isn't just a random action - it triggers an actual computation that happens right away because the system needs your input to know what to do next."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:a06e763d74f65478": {
+    "payload": {
+      "text": "Three point seven million lives are saved every year because of pollution targets set by WHO 2030. This is the result of gaining an extra five years of life expectancy in South Asia. With efforts to reduce air pollution, more people can live healthier lives."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:a27959e5336c156e": {
+    "payload": {
+      "text": "Using a clean cookstove can save children from serious respiratory infections by 68%. This is especially true on the very first day of use, when indoor PM2.5 falls to over 90%. A cleaner home means a healthier tomorrow for those who matter most."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:b28c6b7accff4dcf": {
+    "payload": {
+      "text": "Lahore's unique blend of transport and industry contributions to PM2.5 levels suggests a significant role for vehicular emissions and energy-intensive industrial activities in exacerbating air pollution. The relatively low share of brick kiln emissions indicates that while this sector is still present, it may not be the dominant source of pollution in Lahore compared to other cities. This disparity highlights the need for targeted policy interventions tailored to each city's specific pollution profile."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:b8bbc5875acad030": {
+    "payload": {
+      "text": "The EV shift intervention results in a reduction of PM2.5 levels by 31 µg/m³, but still falls short of the WHO guideline, indicating that alternative measures are needed to further mitigate air pollution in Lahore. The reduced emissions from electric vehicles do not entirely offset the existing air quality issues, suggesting that other sources of pollution remain significant contributors."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:c005e63376292989": {
+    "payload": {
+      "text": "Dhaka's transport sector contributes a relatively low 15% to total PM2.5 emissions, suggesting that compared to other cities, traffic is not the primary source of pollution in Dhaka. In contrast, industry and power account for nearly three times as much of the city's air pollution, indicating that industrial activities or power generation methods are likely having a more significant impact on Dhaka's air quality."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:c5d6d1f24bda962a": {
+    "payload": {
+      "text": "This plan buys a modest 46.7 AQI reduction over three years, which may not be enough to significantly impact public health in heavily polluted cities.\n\nIt leaves untouched some of the most cost-effective measures: for example, promoting alternative modes of transportation like walking or cycling, and improving air quality through municipal policy changes that don't require large infrastructure investments. These smaller interventions are likely more efficient than the subsidies and stack scrubber mandate proposed here.\n\nThe one political obstacle most likely to kill this plan is the mayor's opposition to increased taxes on diesel fuel, which would be needed to finance the industrial stack scrubber mandate. Without a tax increase, the mayor will likely reject the proposal, preventing its implementation despite the promised benefits."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:d69946760509760d": {
+    "payload": {
+      "text": "The shift to electric vehicles (EV) and industry regulation in Lahore is projected to significantly reduce PM2.5 levels, from 150 µg/m³ under current conditions to 98 µg/m³. However, this measure does not address other major contributors to air pollution such as vehicle emissions during the transition period or industrial processes that may still be inadequately regulated."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:dec22c03b2458ece": {
+    "payload": {
+      "text": "This step helps avoid redundant work by reusing existing answers that have already been created for similar questions, making it more efficient and reducing the need to generate multiple solutions from scratch."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:eca3c4b2747c6606": {
+    "payload": {
+      "text": "A school can be closed 72 hours before a bad air day to keep children safe. Machine learning predicts city air quality with 90% accuracy, giving us this extra time to act. This helps keep kids healthy and schools running smoothly."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:eeccbe1007ec5139": {
+    "payload": {
+      "text": "This plan buys a modest 53-point reduction in AQI over four years, spread across two and a half years. The cost is substantial at $2130M, but it's dwarfed by the benefits of improved public health.\n\nThe plan leaves untouched the environmental impacts of increased energy demand from LPG stove access and industrial stack scrubbers. This means that while AQI will decrease, greenhouse gas emissions may increase.\n\nThe one political obstacle most likely to kill this plan is the cost: $2130M is a significant expense for a city, and finding alternative funding sources or justifying the cost to voters is unlikely to be easy."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:f0ba0302abc81a93": {
+    "payload": {
+      "text": "The implementation of an EV shift policy and industry regulation in Mexico City has resulted in a significant reduction in PM2.5 levels, with projected concentrations falling to 28 µg/m³, well below the World Health Organization's guideline of 5 µg/m³. However, this combination of interventions does not eliminate the problem entirely, as the baseline level remains higher than the WHO target, suggesting that further reductions are needed. The policy intervention has successfully decreased exposure risks for citizens, but a more drastic reduction in emissions is still necessary to meet the WHO guideline."
+    },
+    "provider": "ollama"
+  },
+  "ollama_text:fc55ed9c6b9dafc4": {
+    "payload": {
+      "text": "This step is important because it means that the computer can understand and respond to the user's question or request directly, without needing to send the information all the way back to its home server, which would be like sending a letter through the mail."
+    },
+    "provider": "ollama"
+  },
+  "scale_ladder_identity": {
+    "payload": {
+      "age": 32,
+      "detail": "She often takes the 9:00 AM walk to her tea stall near home.",
+      "name": "Rukmini"
+    },
+    "provider": "ollama"
+  },
+  "scale_ladder_rung:rukmini:one person": {
+    "payload": {
+      "orientation": "Rukmini appears at the center of the screen with one dot",
+      "rung": "{Rukmini's marker is visible at a distance from others, smaller than previous views}"
+    },
+    "provider": "ollama"
+  }
+}

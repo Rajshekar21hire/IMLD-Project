@@ -1,163 +1,157 @@
-import React, { useState } from 'react';
-import { WhoAreYouAskingFor } from './WhoAreYouAskingFor';
-import { BreathingCircle } from './BreathingCircle';
-import { WhatThisMeansToday } from './WhatThisMeansToday';
-import { OneSmallThing } from './OneSmallThing';
-import { NeighbourComparison } from './NeighbourComparison';
-import { TodaysAirInWords } from './TodaysAirInWords';
-import { WhatWouldActuallyHelpHere } from './WhatWouldActuallyHelpHere';
-import { OneGoodDay } from './OneGoodDay';
-import { WhatsInTheAir } from './WhatsInTheAir';
-import { SmallThingsThatHold } from './SmallThingsThatHold';
+import React, { useEffect, useRef, useState } from 'react';
+import { Volume2, VolumeX } from 'lucide-react';
+import { useAgenticScrollGrade } from './useAgenticScrollGrade';
+import { useAgenticWindSound } from './useAgenticWindSound';
+import { AgenticHazeLayer } from './AgenticHazeLayer';
+import { PollutionScrollField } from './PollutionScrollField';
+import { AgenticFogWipe } from './AgenticFogWipe';
+import { AgenticBeat } from './AgenticBeat';
+import { HowItFeelsToLiveHere } from './HowItFeelsToLiveHere';
+import { DiurnalRibbon } from './DiurnalRibbon';
+import { MonthlyParticleBars } from './MonthlyParticleBars';
+import { CitySimulation } from './CitySimulation';
 import { RecoveryClock } from './RecoveryClock';
-import { AgenticCard } from './AgenticCard';
-import { MechanismFlowDiagram } from './MechanismFlowDiagram';
-import { CityGridSmallMultiples } from './CityGridSmallMultiples';
-import { SeasonalityHeatmap } from './SeasonalityHeatmap';
-import { ExposureImpactScrollytelling } from './ExposureImpactScrollytelling';
-import { CounterfactualSlider } from './CounterfactualSlider';
+import { SmallThingsThatHold } from './SmallThingsThatHold';
+import { PersonalizedClosing } from './PersonalizedClosing';
 
-const PANEL_BG = 'linear-gradient(180deg, #f8f5ee 0%, #f1f6f5 55%, #eef3f8 100%)';
-const TEXT = '#232323';
+// Beats below scroll as normal page content (no nested scroll region - a fixed-height,
+// overflow:auto box here used to trap the mouse wheel until the visitor scrolled through every
+// slide, which is exactly the "can't get out of this section" complaint this replaces). A
+// drifting fog bank (plus a wind whoosh) still fires once per beat, now triggered by an
+// IntersectionObserver watching a thin band near the viewport centre instead of reading a
+// container's scrollTop.
+function useAgenticSlideDeck(
+  slideRefs: React.MutableRefObject<Array<HTMLDivElement | null>>,
+  prefersReducedMotion: boolean,
+  onTransition: () => void
+) {
+  const [wipeKey, setWipeKey] = useState<number | null>(null);
+  const activeIndexRef = useRef<number | null>(null);
+  const wipeCounterRef = useRef(0);
 
-const ColumnHeader: React.FC<{ eyebrow: string; title: string; accent: string }> = ({ eyebrow, title, accent }) => (
-  <div>
-    <div className="flex items-center gap-2">
-      <span className="h-2 w-2 rounded-full" style={{ backgroundColor: accent }} />
-      <span className="text-xs font-bold uppercase tracking-[0.18em]" style={{ color: accent }}>
-        {eyebrow}
-      </span>
-    </div>
-    <h4 className="mt-2 text-lg font-extrabold text-slate-900">{title}</h4>
-  </div>
-);
+  useEffect(() => {
+    if (prefersReducedMotion) return undefined;
+    const elements = slideRefs.current.filter((el): el is HTMLDivElement => Boolean(el));
+    if (!elements.length) return undefined;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) return;
+          const index = elements.indexOf(entry.target as HTMLDivElement);
+          if (index === -1 || index === activeIndexRef.current) return;
+          activeIndexRef.current = index;
+          wipeCounterRef.current += 1;
+          setWipeKey(wipeCounterRef.current);
+          onTransition();
+        });
+      },
+      { rootMargin: '-45% 0px -45% 0px', threshold: 0 }
+    );
+
+    elements.forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, [slideRefs, prefersReducedMotion, onTransition]);
+
+  return wipeKey;
+}
+
+const SLIDE_COUNT = 6;
 
 export const AgenticAiSection: React.FC = () => {
-  const [city, setCity] = useState<string | null>(null);
-  const [forWhom, setForWhom] = useState<string | null>(null);
-  const [concern, setConcern] = useState<string | null>(null);
+  const sectionRef = useRef<HTMLDivElement>(null);
+  const slideRefs = useRef<Array<HTMLDivElement | null>>(new Array(SLIDE_COUNT).fill(null));
+  const [soundEnabled, setSoundEnabled] = useState(true);
+  const { tint, haze, prefersReducedMotion } = useAgenticScrollGrade(sectionRef);
+  const playWhoosh = useAgenticWindSound(soundEnabled);
+  const wipeKey = useAgenticSlideDeck(slideRefs, prefersReducedMotion, playWhoosh);
 
-  const allSelected = Boolean(city && forWhom && concern);
+  const setSlideRef = (index: number) => (el: HTMLDivElement | null) => {
+    slideRefs.current[index] = el;
+  };
 
   return (
-    <section
-      className="w-full"
-      style={{ background: PANEL_BG, color: TEXT, padding: '64px 24px' }}
-    >
-      <div className="mx-auto" style={{ maxWidth: '1100px' }}>
-        <p className="text-center text-sm font-bold uppercase tracking-[0.32em] text-sky-700">
-          Agentic AI
+    <div ref={sectionRef} className="relative w-full overflow-hidden bg-transparent">
+      <AgenticHazeLayer tint={tint} haze={haze} prefersReducedMotion={prefersReducedMotion} />
+      <PollutionScrollField severity={haze} />
+      <AgenticFogWipe triggerKey={wipeKey} />
+
+      <div className="relative z-[1] mx-auto max-w-4xl px-6 py-4 text-center md:px-10">
+        <p className="truncate text-sm" style={{ color: 'var(--ss-muted)' }}>
+          <span className="font-bold uppercase tracking-[0.25em]" style={{ color: 'var(--ss-accent)' }}>
+            Agentic AI
+          </span>
+          <span className="mx-2">·</span>
+          <span className="font-bold" style={{ color: 'var(--ss-text)' }}>
+            A machine that writes back
+          </span>
+          <span className="mx-2">·</span>
+          Generated by Ollama, running locally, as you scroll and click.
         </p>
-        <h2 className="mt-3 text-center text-3xl font-extrabold text-slate-950 md:text-4xl">
-          A warmer way to read the air
-        </h2>
-        <p className="mx-auto mt-4 max-w-xl text-center text-lg text-slate-600">
-          Tell it a little about you, and it writes the story back &mdash; in plain, human words.
-        </p>
-
-        <AgenticCard eyebrow="Start here" title="Agentic AI" accent="#0ea5e9">
-          <WhoAreYouAskingFor
-            city={city}
-            forWhom={forWhom}
-            concern={concern}
-            onSelectCity={setCity}
-            onSelectForWhom={setForWhom}
-            onSelectConcern={setConcern}
-          />
-        </AgenticCard>
-
-        {allSelected && (
-          <div className="mt-8 grid grid-cols-1 gap-8 md:grid-cols-2">
-            <AgenticCard
-              eyebrow="How it feels"
-              title="Take a breath"
-              accent="#10b981"
-              className="rounded-[28px] border border-black/5 bg-white p-8 shadow-[0_4px_28px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_14px_44px_rgba(0,0,0,0.09)] md:p-10"
-            >
-              <BreathingCircle city={city!} forWhom={forWhom!} concern={concern!} />
-            </AgenticCard>
-            <AgenticCard
-              eyebrow="Right now"
-              title="What this means today"
-              accent="#7c3aed"
-              className="rounded-[28px] border border-black/5 bg-white p-8 shadow-[0_4px_28px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_14px_44px_rgba(0,0,0,0.09)] md:p-10"
-            >
-              <WhatThisMeansToday city={city!} forWhom={forWhom!} concern={concern!} />
-            </AgenticCard>
-            <AgenticCard
-              eyebrow="Do this"
-              title="One small thing"
-              accent="#d97706"
-              className="rounded-[28px] border border-black/5 bg-white p-8 shadow-[0_4px_28px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_14px_44px_rgba(0,0,0,0.09)] md:p-10"
-            >
-              <OneSmallThing city={city!} forWhom={forWhom!} concern={concern!} />
-            </AgenticCard>
-            <AgenticCard
-              eyebrow="Perspective"
-              title="The neighbour comparison"
-              accent="#e11d48"
-              className="rounded-[28px] border border-black/5 bg-white p-8 shadow-[0_4px_28px_rgba(0,0,0,0.06)] transition-all duration-300 hover:-translate-y-1 hover:shadow-[0_14px_44px_rgba(0,0,0,0.09)] md:p-10"
-            >
-              <NeighbourComparison city={city!} forWhom={forWhom!} concern={concern!} />
-            </AgenticCard>
-          </div>
-        )}
-
-        <AgenticCard eyebrow="Right now" title="Today, what helps, and what's possible" accent="#0d9488">
-          <div className="grid grid-cols-1 gap-10 lg:grid-cols-3 lg:gap-8">
-            <div>
-              <ColumnHeader eyebrow="Right now" title="Today's air, in words" accent="#0d9488" />
-              <div className="mt-5">
-                <TodaysAirInWords />
-              </div>
-            </div>
-            <div className="lg:border-x lg:border-black/5 lg:px-8">
-              <ColumnHeader eyebrow="What helps" title="What would actually help here" accent="#ea580c" />
-              <div className="mt-5">
-                <WhatWouldActuallyHelpHere />
-              </div>
-            </div>
-            <div>
-              <ColumnHeader eyebrow="Imagine" title="One good day" accent="#c026d3" />
-              <div className="mt-5">
-                <OneGoodDay />
-              </div>
-            </div>
-          </div>
-        </AgenticCard>
-
-        <AgenticCard eyebrow="Sources" title="What's in the air" accent="#65a30d">
-          <WhatsInTheAir />
-        </AgenticCard>
-
-        <AgenticCard eyebrow="Reminders" title="Small things that hold" accent="#0ea5e9">
-          <SmallThingsThatHold />
-        </AgenticCard>
-
-        <AgenticCard eyebrow="The reversal" title="One Recovery, at Every Scale." accent="#16a34a">
-          <RecoveryClock />
-        </AgenticCard>
-
-        <AgenticCard eyebrow="The pattern" title="One mechanism, repeated" accent="#dc2626">
-          <MechanismFlowDiagram />
-        </AgenticCard>
-
-        <AgenticCard eyebrow="Same shape, five cities" title="Five cities, one curve" accent="#0ea5e9">
-          <CityGridSmallMultiples />
-        </AgenticCard>
-
-        <AgenticCard eyebrow="When it's worst" title="The season, mapped" accent="#b45309">
-          <SeasonalityHeatmap />
-        </AgenticCard>
-
-        <AgenticCard eyebrow="Feel the number" title="One number, three ways" accent="#7c3aed">
-          <ExposureImpactScrollytelling />
-        </AgenticCard>
-
-        <AgenticCard eyebrow="What's left over" title="Cut the burning, keep the haze" accent="#d97706">
-          <CounterfactualSlider />
-        </AgenticCard>
       </div>
-    </section>
+
+      <div className="sticky top-3 z-50 flex justify-end pr-3">
+        <button
+          type="button"
+          onClick={() => setSoundEnabled((v) => !v)}
+          aria-pressed={soundEnabled}
+          aria-label={soundEnabled ? 'Mute the scroll-transition wind sound' : 'Unmute the scroll-transition wind sound'}
+          className="flex h-8 w-8 items-center justify-center rounded-full transition-colors"
+          style={{ backgroundColor: 'rgba(255,255,255,0.85)', border: '1px solid var(--ss-border)', color: 'var(--ss-muted)' }}
+        >
+          {soundEnabled ? <Volume2 size={15} /> : <VolumeX size={15} />}
+        </button>
+      </div>
+
+      <div className="relative z-[1]">
+        <div ref={setSlideRef(0)} className="agentic-slide flex min-h-[85vh] flex-col justify-center">
+          <AgenticBeat eyebrow="In plain terms" title="How it feels to live here" accent="#f87171">
+            <HowItFeelsToLiveHere />
+            <DiurnalRibbon />
+          </AgenticBeat>
+        </div>
+
+        <div ref={setSlideRef(1)} className="agentic-slide flex min-h-[85vh] flex-col justify-center">
+          <AgenticBeat eyebrow="The shape of a year" title="Twelve months, in particles" accent="#38bdf8">
+            <MonthlyParticleBars />
+          </AgenticBeat>
+        </div>
+
+        <div ref={setSlideRef(2)} className="agentic-slide flex min-h-[85vh] flex-col justify-center">
+          <AgenticBeat eyebrow="Play it forward" title="Simulate the next years" accent="#f59e0b">
+            <CitySimulation />
+          </AgenticBeat>
+        </div>
+
+        <div ref={setSlideRef(3)} className="agentic-slide flex min-h-[85vh] flex-col justify-center">
+          <AgenticBeat eyebrow="The reversal" title="One recovery, at every scale" accent="#16a34a">
+            <RecoveryClock />
+          </AgenticBeat>
+        </div>
+
+        <div ref={setSlideRef(4)} className="agentic-slide flex min-h-[85vh] flex-col justify-center">
+          <AgenticBeat eyebrow="Reminders" title="Quiet truths about the air" accent="#38bdf8">
+            <p className="mx-auto -mt-3 mb-6 max-w-xl text-center text-sm" style={{ color: 'var(--ss-muted)' }}>
+              Six small, true things about air and the people who breathe it - tap a card to read one more thought.
+            </p>
+            <SmallThingsThatHold />
+          </AgenticBeat>
+        </div>
+
+        <div ref={setSlideRef(5)} className="agentic-slide flex min-h-[85vh] flex-col justify-center">
+          <AgenticBeat
+            eyebrow="Finally"
+            title="Make it about you"
+            accent="#7ab8e6"
+            className="relative z-[1] mx-auto w-full max-w-6xl px-6 pb-16 pt-20 text-center md:px-10"
+          >
+            <p className="mx-auto -mt-3 mb-6 max-w-xl text-center text-sm" style={{ color: 'var(--ss-muted)' }}>
+              Pick your city, who you're asking for, and what's on your mind - we'll write something just for that.
+            </p>
+            <PersonalizedClosing />
+          </AgenticBeat>
+        </div>
+      </div>
+    </div>
   );
 };

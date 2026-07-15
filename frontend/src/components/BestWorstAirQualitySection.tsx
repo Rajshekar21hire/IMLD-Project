@@ -113,7 +113,7 @@ export const BestWorstAirQualitySection: React.FC = () => {
   }, []);
 
   return (
-    <section className="bg-white py-16 px-6 md:px-12">
+    <section className="bg-transparent py-16 px-6 md:px-12">
       <div className="mx-auto max-w-5xl">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-sky-700 font-bold">
           Why These Five

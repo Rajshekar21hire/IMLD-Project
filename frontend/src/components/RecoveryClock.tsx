@@ -1,5 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { storyAPI } from '../services/api';
+import { AgenticTypingDots } from './AgenticTypingDots';
+
+const TEXT = 'var(--ss-text)';
+const MUTED = 'var(--ss-muted)';
+const PANEL_BG = 'rgba(255,255,255,0.86)';
 
 type Arc = {
   id: string;
@@ -69,14 +74,6 @@ type ArcStatus = 'idle' | 'loading' | 'streaming' | 'done';
 const RADII = [46, 70, 94, 118];
 const HAZY = '#c9a86a';
 const CLEAR = ['#16a34a', '#22c55e', '#4ade80', '#86efac'];
-
-const TypingDots: React.FC = () => (
-  <span className="rc-typing" aria-label="thinking">
-    <span />
-    <span />
-    <span />
-  </span>
-);
 
 export const RecoveryClock: React.FC = () => {
   const [activated, setActivated] = useState<Record<string, boolean>>({});
@@ -179,8 +176,8 @@ export const RecoveryClock: React.FC = () => {
           })}
         </svg>
         <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-          <div className="text-3xl font-extrabold text-slate-900">{activeCount}</div>
-          <div className="mt-1 text-center text-xs font-medium uppercase tracking-[0.15em] text-slate-500">
+          <div className="text-3xl font-extrabold" style={{ color: TEXT }}>{activeCount}</div>
+          <div className="mt-1 text-center text-xs font-medium uppercase tracking-[0.15em]" style={{ color: MUTED }}>
             {activeCount === 1 ? 'recovery active' : 'recoveries active'}
           </div>
         </div>
@@ -203,25 +200,25 @@ export const RecoveryClock: React.FC = () => {
                   className="h-3 w-3 shrink-0 rounded-full"
                   style={{ backgroundColor: isActive ? CLEAR[i] : HAZY, transition: 'background-color 800ms ease' }}
                 />
-                <span className="flex-1 text-base font-semibold text-slate-800">{arc.label}</span>
-                <span className="text-sm font-medium text-slate-500">{arc.timescale}</span>
+                <span className="flex-1 text-base font-semibold" style={{ color: TEXT }}>{arc.label}</span>
+                <span className="text-sm font-medium" style={{ color: MUTED }}>{arc.timescale}</span>
               </button>
             );
           })}
         </div>
 
-        <div className="mt-6 min-h-[88px] rounded-2xl bg-slate-50 px-5 py-4">
+        <div className="mt-6 min-h-[88px] rounded-2xl px-5 py-4" style={{ backgroundColor: PANEL_BG, border: '1px solid var(--ss-border)' }}>
           {!activeArc && (
-            <div className="text-base text-slate-500">
+            <div className="text-base" style={{ color: MUTED }}>
               Click a ring, or an intervention above, to watch the air clear.
             </div>
           )}
-          {activeArc && status[activeArc.id] === 'loading' && <TypingDots />}
+          {activeArc && status[activeArc.id] === 'loading' && <AgenticTypingDots />}
           {activeArc && status[activeArc.id] !== 'loading' && (
             <>
               <div
-                className="text-lg leading-relaxed text-slate-800"
-                style={{ fontFamily: "Georgia, 'Iowan Old Style', 'Palatino Linotype', serif" }}
+                className="text-lg leading-relaxed"
+                style={{ fontFamily: "Georgia, 'Iowan Old Style', 'Palatino Linotype', serif", color: TEXT }}
               >
                 {texts[activeArc.id]}
                 {status[activeArc.id] === 'streaming' && <span className="rc-cursor">|</span>}
@@ -230,7 +227,8 @@ export const RecoveryClock: React.FC = () => {
                 <button
                   type="button"
                   onClick={handleRegenerate}
-                  className="mt-3 text-sm font-semibold text-emerald-700 hover:underline"
+                  className="mt-3 text-sm font-semibold hover:underline"
+                  style={{ color: '#15803d' }}
                 >
                   regenerate
                 </button>
@@ -241,18 +239,6 @@ export const RecoveryClock: React.FC = () => {
       </div>
 
       <style>{`
-        .rc-typing { display: inline-flex; gap: 4px; align-items: center; height: 24px; }
-        .rc-typing span {
-          width: 6px; height: 6px; border-radius: 50%;
-          background-color: #94a3b8;
-          animation: rc-bounce 1.2s infinite ease-in-out;
-        }
-        .rc-typing span:nth-child(2) { animation-delay: 0.15s; }
-        .rc-typing span:nth-child(3) { animation-delay: 0.3s; }
-        @keyframes rc-bounce {
-          0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
-          40% { transform: translateY(-4px); opacity: 1; }
-        }
         .rc-cursor { animation: rc-blink 1s step-start infinite; }
         @keyframes rc-blink { 50% { opacity: 0; } }
       `}</style>

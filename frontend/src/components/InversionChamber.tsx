@@ -22,13 +22,15 @@ const heightToY = (heightM: number) => {
   return CANVAS_H - GROUND_MARGIN - t * usable;
 };
 
+// Softer, lower-contrast pastel tones - same AQI ordering as everywhere else on the page, just
+// muted a step further so the readout sits quietly on a light background instead of shouting.
 const getBand = (value: number) => {
-  if (value <= 50) return { label: 'Good', color: '#34d399' };
-  if (value <= 100) return { label: 'Moderate', color: '#facc15' };
-  if (value <= 150) return { label: 'Unhealthy for sensitive groups', color: '#fb923c' };
-  if (value <= 200) return { label: 'Unhealthy', color: '#f87171' };
-  if (value <= 300) return { label: 'Very unhealthy', color: '#c084fc' };
-  return { label: 'Hazardous', color: '#e11d48' };
+  if (value <= 50) return { label: 'Good', color: '#7bc9b8' };
+  if (value <= 100) return { label: 'Moderate', color: '#e0be6b' };
+  if (value <= 150) return { label: 'Unhealthy for sensitive groups', color: '#e3a374' };
+  if (value <= 200) return { label: 'Unhealthy', color: '#dd8f8f' };
+  if (value <= 300) return { label: 'Very unhealthy', color: '#c99bd6' };
+  return { label: 'Hazardous', color: '#d992a3' };
 };
 
 const PRESETS = [
@@ -37,10 +39,19 @@ const PRESETS = [
   { key: 'january', label: 'January morning', emissions: 78, height: 160 },
 ] as const;
 
+function hexToRgba(hex: string, alpha: number) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return `rgba(${r},${g},${b},${alpha})`;
+}
+
 export const InversionChamber: React.FC = () => {
   const [emissions, setEmissions] = useState(50);
   const [mixingHeight, setMixingHeight] = useState(900);
   const [hasSeenLowLid, setHasSeenLowLid] = useState(false);
+  const [playingPresets, setPlayingPresets] = useState(false);
 
   const [howToUse, setHowToUse] = useState<string | null>(null);
   const [description, setDescription] = useState<string | null>(null);
@@ -95,6 +106,38 @@ export const InversionChamber: React.FC = () => {
     if (mixingHeight < 400) setHasSeenLowLid(true);
   }, [mixingHeight]);
 
+  // Auto-cycle through the three presets so there's a hands-off way to see the whole range,
+  // not just a manual one - stops as soon as the visitor touches a slider or preset themselves.
+  useEffect(() => {
+    if (!playingPresets) return;
+    let i = PRESETS.findIndex((p) => p.emissions === emissionsRef.current && p.height === mixingHeightRef.current);
+    const interval = setInterval(() => {
+      i = (i + 1) % PRESETS.length;
+      const preset = PRESETS[i];
+      setEmissions(preset.emissions);
+      setMixingHeight(preset.height);
+      fetchExplanation(preset.key, preset.emissions, preset.height);
+    }, 3200);
+    return () => clearInterval(interval);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playingPresets]);
+
+  const yToHeight = (y: number) => {
+    const usable = CANVAS_H - GROUND_MARGIN - SKY_MARGIN;
+    const t = Math.min(1, Math.max(0, (CANVAS_H - GROUND_MARGIN - y) / usable));
+    return Math.round(t * MAX_HEIGHT_M);
+  };
+
+  const draggingRef = useRef(false);
+  const handleCanvasPointer = (clientY: number) => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const rect = canvas.getBoundingClientRect();
+    const y = ((clientY - rect.top) / rect.height) * CANVAS_H;
+    setPlayingPresets(false);
+    setMixingHeight(Math.min(2000, Math.max(150, yToHeight(y))));
+  };
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -123,7 +166,7 @@ export const InversionChamber: React.FC = () => {
             y: groundY,
             targetY: lidY + Math.random() * (groundY - lidY),
             vy: -(1.6 + Math.random() * 1.8),
-            alpha: 0.16 + Math.random() * 0.18,
+            alpha: 0.35 + Math.random() * 0.35,
             dying: false,
           });
         }
@@ -155,26 +198,46 @@ export const InversionChamber: React.FC = () => {
 
       particlesRef.current = alive.filter((p) => p.alpha > 0.01);
 
+      const concentration = Math.min(500, Math.round((em / mh) * 1000));
+      const bandColor = getBand(concentration).color;
+
       ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
 
-      ctx.fillStyle = '#ffffff';
+      const skyGradient = ctx.createLinearGradient(0, 0, 0, groundY);
+      skyGradient.addColorStop(0, '#f8fafc');
+      skyGradient.addColorStop(0.6, hexToRgba(bandColor, 0.08));
+      skyGradient.addColorStop(1, hexToRgba(bandColor, 0.14));
+      ctx.fillStyle = skyGradient;
       ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+
+      const vignette = ctx.createRadialGradient(CANVAS_W / 2, groundY * 0.5, 20, CANVAS_W / 2, groundY * 0.5, CANVAS_W * 0.9);
+      vignette.addColorStop(0, hexToRgba(bandColor, 0.08));
+      vignette.addColorStop(1, 'rgba(255,255,255,0)');
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, CANVAS_W, groundY);
 
       particlesRef.current.forEach((p) => {
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 1.6, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(0,0,0,${p.alpha})`;
+        ctx.arc(p.x, p.y, 1.9, 0, Math.PI * 2);
+        ctx.fillStyle = hexToRgba(bandColor, p.alpha * 0.8);
         ctx.fill();
       });
 
-      const lidGradient = ctx.createLinearGradient(0, currentLidY - 22, 0, currentLidY + 22);
-      lidGradient.addColorStop(0, 'rgba(0,0,0,0)');
-      lidGradient.addColorStop(0.5, 'rgba(0,0,0,0.28)');
-      lidGradient.addColorStop(1, 'rgba(0,0,0,0)');
+      ctx.save();
+      ctx.shadowColor = hexToRgba(bandColor, 0.6);
+      ctx.shadowBlur = 10;
+      const lidGradient = ctx.createLinearGradient(0, currentLidY - 3, 0, currentLidY + 3);
+      lidGradient.addColorStop(0, hexToRgba(bandColor, 0));
+      lidGradient.addColorStop(0.5, hexToRgba(bandColor, 0.75));
+      lidGradient.addColorStop(1, hexToRgba(bandColor, 0));
       ctx.fillStyle = lidGradient;
-      ctx.fillRect(0, currentLidY - 22, CANVAS_W, 44);
+      ctx.fillRect(0, currentLidY - 3, CANVAS_W, 6);
+      ctx.restore();
 
-      ctx.fillStyle = '#000000';
+      const groundGradient = ctx.createLinearGradient(0, groundY, 0, CANVAS_H);
+      groundGradient.addColorStop(0, hexToRgba(bandColor, 0.35));
+      groundGradient.addColorStop(1, hexToRgba(bandColor, 0.55));
+      ctx.fillStyle = groundGradient;
       ctx.fillRect(0, groundY, CANVAS_W, CANVAS_H - groundY);
 
       rafRef.current = requestAnimationFrame(step);
@@ -193,74 +256,99 @@ export const InversionChamber: React.FC = () => {
   const lidYpx = heightToY(mixingHeight);
 
   return (
-    <section className="ic-root bg-white px-6 py-16 md:px-12">
+    <section className="ic-root bg-transparent px-6 py-10 md:px-12">
       <style>{`
         .ic-root input[type="range"] {
           -webkit-appearance: none;
           appearance: none;
           width: 100%;
-          height: 1px;
-          background: rgba(0,0,0,0.35);
+          height: 6px;
+          border-radius: 9999px;
         }
         .ic-root input[type="range"]::-webkit-slider-thumb {
           -webkit-appearance: none;
-          width: 14px;
-          height: 14px;
+          width: 16px;
+          height: 16px;
           border-radius: 50%;
-          background: #000000;
+          background: ${band.color};
+          box-shadow: 0 2px 8px rgba(15,36,55,0.25);
           cursor: pointer;
-          margin-top: -6.5px;
         }
         .ic-root input[type="range"]::-moz-range-thumb {
-          width: 14px;
-          height: 14px;
+          width: 16px;
+          height: 16px;
           border-radius: 50%;
           border: none;
-          background: #000000;
+          background: ${band.color};
+          box-shadow: 0 2px 8px rgba(15,36,55,0.25);
           cursor: pointer;
-        }
-        .ic-root input[type="range"]::-moz-range-track {
-          height: 1px;
-          background: rgba(0,0,0,0.35);
         }
       `}</style>
 
-      <div className="mx-auto max-w-5xl">
-        <p className="font-mono text-xs uppercase tracking-[0.3em] text-black">
+      <div className="mx-auto max-w-[61rem]">
+        <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: band.color }}>
           The Inversion Chamber
         </p>
 
         <div className="mt-8 flex flex-col gap-10 md:flex-row md:items-start">
-          <div className="relative shrink-0 self-center border border-black md:self-start">
-            <canvas ref={canvasRef} width={CANVAS_W} height={CANVAS_H} />
+          <div
+            className="relative shrink-0 self-center overflow-hidden rounded-2xl border md:self-start"
+            style={{ borderColor: 'var(--ss-border)', boxShadow: '0 8px 24px rgba(15,36,55,0.1)' }}
+          >
+            <canvas
+              ref={canvasRef}
+              width={CANVAS_W}
+              height={CANVAS_H}
+              style={{ cursor: 'ns-resize', touchAction: 'none', display: 'block' }}
+              onPointerDown={(e) => {
+                draggingRef.current = true;
+                (e.target as HTMLCanvasElement).setPointerCapture(e.pointerId);
+                handleCanvasPointer(e.clientY);
+              }}
+              onPointerMove={(e) => {
+                if (draggingRef.current) handleCanvasPointer(e.clientY);
+              }}
+              onPointerUp={() => {
+                draggingRef.current = false;
+              }}
+              onPointerLeave={() => {
+                draggingRef.current = false;
+              }}
+            />
             <div
-              className="pointer-events-none absolute left-2 right-2 font-mono text-sm font-semibold leading-snug text-black transition-opacity duration-[1400ms]"
+              className="pointer-events-none absolute left-2 right-2 text-sm font-semibold leading-snug"
               style={{
                 top: Math.max(6, lidYpx - 34),
                 opacity: hasSeenLowLid ? 1 : 0,
+                color: 'var(--ss-text)',
+                transition: 'opacity 1400ms',
+                textShadow: '0 1px 4px rgba(255,255,255,0.8)',
               }}
             >
               Same emissions. Less air to hold them.
+            </div>
+            <div className="pointer-events-none absolute bottom-2 left-2 right-2 text-center text-[10px] uppercase tracking-[0.15em]" style={{ color: 'var(--ss-muted)' }}>
+              Drag inside the chamber to move the ceiling
             </div>
           </div>
 
           <div className="flex w-full flex-col gap-8">
             <div>
-              <div className="font-mono text-6xl font-bold leading-none" style={{ color: band.color }}>
+              <div className="text-6xl font-black leading-none" style={{ color: band.color }}>
                 {displayValue}
                 {overflow ? '+' : ''}
               </div>
-              <div className="mt-2 font-mono text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: band.color }}>
+              <div className="mt-2 text-sm font-semibold uppercase tracking-[0.2em]" style={{ color: band.color }}>
                 {band.label}
               </div>
             </div>
 
-            <div className="border-t border-black" />
+            <div className="border-t" style={{ borderColor: 'var(--ss-border)' }} />
 
             <div>
-              <div className="flex items-baseline justify-between font-mono text-sm uppercase tracking-[0.2em] text-black">
+              <div className="flex items-baseline justify-between text-sm uppercase tracking-[0.2em]" style={{ color: 'var(--ss-muted)' }}>
                 <span>Emissions</span>
-                <span className="text-lg font-bold text-black">{emissions}</span>
+                <span className="text-lg font-bold" style={{ color: band.color }}>{emissions}</span>
               </div>
               <input
                 className="mt-4"
@@ -268,14 +356,18 @@ export const InversionChamber: React.FC = () => {
                 min={0}
                 max={100}
                 value={emissions}
-                onChange={(e) => setEmissions(Number(e.target.value))}
+                onChange={(e) => {
+                  setPlayingPresets(false);
+                  setEmissions(Number(e.target.value));
+                }}
+                style={{ background: `linear-gradient(90deg, ${band.color} 0%, ${band.color} ${emissions}%, rgba(148,163,184,0.28) ${emissions}%, rgba(148,163,184,0.28) 100%)` }}
               />
             </div>
 
             <div>
-              <div className="flex items-baseline justify-between font-mono text-sm uppercase tracking-[0.2em] text-black">
+              <div className="flex items-baseline justify-between text-sm uppercase tracking-[0.2em]" style={{ color: 'var(--ss-muted)' }}>
                 <span>Mixing height</span>
-                <span className="text-lg font-bold text-black">{mixingHeight}m</span>
+                <span className="text-lg font-bold" style={{ color: band.color }}>{mixingHeight}m</span>
               </div>
               <input
                 className="mt-4"
@@ -283,55 +375,75 @@ export const InversionChamber: React.FC = () => {
                 min={150}
                 max={2000}
                 value={mixingHeight}
-                onChange={(e) => setMixingHeight(Number(e.target.value))}
+                onChange={(e) => {
+                  setPlayingPresets(false);
+                  setMixingHeight(Number(e.target.value));
+                }}
+                style={{
+                  background: `linear-gradient(90deg, ${band.color} 0%, ${band.color} ${((mixingHeight - 150) / (2000 - 150)) * 100}%, rgba(148,163,184,0.28) ${((mixingHeight - 150) / (2000 - 150)) * 100}%, rgba(148,163,184,0.28) 100%)`,
+                }}
               />
             </div>
 
-            <div className="border-t border-black" />
+            <div className="border-t" style={{ borderColor: 'var(--ss-border)' }} />
 
-            <div className="flex flex-wrap gap-3">
+            <div className="flex flex-wrap items-center gap-3">
               {PRESETS.map((preset) => {
                 const presetConcentration = Math.min(500, Math.round((preset.emissions / preset.height) * 1000));
                 const presetBand = getBand(presetConcentration);
+                const isActive = !playingPresets && emissions === preset.emissions && mixingHeight === preset.height;
                 return (
                   <button
                     key={preset.label}
                     type="button"
                     onClick={() => {
+                      setPlayingPresets(false);
                       setEmissions(preset.emissions);
                       setMixingHeight(preset.height);
                       fetchExplanation(preset.key, preset.emissions, preset.height);
                     }}
-                    style={{ borderColor: presetBand.color, color: presetBand.color }}
-                    className="border-2 bg-white px-3 py-1.5 font-mono text-xs font-semibold uppercase tracking-[0.15em] transition-colors hover:text-white"
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = presetBand.color;
-                      e.currentTarget.style.color = '#ffffff';
+                    style={{
+                      color: isActive ? '#ffffff' : presetBand.color,
+                      backgroundColor: isActive ? presetBand.color : hexToRgba(presetBand.color, 0.12),
+                      border: `1.5px solid ${isActive ? presetBand.color : hexToRgba(presetBand.color, 0.3)}`,
                     }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = '#ffffff';
-                      e.currentTarget.style.color = presetBand.color;
-                    }}
+                    className="rounded-full px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] transition-all"
                   >
                     {preset.label}
                   </button>
                 );
               })}
+              <button
+                type="button"
+                onClick={() => setPlayingPresets((p) => !p)}
+                className="rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-[0.1em] transition-all"
+                style={{
+                  backgroundColor: playingPresets ? 'rgba(255,255,255,0.7)' : band.color,
+                  color: playingPresets ? band.color : '#ffffff',
+                  border: `1.5px solid ${band.color}`,
+                }}
+                aria-pressed={playingPresets}
+              >
+                {playingPresets ? '❚❚ Stop' : '▶ Cycle presets'}
+              </button>
             </div>
 
-            <div className="border-2 border-l-[6px] border-black bg-white p-4" style={{ borderLeftColor: band.color }}>
+            <div
+              className="rounded-2xl border-l-[6px] bg-white/70 p-4"
+              style={{ borderColor: 'var(--ss-border)', borderLeftColor: band.color }}
+            >
               {explainLoading && (
-                <p className="font-mono text-xs uppercase tracking-[0.15em] text-black">
+                <p className="text-xs uppercase tracking-[0.15em]" style={{ color: 'var(--ss-muted)' }}>
                   Generating…
                 </p>
               )}
               {!explainLoading && explainError && (
-                <p className="font-mono text-xs text-black">{explainError}</p>
+                <p className="text-xs" style={{ color: 'var(--ss-muted)' }}>{explainError}</p>
               )}
               {!explainLoading && !explainError && howToUse && (
                 <>
-                  <p className="font-mono text-sm font-bold" style={{ color: band.color }}>{howToUse}</p>
-                  <p className="mt-2 font-mono text-sm leading-relaxed text-slate-800">
+                  <p className="text-sm font-bold" style={{ color: band.color }}>{howToUse}</p>
+                  <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--ss-text)' }}>
                     {description}
                   </p>
                 </>

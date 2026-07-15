@@ -1,8 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { storyAPI } from '../services/api';
+import { AgenticTypingDots } from './AgenticTypingDots';
 
-const TEXT = '#3a3733';
-const MUTED = '#8b8780';
+const TEXT = 'var(--ss-text)';
+const MUTED = 'var(--ss-muted)';
+const PANEL_BG = 'rgba(255,255,255,0.86)';
 const SERIF = "Georgia, 'Iowan Old Style', 'Palatino Linotype', serif";
 
 const FALLBACK_FACTS = [
@@ -23,46 +25,27 @@ const FALLBACK_DETAILS = [
   "So on a good day, the quiet itself is the story - nothing to smell means there's nothing to notice.",
 ];
 
-const NODE_COLORS = [
-  { fill: '#8fa77c', glow: 'rgba(143,167,124,0.35)' },
-  { fill: '#c9a86a', glow: 'rgba(201,168,106,0.35)' },
-  { fill: '#c17f5e', glow: 'rgba(193,127,94,0.32)' },
-  { fill: '#5b9aa8', glow: 'rgba(91,154,168,0.32)' },
-  { fill: '#c9a86a', glow: 'rgba(201,168,106,0.3)' },
-  { fill: '#8fa77c', glow: 'rgba(143,167,124,0.3)' },
+// Light, glassy tints - colourful but airy, so the card row feels like frosted glass sitting
+// on the page's own background rather than a block of solid, opaque colour.
+const CARD_THEMES = [
+  { from: 'rgba(251,113,133,0.28)', to: 'rgba(244,63,94,0.16)', glow: 'rgba(251,113,133,0.25)', accent: '#e11d48' },
+  { from: 'rgba(251,191,36,0.28)', to: 'rgba(245,158,11,0.16)', glow: 'rgba(251,191,36,0.25)', accent: '#b45309' },
+  { from: 'rgba(52,211,153,0.28)', to: 'rgba(5,150,105,0.16)', glow: 'rgba(52,211,153,0.25)', accent: '#047857' },
+  { from: 'rgba(56,189,248,0.28)', to: 'rgba(2,132,199,0.16)', glow: 'rgba(56,189,248,0.25)', accent: '#0369a1' },
+  { from: 'rgba(167,139,250,0.28)', to: 'rgba(124,58,237,0.16)', glow: 'rgba(167,139,250,0.25)', accent: '#6d28d9' },
+  { from: 'rgba(251,146,60,0.28)', to: 'rgba(234,88,12,0.16)', glow: 'rgba(251,146,60,0.25)', accent: '#c2410c' },
 ];
 
-const HUB = { x: 50, y: 50 };
-const NODE_COUNT = 6;
-const RADIUS = 38;
-
-function nodePosition(index: number) {
-  const angle = (index / NODE_COUNT) * 2 * Math.PI - Math.PI / 2;
-  return {
-    x: HUB.x + RADIUS * Math.cos(angle),
-    y: HUB.y + RADIUS * Math.sin(angle),
-  };
-}
-
-const TypingDots: React.FC = () => (
-  <span className="sttb-typing" aria-label="thinking">
-    <span />
-    <span />
-    <span />
-  </span>
-);
-
 export const SmallThingsThatHold: React.FC = () => {
-  // Start populated with the fallback facts and already visible, so the graph (rings, hub, and
-  // bubbles) renders immediately instead of waiting on the Ollama round trip - a slow or queued
-  // generation used to leave only the centre hub on screen for several seconds. AI-generated
-  // facts quietly swap in over the fallback text once they arrive.
+  // Start populated with the fallback facts and already visible, so the row of cards renders
+  // immediately instead of waiting on the Ollama round trip. AI-generated facts quietly swap in
+  // over the fallback text once they arrive.
   const [facts, setFacts] = useState<string[]>(FALLBACK_FACTS);
-  const [visible, setVisible] = useState(true);
   const [selected, setSelected] = useState<number | null>(null);
   const [details, setDetails] = useState<Record<number, string>>({});
   const [loadingIndex, setLoadingIndex] = useState<number | null>(null);
   const requestIds = useRef<Record<number, number>>({});
+  const trackRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -107,108 +90,87 @@ export const SmallThingsThatHold: React.FC = () => {
       });
   };
 
+  const scrollByCard = (dir: 1 | -1) => {
+    const track = trackRef.current;
+    if (!track) return;
+    const card = track.querySelector<HTMLElement>('[data-sttb-card]');
+    const step = (card?.offsetWidth ?? 220) + 16;
+    track.scrollBy({ left: dir * step, behavior: 'smooth' });
+  };
+
   return (
-    <div className="flex flex-col items-center gap-10 md:flex-row md:items-start">
-      <div className="relative mx-auto shrink-0" style={{ height: '460px', width: '100%', maxWidth: '460px' }}>
-        <svg
-          viewBox="0 0 100 100"
-          className="pointer-events-none absolute inset-0 h-full w-full"
-          style={{ opacity: visible ? 1 : 0, transition: 'opacity 600ms' }}
-          aria-hidden="true"
+    <div>
+      <div className="flex items-center gap-3">
+        <button
+          type="button"
+          onClick={() => scrollByCard(-1)}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg transition-transform hover:scale-110"
+          style={{ backgroundColor: 'rgba(255,255,255,0.9)', border: '1px solid var(--ss-border)', color: TEXT }}
+          aria-label="Scroll left"
         >
-          {NODE_COLORS.map((_, index) => {
-            const pos = nodePosition(index);
-            const next = nodePosition((index + 1) % NODE_COUNT);
-            const isActiveSpoke = selected === index;
+          ‹
+        </button>
+
+        <div
+          ref={trackRef}
+          className="sttb-track flex flex-1 gap-4 overflow-x-auto px-1 py-3"
+          style={{ scrollSnapType: 'x mandatory' }}
+        >
+          {CARD_THEMES.map((theme, index) => {
+            const isSelected = selected === index;
             return (
-              <g key={`ring-${index}`}>
-                <line
-                  x1={pos.x}
-                  y1={pos.y}
-                  x2={next.x}
-                  y2={next.y}
-                  stroke="rgba(139,135,128,0.22)"
-                  strokeWidth={0.4}
-                />
-                <line
-                  x1={HUB.x}
-                  y1={HUB.y}
-                  x2={pos.x}
-                  y2={pos.y}
-                  stroke={isActiveSpoke ? NODE_COLORS[index].fill : 'rgba(139,135,128,0.28)'}
-                  strokeWidth={isActiveSpoke ? 0.9 : 0.4}
-                  className={isActiveSpoke ? 'sttb-spoke-active' : ''}
-                />
-              </g>
+              <button
+                key={index}
+                type="button"
+                data-sttb-card
+                onClick={() => handleSelect(index)}
+                className="sttb-card flex shrink-0 flex-col justify-between rounded-2xl px-5 py-5 text-left backdrop-blur-md transition-transform"
+                style={{
+                  width: 230,
+                  minHeight: 160,
+                  scrollSnapAlign: 'start',
+                  background: `linear-gradient(150deg, ${theme.from} 0%, ${theme.to} 100%)`,
+                  boxShadow: isSelected ? `0 14px 32px ${theme.glow}` : `0 6px 18px ${theme.glow}`,
+                  transform: isSelected ? 'translateY(-6px) scale(1.02)' : 'translateY(0) scale(1)',
+                  border: isSelected ? `2px solid ${theme.accent}55` : '2px solid rgba(255,255,255,0.5)',
+                  cursor: 'pointer',
+                }}
+                aria-pressed={isSelected}
+              >
+                <span className="text-sm font-semibold leading-snug" style={{ fontFamily: SERIF, color: TEXT }}>
+                  {facts[index] || FALLBACK_FACTS[index]}
+                </span>
+                <span className="mt-4 text-xs font-bold uppercase tracking-widest" style={{ color: theme.accent }}>
+                  {isSelected ? 'Selected' : 'Tap to open'}
+                </span>
+              </button>
             );
           })}
-        </svg>
+        </div>
 
         <button
           type="button"
-          className="sttb-hub absolute flex items-center justify-center rounded-full text-center shadow-[0_6px_20px_rgba(58,55,51,0.18)]"
-          style={{
-            width: 96,
-            height: 96,
-            top: `${HUB.y}%`,
-            left: `${HUB.x}%`,
-            transform: 'translate(-50%, -50%)',
-            background: 'radial-gradient(circle at 35% 30%, #fff 0%, #eef0eb 70%)',
-            border: '1.5px solid rgba(58,55,51,0.15)',
-          }}
-          aria-label="Small things that hold - centre"
+          onClick={() => scrollByCard(1)}
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-lg transition-transform hover:scale-110"
+          style={{ backgroundColor: 'rgba(255,255,255,0.9)', border: '1px solid var(--ss-border)', color: TEXT }}
+          aria-label="Scroll right"
         >
-          <span className="px-2 text-xs font-semibold uppercase tracking-[0.1em]" style={{ color: MUTED }}>
-            What holds
-          </span>
+          ›
         </button>
-
-        {NODE_COLORS.map((color, index) => {
-          const pos = nodePosition(index);
-          const isSelected = selected === index;
-          return (
-            <button
-              key={index}
-              type="button"
-              onClick={() => handleSelect(index)}
-              className="sttb-bubble absolute flex items-center justify-center rounded-full text-center transition-all"
-              style={{
-                width: 118,
-                height: 118,
-                top: `${pos.y}%`,
-                left: `${pos.x}%`,
-                transform: 'translate(-50%, -50%)',
-                background: `radial-gradient(circle at 32% 28%, #fff 0%, ${color.glow} 55%, ${color.fill}55 100%)`,
-                opacity: visible ? 1 : 0,
-                transitionDuration: '600ms',
-                transitionDelay: `${index * 150}ms`,
-                border: isSelected ? `2px solid ${color.fill}` : '2px solid rgba(255,255,255,0.6)',
-                boxShadow: isSelected
-                  ? `0 10px 26px ${color.glow}`
-                  : '0 4px 14px rgba(58,55,51,0.1)',
-                cursor: 'pointer',
-                zIndex: isSelected ? 5 : 1,
-              }}
-            >
-              <span
-                className="sttb-text px-4 text-sm leading-snug transition-colors duration-300"
-                style={{ fontFamily: SERIF, color: TEXT }}
-              >
-                {facts[index] || FALLBACK_FACTS[index]}
-              </span>
-            </button>
-          );
-        })}
       </div>
 
-      <div className="w-full max-w-sm text-left">
-        <div className="min-h-[160px] rounded-2xl bg-slate-50 px-5 py-4">
+      <div className="mt-2 text-center text-xs" style={{ color: MUTED }}>
+        Drag, scroll, or use the arrows - tap a card to sit with it a little longer.
+      </div>
+
+      <div className="mx-auto mt-5 w-full max-w-xl text-left">
+        <div className="min-h-[120px] rounded-2xl px-5 py-4" style={{ backgroundColor: PANEL_BG, border: '1px solid var(--ss-border)' }}>
           {selected === null && (
             <div className="text-base" style={{ color: MUTED }}>
-              Click a memory to sit with it a little longer.
+              Click a memory above to sit with it a little longer.
             </div>
           )}
-          {selected !== null && loadingIndex === selected && <TypingDots />}
+          {selected !== null && loadingIndex === selected && <AgenticTypingDots />}
           {selected !== null && loadingIndex !== selected && (
             <div className="text-lg leading-relaxed" style={{ fontFamily: SERIF, color: TEXT }}>
               {details[selected]}
@@ -218,47 +180,18 @@ export const SmallThingsThatHold: React.FC = () => {
       </div>
 
       <style>{`
-        .sttb-bubble {
-          animation-name: sttb-pulse;
-          animation-duration: 5s;
-          animation-timing-function: ease-in-out;
-          animation-iteration-count: infinite;
+        .sttb-track {
+          scrollbar-width: thin;
         }
-        .sttb-bubble:hover {
-          transform: translate(-50%, -50%) scale(1.06);
+        .sttb-track::-webkit-scrollbar {
+          height: 6px;
         }
-        .sttb-bubble:hover .sttb-text {
-          color: #14130f;
+        .sttb-track::-webkit-scrollbar-thumb {
+          background: rgba(148,163,184,0.4);
+          border-radius: 9999px;
         }
-        @keyframes sttb-pulse {
-          0%, 100% { transform: translate(-50%, -50%) scale(1); }
-          50% { transform: translate(-50%, -50%) scale(1.03); }
-        }
-        .sttb-hub {
-          animation: sttb-hub-glow 3.5s ease-in-out infinite;
-        }
-        @keyframes sttb-hub-glow {
-          0%, 100% { box-shadow: 0 6px 20px rgba(58,55,51,0.18); }
-          50% { box-shadow: 0 8px 28px rgba(14,165,233,0.22); }
-        }
-        .sttb-spoke-active {
-          stroke-dasharray: 2 1.4;
-          animation: sttb-flow 1.2s linear infinite;
-        }
-        @keyframes sttb-flow {
-          to { stroke-dashoffset: -6.8; }
-        }
-        .sttb-typing { display: inline-flex; gap: 4px; align-items: center; height: 24px; }
-        .sttb-typing span {
-          width: 6px; height: 6px; border-radius: 50%;
-          background-color: #94a3b8;
-          animation: sttb-bounce 1.2s infinite ease-in-out;
-        }
-        .sttb-typing span:nth-child(2) { animation-delay: 0.15s; }
-        .sttb-typing span:nth-child(3) { animation-delay: 0.3s; }
-        @keyframes sttb-bounce {
-          0%, 80%, 100% { transform: translateY(0); opacity: 0.4; }
-          40% { transform: translateY(-4px); opacity: 1; }
+        .sttb-card:hover {
+          transform: translateY(-4px) scale(1.02);
         }
       `}</style>
     </div>

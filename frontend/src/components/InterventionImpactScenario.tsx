@@ -1,9 +1,28 @@
 import React, { useMemo, useState } from 'react';
-import { CauseKey, CITIES, CityMix } from './SourceMixComparator';
+import { CauseKey, CityMix } from './SourceMixComparator';
 import { useOllamaText } from './useOllamaText';
 import { OllamaCommentaryBody } from './OllamaCommentary';
 
 type InterventionKey = 'ev' | 'kiln' | 'industry' | 'cropBan' | 'dust';
+type PollutionTier = 'best' | 'medium' | 'worst';
+
+// Two cities per tier so the scenario tool spans the full spectrum (cleanest to most polluted),
+// not just five uniformly high-PM2.5 cities as before. Worst-tier rows reuse the same PM2.5 and
+// cause-mix figures as Delhi/Lahore in SourceMixComparator's CITIES for consistency.
+const SCENARIO_CITIES: (CityMix & { tier: PollutionTier })[] = [
+  { id: 'zurich', name: 'Zurich', pm25: 8, tier: 'best', transport: 40, kilns: 0, industry: 20, crop: 5, other: 35 },
+  { id: 'hobart', name: 'Hobart', pm25: 9, tier: 'best', transport: 35, kilns: 0, industry: 15, crop: 10, other: 40 },
+  { id: 'mexicocity', name: 'Mexico City', pm25: 45, tier: 'medium', transport: 42, kilns: 5, industry: 25, crop: 8, other: 20 },
+  { id: 'bangkok', name: 'Bangkok', pm25: 38, tier: 'medium', transport: 38, kilns: 4, industry: 22, crop: 18, other: 18 },
+  { id: 'lahore', name: 'Lahore', pm25: 150, tier: 'worst', transport: 35, kilns: 17, industry: 28, crop: 8, other: 12 },
+  { id: 'delhi', name: 'Delhi', pm25: 170, tier: 'worst', transport: 28, kilns: 12, industry: 14, crop: 34, other: 12 },
+];
+
+const TIER_COLORS: Record<PollutionTier, string> = {
+  best: '#16a34a',
+  medium: '#d97706',
+  worst: '#dc2626',
+};
 
 const INTERVENTIONS: { key: InterventionKey; label: string; cause: CauseKey; effect: number }[] = [
   { key: 'ev', label: 'EV shift', cause: 'transport', effect: 0.6 },
@@ -31,11 +50,11 @@ Write 2 to 3 sentences of direct, structural analyst commentary on what this com
 }
 
 export const InterventionImpactScenario: React.FC = () => {
-  const [cityId, setCityId] = useState(CITIES[1].id);
+  const [cityId, setCityId] = useState(SCENARIO_CITIES[2].id);
   const [active, setActive] = useState<InterventionKey[]>([]);
   const [interacted, setInteracted] = useState(false);
 
-  const city = useMemo(() => CITIES.find((c) => c.id === cityId) || CITIES[0], [cityId]);
+  const city = useMemo(() => SCENARIO_CITIES.find((c) => c.id === cityId) || SCENARIO_CITIES[0], [cityId]);
 
   const projected = useMemo(() => {
     let value = city.pm25;
@@ -66,30 +85,34 @@ export const InterventionImpactScenario: React.FC = () => {
   const whoPct = (WHO_GUIDELINE / SCALE_MAX) * 100;
 
   return (
-    <div className="rounded-3xl border border-indigo-400/40 bg-gradient-to-br from-blue-600/15 via-indigo-500/10 to-purple-600/15 p-6 shadow-xl shadow-indigo-500/10 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl md:p-8">
+    <div className="mx-auto w-full max-w-[61rem] px-6 md:px-10">
       <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">Intervention scenario</p>
       <h4 className="mt-2 text-2xl font-extrabold md:text-3xl" style={{ color: '#1e3a5f' }}>
         How far can policy actually move the number?
       </h4>
       <p className="mt-2 text-base leading-relaxed text-slate-600">
         Toggle interventions for one city and watch the projected PM2.5 move against the WHO guideline.
+        Cities span the full range - two of the cleanest, two mid-range, and two of the most polluted.
       </p>
 
       <div className="mt-6 flex flex-wrap gap-2">
-        {CITIES.map((c) => (
-          <button
-            key={c.id}
-            type="button"
-            onClick={() => selectCity(c.id)}
-            className={`rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${
-              c.id === cityId
-                ? 'border-indigo-500 bg-indigo-500 text-white'
-                : 'border-blue-200 bg-white text-slate-600 hover:border-indigo-300'
-            }`}
-          >
-            {c.name}
-          </button>
-        ))}
+        {SCENARIO_CITIES.map((c) => {
+          const on = c.id === cityId;
+          const tierColor = TIER_COLORS[c.tier];
+          return (
+            <button
+              key={c.id}
+              type="button"
+              onClick={() => selectCity(c.id)}
+              className={`flex items-center gap-2 rounded-full border px-3 py-1.5 text-sm font-semibold transition-colors ${
+                on ? 'border-indigo-500 bg-indigo-500 text-white' : 'border-blue-200 bg-white text-slate-600 hover:border-indigo-300'
+              }`}
+            >
+              <span className="h-2 w-2 shrink-0 rounded-full" style={{ backgroundColor: tierColor }} />
+              {c.name}
+            </button>
+          );
+        })}
       </div>
 
       <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">

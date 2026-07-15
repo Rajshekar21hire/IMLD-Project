@@ -48,6 +48,14 @@ def create_app():
         if AirQualityData.query.count() == 0:
             _load_csv_data(app)
 
+        # Auto-load pre-generated Ollama narratives if the cache is empty. This is what lets a
+        # fresh clone/Docker container with no Ollama installed still serve real AI-generated
+        # content on first request instead of falling back to filler text for everything - see
+        # backend/scripts/warm_ollama_cache.py for how the seed file is produced.
+        from app.models import CachedNarrative
+        if CachedNarrative.query.count() == 0:
+            _load_ollama_cache_seed(app)
+
     return app
 
 
@@ -211,3 +219,44 @@ def _load_csv_data(app):
     except Exception as e:
         db.session.rollback()
         print(f"✗ Error loading CSV data: {str(e)}")
+
+
+def _load_ollama_cache_seed(app):
+    """Load pre-generated Ollama narratives from the committed seed file on startup.
+
+    Produced by running backend/scripts/warm_ollama_cache.py once against a real local Ollama.
+    Without this, a fresh database (any new clone, any fresh Docker container) starts with an
+    empty cache and depends on Ollama being reachable for every single AI-driven section on
+    first load - which isn't true for anyone who doesn't have Ollama installed locally. Every
+    route still tries a live Ollama call first and only falls back to this seed data (or, on a
+    miss, deterministic fallback text) after that fails.
+    """
+    import json
+    from app.models import CachedNarrative
+
+    seed_path = os.path.join(os.path.dirname(__file__), 'data', 'ollama_cache_seed.json')
+    if not os.path.exists(seed_path):
+        print(f"Note: no Ollama cache seed found at {seed_path} - AI sections will populate as Ollama is used.")
+        return
+
+    try:
+        with open(seed_path, 'r', encoding='utf-8') as f:
+            seed = json.load(f)
+
+        loaded = 0
+        for cache_key, entry in seed.items():
+            payload = entry.get('payload')
+            if payload is None:
+                continue
+            db.session.add(CachedNarrative(
+                cache_key=cache_key,
+                payload=payload,
+                provider=entry.get('provider') or 'ollama',
+            ))
+            loaded += 1
+
+        db.session.commit()
+        print(f"Ollama cache seed loaded: {loaded} pre-generated narratives")
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error loading Ollama cache seed: {str(e)}")

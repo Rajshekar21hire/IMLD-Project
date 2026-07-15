@@ -28,8 +28,9 @@ const INTERVENTIONS: Intervention[] = [
   { id: 'emissions-monitoring', name: 'Real-time emissions monitoring & fines', category: 'industry', costMillionsUSD: 100, yearsToEffect: 1, aqiPointsRemoved: 7, mechanism: 'Installs continuous stack sensors so violations are fined the same day, not audited a year later.' },
 ];
 
-// Hardcoded panel palette - intentionally not derived from the page theme.
-const PANEL_BG = '#f5f1e8';
+// Accent palette - no full-bleed panel background any more; content sits directly on the
+// page's shared sky background, matching Source Mix / Intervention Impact, with only small
+// individual light glass cards (see below) for the chart, side panel, and draft output.
 const PANEL_TEXT = '#1c1b18';
 const AXIS_LINE = 'rgba(28,27,24,0.3)';
 const TICK_LABEL = '#3f3d38';
@@ -159,19 +160,9 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
   const yTicks = [0, 10, 20, 30, 40];
 
   return (
-    <section
-      className="il-root w-full"
-      style={{
-        background: PANEL_BG,
-        color: PANEL_TEXT,
-        padding: '48px 32px',
-      }}
-    >
-      <div className="mx-auto max-w-5xl">
-        <p
-          className="font-mono text-xs uppercase"
-          style={{ letterSpacing: '0.3em', color: LABEL_COLOR, margin: 0 }}
-        >
+    <section className="il-root w-full bg-transparent px-6 py-10 md:px-10" style={{ color: PANEL_TEXT }}>
+      <div className="mx-auto max-w-[61rem]">
+        <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: LABEL_COLOR, margin: 0 }}>
           Intervention Ledger
         </p>
         <div style={{ borderBottom: `1px solid ${PANEL_BORDER}`, marginTop: '16px', marginBottom: '32px' }} />
@@ -206,9 +197,10 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
         <div className="mt-10 flex flex-col gap-6 lg:flex-row">
           <svg
             viewBox={`0 0 ${VB_W} ${VB_H}`}
-            style={{ width: '100%', maxWidth: '640px', height: '420px', display: 'block' }}
+            className="rounded-2xl border"
+            style={{ width: '100%', maxWidth: '640px', height: '420px', display: 'block', borderColor: PANEL_BORDER, background: 'rgba(255,255,255,0.6)' }}
           >
-            <rect x={0} y={0} width={VB_W} height={VB_H} fill={PANEL_BG} />
+            <rect x={0} y={0} width={VB_W} height={VB_H} fill="transparent" />
             <line
               x1={MARGIN.left} y1={MARGIN.top} x2={MARGIN.left} y2={VB_H - MARGIN.bottom}
               stroke={AXIS_LINE} strokeWidth={1}
@@ -278,8 +270,8 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
           </svg>
 
           <div
-            className="w-full pt-4 font-mono text-sm lg:w-64 lg:pl-6 lg:pt-0"
-            style={{ borderTop: `1px solid ${PANEL_BORDER}` }}
+            className="w-full rounded-2xl border p-4 font-mono text-sm lg:w-64"
+            style={{ borderColor: PANEL_BORDER, background: 'rgba(255,255,255,0.6)' }}
           >
             {hoveredItem ? (
               <>
@@ -334,8 +326,8 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
 
           {(drafting || draftVisible || draftError) && (
             <div
-              className="mt-4 max-w-2xl p-4 font-mono text-sm leading-relaxed"
-              style={{ border: `1px solid ${PANEL_BORDER}`, color: PRIMARY_NUM }}
+              className="mt-4 max-w-2xl rounded-2xl p-4 font-mono text-sm leading-relaxed"
+              style={{ border: `1px solid ${PANEL_BORDER}`, background: 'rgba(255,255,255,0.6)', color: PRIMARY_NUM }}
             >
               {draftError && <span style={{ color: SECONDARY_TEXT }}>{draftError}</span>}
               {!draftError && (

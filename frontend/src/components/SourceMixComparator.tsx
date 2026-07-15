@@ -1,5 +1,4 @@
 import React, { useMemo, useState } from 'react';
-import { Bar, BarChart, CartesianGrid, Cell, Legend, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { useOllamaText } from './useOllamaText';
 import { OllamaCommentaryBody } from './OllamaCommentary';
 
@@ -18,12 +17,14 @@ export const CITIES: CityMix[] = [
   { id: 'ghaziabad', name: 'Ghaziabad', pm25: 158, transport: 24, kilns: 15, industry: 20, crop: 27, other: 14 },
 ];
 
+// Softer, lower-saturation pastel tones - deliberately quieter than a typical categorical
+// palette so the mix reads as calm proportions rather than an alarm-toned chart.
 const SEGMENTS: { key: CauseKey; label: string; color: string }[] = [
-  { key: 'transport', label: 'Transport', color: '#3b82f6' },
-  { key: 'kilns', label: 'Brick kilns', color: '#6366f1' },
-  { key: 'industry', label: 'Industry & power', color: '#a855f7' },
-  { key: 'crop', label: 'Crop burning', color: '#f59e0b' },
-  { key: 'other', label: 'Other', color: '#94a3b8' },
+  { key: 'transport', label: 'Transport', color: '#a8c8ec' },
+  { key: 'kilns', label: 'Brick kilns', color: '#b7b3e8' },
+  { key: 'industry', label: 'Industry & power', color: '#d3b6e3' },
+  { key: 'crop', label: 'Crop burning', color: '#f0cf8e' },
+  { key: 'other', label: 'Other', color: '#c9d1dc' },
 ];
 
 const FALLBACK =
@@ -39,79 +40,125 @@ Write 2 to 3 sentences of direct, structural analyst commentary explaining what 
 }
 
 export const SourceMixComparator: React.FC = () => {
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [hoveredId, setHoveredId] = useState<string | null>(null);
+  const [index, setIndex] = useState(0);
+  const [hoveredKey, setHoveredKey] = useState<CauseKey | null>(null);
+  const city = CITIES[index];
 
-  const activeId = hoveredId || selectedId;
-  const selectedCity = useMemo(() => CITIES.find((c) => c.id === selectedId) || null, [selectedId]);
-
-  const prompt = selectedCity ? buildPrompt(selectedCity) : null;
+  const prompt = useMemo(() => buildPrompt(city), [city]);
   const { text, status } = useOllamaText(prompt, FALLBACK);
 
-  // Convert each cause's share (%) to its absolute µg/m³ contribution so bar height reflects
-  // both the city's total PM2.5 and its internal mix - not just a flat 100%-stacked share.
-  const chartData = useMemo(
-    () =>
-      CITIES.map((city) => ({
-        ...city,
-        transport: (city.transport / 100) * city.pm25,
-        kilns: (city.kilns / 100) * city.pm25,
-        industry: (city.industry / 100) * city.pm25,
-        crop: (city.crop / 100) * city.pm25,
-        other: (city.other / 100) * city.pm25,
-      })),
-    []
-  );
+  const goTo = (next: number) => setIndex(((next % CITIES.length) + CITIES.length) % CITIES.length);
 
   return (
-    <div className="rounded-3xl border border-indigo-400/40 bg-gradient-to-br from-blue-600/15 via-indigo-500/10 to-purple-600/15 p-6 shadow-xl shadow-indigo-500/10 backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:shadow-2xl md:p-8">
-      <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-600">Source mix</p>
+    <div className="mx-auto w-full max-w-[61rem] px-6 md:px-10">
+      <p className="text-xs font-bold uppercase tracking-[0.2em] text-indigo-400">Source mix</p>
       <h4 className="mt-2 text-2xl font-extrabold md:text-3xl" style={{ color: '#1e3a5f' }}>
         Same ingredients, different proportions
       </h4>
       <p className="mt-2 text-base leading-relaxed text-slate-600">
-        Click a city to see how its PM2.5 breaks down across the same five root causes shared by all five.
+        Scroll or tap through the five cities - the same five causes are always present, just in different proportions.
       </p>
 
-      <div className="mt-6 h-96 w-full rounded-xl border border-blue-100 bg-white/70 p-2">
-        <ResponsiveContainer width="100%" height="100%">
-          <BarChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 10 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#e0e7ff" />
-            <XAxis dataKey="name" tick={{ fontSize: 13, fill: '#475569' }} />
-            <YAxis
-              tick={{ fontSize: 13, fill: '#475569' }}
-              label={{ value: 'µg/m³ PM2.5', angle: -90, position: 'insideLeft', fill: '#475569', fontSize: 12 }}
-            />
-            <Tooltip
-              contentStyle={{ borderRadius: 12, borderColor: '#c7d2fe', fontSize: 14 }}
-              formatter={(value: number, name: string) => [`${value.toFixed(0)} µg/m³`, name]}
-              labelFormatter={(label) => `City: ${label}`}
-            />
-            <Legend wrapperStyle={{ fontSize: 13 }} />
-            {SEGMENTS.map((seg, segIndex) => (
-              <Bar key={seg.key} dataKey={seg.key} stackId="mix" name={seg.label} radius={segIndex === SEGMENTS.length - 1 ? [10, 10, 0, 0] : undefined}>
-                {chartData.map((city) => (
-                  <Cell
-                    key={city.id}
-                    fill={seg.color}
-                    fillOpacity={!activeId || activeId === city.id ? 1 : 0.25}
-                    cursor="pointer"
-                    onClick={() => setSelectedId((current) => (current === city.id ? null : city.id))}
-                    onMouseEnter={() => setHoveredId(city.id)}
-                    onMouseLeave={() => setHoveredId(null)}
-                  />
-                ))}
-              </Bar>
-            ))}
-          </BarChart>
-        </ResponsiveContainer>
+      <div className="mt-6 flex items-center justify-center gap-3">
+        <button
+          type="button"
+          onClick={() => goTo(index - 1)}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-white text-lg text-slate-500 transition-transform hover:scale-110"
+          aria-label="Previous city"
+        >
+          ‹
+        </button>
+
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          {CITIES.map((c, i) => {
+            const active = i === index;
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setIndex(i)}
+                className="rounded-full px-3.5 py-1.5 text-sm font-semibold transition-all"
+                style={{
+                  backgroundColor: active ? '#eef2ff' : 'rgba(255,255,255,0.7)',
+                  color: active ? '#4338ca' : '#64748b',
+                  border: `1.5px solid ${active ? '#c7d2fe' : '#e2e8f0'}`,
+                }}
+                aria-pressed={active}
+              >
+                {c.name}
+              </button>
+            );
+          })}
+        </div>
+
+        <button
+          type="button"
+          onClick={() => goTo(index + 1)}
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-indigo-100 bg-white text-lg text-slate-500 transition-transform hover:scale-110"
+          aria-label="Next city"
+        >
+          ›
+        </button>
+      </div>
+
+      <input
+        type="range"
+        min={0}
+        max={CITIES.length - 1}
+        step={1}
+        value={index}
+        onChange={(e) => setIndex(Number(e.target.value))}
+        className="smc-slider mx-auto mt-4 block w-full max-w-md"
+        aria-label="Scrub through cities"
+      />
+
+      <div key={city.id} className="smc-fade mt-6 rounded-2xl border border-indigo-100 bg-white/70 p-6">
+        <div className="flex items-baseline justify-between">
+          <span className="text-lg font-bold" style={{ color: '#1e3a5f' }}>{city.name}</span>
+          <span className="text-sm text-slate-500">{city.pm25} µg/m³ total PM2.5</span>
+        </div>
+
+        <div className="mt-4 flex h-10 w-full overflow-hidden rounded-full border border-slate-100">
+          {SEGMENTS.map((seg) => {
+            const share = city[seg.key];
+            const dimmed = hoveredKey !== null && hoveredKey !== seg.key;
+            return (
+              <button
+                key={seg.key}
+                type="button"
+                onMouseEnter={() => setHoveredKey(seg.key)}
+                onMouseLeave={() => setHoveredKey(null)}
+                className="h-full transition-opacity"
+                style={{ width: `${share}%`, backgroundColor: seg.color, opacity: dimmed ? 0.35 : 1 }}
+                aria-label={`${seg.label}: ${share}% of ${city.name}'s PM2.5`}
+              />
+            );
+          })}
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-x-5 gap-y-2 text-sm">
+          {SEGMENTS.map((seg) => (
+            <button
+              key={seg.key}
+              type="button"
+              onMouseEnter={() => setHoveredKey(seg.key)}
+              onMouseLeave={() => setHoveredKey(null)}
+              className="flex items-center gap-1.5 transition-opacity"
+              style={{ opacity: hoveredKey !== null && hoveredKey !== seg.key ? 0.4 : 1 }}
+            >
+              <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: seg.color }} />
+              <span className="text-slate-600">{seg.label}</span>
+              <span className="font-semibold" style={{ color: '#1e3a5f' }}>{city[seg.key]}%</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       <div className="mt-6 flex flex-wrap items-center gap-3 text-sm">
         <span className="rounded-full bg-emerald-50 px-3 py-1 font-semibold text-emerald-700 border border-emerald-200">
           Generated by Ollama
         </span>
-        {selectedCity && <span className="text-slate-500">for {selectedCity.name}</span>}
+        <span className="text-slate-500">for {city.name}</span>
       </div>
 
       <div className="mt-3 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
@@ -119,12 +166,49 @@ export const SourceMixComparator: React.FC = () => {
           Analyst read
         </h6>
         <div className="mt-2">
-          {!selectedCity && (
-            <p className="text-base leading-relaxed text-slate-500">Select a city above to generate commentary on its source mix.</p>
-          )}
-          {selectedCity && <OllamaCommentaryBody status={status} text={text} />}
+          <OllamaCommentaryBody status={status} text={text} />
         </div>
       </div>
+
+      <style>{`
+        .smc-fade {
+          animation: smc-fade-in 350ms ease-out;
+        }
+        @keyframes smc-fade-in {
+          from { opacity: 0; transform: translateY(4px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .smc-slider {
+          -webkit-appearance: none;
+          appearance: none;
+          height: 5px;
+          border-radius: 9999px;
+          background: rgba(148,163,184,0.3);
+          outline: none;
+        }
+        .smc-slider::-webkit-slider-thumb {
+          -webkit-appearance: none;
+          appearance: none;
+          width: 16px;
+          height: 16px;
+          border-radius: 9999px;
+          background: #6366f1;
+          box-shadow: 0 2px 8px rgba(15,36,55,0.2);
+          cursor: pointer;
+        }
+        .smc-slider::-moz-range-thumb {
+          width: 16px;
+          height: 16px;
+          border: none;
+          border-radius: 9999px;
+          background: #6366f1;
+          box-shadow: 0 2px 8px rgba(15,36,55,0.2);
+          cursor: pointer;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .smc-fade { animation: none; }
+        }
+      `}</style>
     </div>
   );
 };

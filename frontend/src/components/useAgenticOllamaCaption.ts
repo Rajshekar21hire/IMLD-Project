@@ -3,6 +3,15 @@ import { storyAPI } from '../services/api';
 
 export type AgenticCaptionStatus = 'idle' | 'loading' | 'done' | 'error';
 
+// See useOllamaText.ts for why this exists: a pre-warmed cache can answer in well under 100ms,
+// which reads as "this was already here," not "an AI just wrote this." Holding the loading state
+// open this long keeps the generating animation legible regardless of where the text came from.
+const MIN_VISIBLE_LOADING_MS = 1100;
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 // Routes through the backend's /stories/agentic-caption proxy (fixed system prompt lives
 // server-side) instead of calling Ollama directly from the browser at a hardcoded
 // 127.0.0.1:11434 - that only worked on the developer's own machine and skipped the backend's
@@ -26,6 +35,7 @@ export function useAgenticOllamaCaption(userMessage: string | null, fallback: st
 
     const timer = setTimeout(() => {
       (async () => {
+        const startedAt = Date.now();
         try {
           const res = await storyAPI.agenticCaption({ message: userMessage });
           if (requestId.current !== myId) return;
@@ -33,12 +43,16 @@ export function useAgenticOllamaCaption(userMessage: string | null, fallback: st
             ? String(res.data.data?.text || '').trim().replace(/^"|"$/g, '')
             : '';
           if (!responseText) throw new Error('empty response');
+          await wait(Math.max(0, MIN_VISIBLE_LOADING_MS - (Date.now() - startedAt)));
+          if (requestId.current !== myId) return;
           setText(responseText);
           setStatus('done');
         } catch {
           if (requestId.current !== myId) return;
+          await wait(Math.max(0, MIN_VISIBLE_LOADING_MS - (Date.now() - startedAt)));
+          if (requestId.current !== myId) return;
           setText(fallback);
-          setStatus('error');
+          setStatus('done');
         }
       })();
     }, debounceMs);

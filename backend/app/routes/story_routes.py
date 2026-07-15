@@ -459,9 +459,9 @@ Rules:
 
         if not parsed or not isinstance(parsed.get('pattern_cards'), list) or len(parsed.get('pattern_cards')) == 0:
             return jsonify({
-                'success': False,
-                'error': 'The Ollama service did not return a usable narrative. Make sure Ollama is running and try again.',
-            }), 502
+                'success': True,
+                'data': {'provider': 'fallback', 'mode': mode, 'narrative': _deep_dive_narrative_fallback(mode)},
+            }), 200
 
         _set_cached_narrative(cache_key, parsed, provider_used)
 
@@ -599,9 +599,9 @@ Rules:
 
         if not interventions:
             return jsonify({
-                'success': False,
-                'error': 'The Ollama service did not return usable intervention text. Make sure Ollama is running and try again.',
-            }), 502
+                'success': True,
+                'data': {'provider': 'fallback', 'mode': mode, 'interventions': _deep_dive_interventions_fallback()},
+            }), 200
 
         _set_cached_narrative(cache_key, interventions, provider_used)
 
@@ -680,9 +680,9 @@ Rules:
 
         if not impact_stats:
             return jsonify({
-                'success': False,
-                'error': 'The Ollama service did not return usable impact text. Make sure Ollama is running and try again.',
-            }), 502
+                'success': True,
+                'data': {'provider': 'fallback', 'mode': mode, 'impact_stats': _deep_dive_impact_fallback()},
+            }), 200
 
         _set_cached_narrative(cache_key, impact_stats, provider_used)
 
@@ -801,10 +801,18 @@ Rules:
         description = (parsed or {}).get('description')
         if not isinstance(how_to_use, str) or not how_to_use.strip() or \
            not isinstance(description, str) or not description.strip():
+            fallback_payload = _inversion_chamber_fallback(preset, emissions, mixing_height, concentration, band)
             return jsonify({
-                'success': False,
-                'error': 'The Ollama service did not return usable copy. Make sure Ollama is running and try again.',
-            }), 502
+                'success': True,
+                'data': {
+                    'provider': 'fallback',
+                    'preset': preset,
+                    'concentration': concentration,
+                    'band': band,
+                    'how_to_use': fallback_payload['how_to_use'],
+                    'description': fallback_payload['description'],
+                },
+            }), 200
 
         payload = {'how_to_use': how_to_use.strip(), 'description': description.strip()}
         _set_cached_narrative(cache_key, payload, provider_used)
@@ -825,6 +833,12 @@ Rules:
 
 
 AGENTIC_CITIES = ['Delhi', 'Lahore', 'Dhaka', 'Kathmandu', 'Kolkata']
+
+# Cities for the closing "Make it about you" beat only - deliberately distinct from
+# AGENTIC_CITIES (still used by the Diurnal Ribbon) and from the monthly-bars tiered set, so the
+# whole Agentic AI section doesn't repeat the same handful of names end to end.
+AGENTIC_CLOSING_CITIES = ['Ulaanbaatar', "N'Djamena", 'Peshawar', 'Cairo', 'Jakarta', 'Vancouver', 'Helsinki']
+
 AGENTIC_FOR_WHOM = ['Myself', 'My child', 'My parents', 'Someone with asthma']
 AGENTIC_CONCERNS = ['Going outside today', 'Sleeping better', 'Cooking at home', 'The long run']
 
@@ -837,7 +851,9 @@ AGENTIC_TONE = (
 
 
 def _agentic_inputs(data):
-    city = data.get('city') if data.get('city') in AGENTIC_CITIES else AGENTIC_CITIES[0]
+    # Validated against AGENTIC_CLOSING_CITIES, not AGENTIC_CITIES - the four routes that call
+    # this helper (meaning/action/neighbours/breath) exclusively serve the closing beat.
+    city = data.get('city') if data.get('city') in AGENTIC_CLOSING_CITIES else AGENTIC_CLOSING_CITIES[0]
     for_whom = data.get('for_whom') if data.get('for_whom') in AGENTIC_FOR_WHOM else AGENTIC_FOR_WHOM[0]
     concern = data.get('concern') if data.get('concern') in AGENTIC_CONCERNS else AGENTIC_CONCERNS[0]
     return city, for_whom, concern
@@ -883,7 +899,7 @@ Return only the observation, no preamble, no quotation marks."""
             text = None
 
         if not text:
-            return jsonify({'success': False, 'error': 'The Ollama service did not respond. Make sure Ollama is running and try again.'}), 502
+            return jsonify({'success': True, 'data': {'provider': 'fallback', 'meaning': _agentic_meaning_fallback(city, for_whom, concern)}}), 200
 
         _set_cached_narrative(cache_key, {'meaning': text}, provider_used)
         return jsonify({'success': True, 'data': {'provider': provider_used, 'meaning': text}}), 200
@@ -929,7 +945,7 @@ Return only the single action, no preamble, no quotation marks, no numbering."""
             text = None
 
         if not text:
-            return jsonify({'success': False, 'error': 'The Ollama service did not respond. Make sure Ollama is running and try again.'}), 502
+            return jsonify({'success': True, 'data': {'provider': 'fallback', 'action': _agentic_action_fallback(city, for_whom, concern)}}), 200
 
         _set_cached_narrative(cache_key, {'action': text}, provider_used)
         return jsonify({'success': True, 'data': {'provider': provider_used, 'action': text}}), 200
@@ -943,7 +959,7 @@ def generate_agentic_neighbours():
     try:
         data = request.get_json() or {}
         city, for_whom, concern = _agentic_inputs(data)
-        others = [c for c in AGENTIC_CITIES if c != city][:3]
+        others = [c for c in AGENTIC_CLOSING_CITIES if c != city][:3]
         cache_key = _agentic_cache_key('neighbours', city, for_whom, concern)
 
         cached_payload, cached_provider = _get_cached_narrative(cache_key)
@@ -987,7 +1003,7 @@ Each "line" is one short sentence. No markdown fences, no extra keys."""
             isinstance(item, dict) and isinstance(item.get('city'), str) and isinstance(item.get('line'), str) and item.get('line').strip()
             for item in comparisons
         ):
-            return jsonify({'success': False, 'error': 'The Ollama service did not return usable comparisons. Make sure Ollama is running and try again.'}), 502
+            return jsonify({'success': True, 'data': {'provider': 'fallback', 'comparisons': _agentic_neighbours_fallback(city, others)}}), 200
 
         _set_cached_narrative(cache_key, {'comparisons': comparisons}, provider_used)
         return jsonify({'success': True, 'data': {'provider': provider_used, 'comparisons': comparisons}}), 200
@@ -1030,7 +1046,7 @@ Return only that one sentence, no preamble, no quotation marks."""
             text = None
 
         if not text:
-            return jsonify({'success': False, 'error': 'The Ollama service did not respond. Make sure Ollama is running and try again.'}), 502
+            return jsonify({'success': True, 'data': {'provider': 'fallback', 'phrase': _agentic_breath_fallback(city, for_whom, concern)}}), 200
 
         _set_cached_narrative(cache_key, {'phrase': text}, provider_used)
         return jsonify({'success': True, 'data': {'provider': provider_used, 'phrase': text}}), 200
@@ -1071,7 +1087,7 @@ Return only the sentence(s), no preamble, no quotation marks."""
             text = None
 
         if not text:
-            return jsonify({'success': False, 'error': 'The Ollama service did not respond. Make sure Ollama is running and try again.'}), 502
+            return jsonify({'success': True, 'data': {'provider': 'fallback', 'sentence': _agentic_air_words_fallback(city)}}), 200
 
         _set_cached_narrative(cache_key, {'sentence': text}, provider_used)
         return jsonify({'success': True, 'data': {'provider': provider_used, 'sentence': text}}), 200
@@ -1127,7 +1143,10 @@ Return only the paragraph, no preamble, no quotation marks."""
             text = None
 
         if not text:
-            return jsonify({'success': False, 'error': 'The Ollama service did not respond. Make sure Ollama is running and try again.'}), 502
+            return jsonify({
+                'success': True,
+                'data': {'provider': 'fallback', 'share': source_info['share'], 'paragraph': _agentic_help_fallback(source_info['label'])},
+            }), 200
 
         _set_cached_narrative(cache_key, {'paragraph': text}, provider_used)
         return jsonify({
@@ -1169,7 +1188,7 @@ Return only the scene, no preamble, no quotation marks."""
             text = None
 
         if not text:
-            return jsonify({'success': False, 'error': 'The Ollama service did not respond. Make sure Ollama is running and try again.'}), 502
+            return jsonify({'success': True, 'data': {'provider': 'fallback', 'scene': _agentic_good_day_fallback()}}), 200
 
         _set_cached_narrative(cache_key, {'scene': text}, provider_used)
         return jsonify({'success': True, 'data': {'provider': provider_used, 'scene': text}}), 200
@@ -1220,7 +1239,7 @@ No markdown fences, no extra keys."""
         age = (parsed or {}).get('age')
         detail = (parsed or {}).get('detail')
         if not isinstance(name, str) or not name.strip() or not isinstance(detail, str) or not detail.strip():
-            return jsonify({'success': False, 'error': 'The Ollama service did not return a usable identity. Make sure Ollama is running and try again.'}), 502
+            return jsonify({'success': True, 'data': {'provider': 'fallback', **_scale_ladder_identity_fallback()}}), 200
 
         payload = {'name': name.strip(), 'age': age if isinstance(age, int) else 34, 'detail': detail.strip()}
         _set_cached_narrative(cache_key, payload, provider_used)
@@ -1286,7 +1305,8 @@ No markdown fences, no extra keys."""
         orientation = (parsed or {}).get('orientation')
         rung_text = (parsed or {}).get('rung')
         if not isinstance(orientation, str) or not orientation.strip() or not isinstance(rung_text, str) or not rung_text.strip():
-            return jsonify({'success': False, 'error': 'The Ollama service did not return usable captions. Make sure Ollama is running and try again.'}), 502
+            fallback_payload = _scale_ladder_rung_fallback(name, rung_name, prev_rung_name, marker_findable)
+            return jsonify({'success': True, 'data': {'provider': 'fallback', **fallback_payload}}), 200
 
         payload = {'orientation': orientation.strip(), 'rung': rung_text.strip()}
         _set_cached_narrative(cache_key, payload, provider_used)
@@ -1338,7 +1358,7 @@ Rules:
         easiest = (parsed or {}).get('easiest')
         heaviest = (parsed or {}).get('heaviest')
         if not isinstance(easiest, str) or not easiest.strip() or not isinstance(heaviest, str) or not heaviest.strip():
-            return jsonify({'success': False, 'error': 'The Ollama service did not return usable labels. Make sure Ollama is running and try again.'}), 502
+            return jsonify({'success': True, 'data': {'provider': 'fallback', **_agentic_day_ribbon_fallback(city)}}), 200
 
         payload = {'easiest': easiest.strip(), 'heaviest': heaviest.strip()}
         _set_cached_narrative(cache_key, payload, provider_used)
@@ -1390,7 +1410,7 @@ coughing). No markdown fences, no extra keys."""
         timeline = (parsed or {}).get('timeline')
         required_phases = {'morning', 'midday', 'evening', 'night'}
         if not isinstance(timeline, list) or len(timeline) != 4 or {item.get('phase') for item in timeline if isinstance(item, dict)} != required_phases:
-            return jsonify({'success': False, 'error': 'The Ollama service did not return a usable timeline. Make sure Ollama is running and try again.'}), 502
+            return jsonify({'success': True, 'data': {'provider': 'fallback', 'timeline': _agentic_good_day_timeline_fallback()}}), 200
 
         _set_cached_narrative(cache_key, {'timeline': timeline}, provider_used)
         return jsonify({'success': True, 'data': {'provider': provider_used, 'timeline': timeline}}), 200
@@ -1447,7 +1467,10 @@ Return only the sentence, no preamble, no quotation marks."""
             text = None
 
         if not text:
-            return jsonify({'success': False, 'error': 'The Ollama service did not respond. Make sure Ollama is running and try again.'}), 502
+            return jsonify({
+                'success': True,
+                'data': {'provider': 'fallback', 'share': source_info['share'], 'line': _agentic_cloud_fallback(source_info['label'])},
+            }), 200
 
         _set_cached_narrative(cache_key, {'line': text}, provider_used)
         return jsonify({
@@ -1462,7 +1485,10 @@ Return only the sentence, no preamble, no quotation marks."""
 def generate_agentic_bubbles():
     """'Small things that hold' - six quiet, true, human facts about air, in a single call."""
     try:
-        cache_key = 'agentic_bubbles'
+        # v3: bumped after tightening the grounding requirement further - a stale v1/v2 cache
+        # entry would otherwise keep serving off-topic facts generated under a looser prompt
+        # forever, regardless of any prompt change made here.
+        cache_key = 'agentic_bubbles_v3'
         cached_payload, cached_provider = _get_cached_narrative(cache_key)
         if cached_payload:
             return jsonify({'success': True, 'data': {'provider': cached_provider, 'facts': cached_payload.get('facts')}}), 200
@@ -1471,16 +1497,29 @@ def generate_agentic_bubbles():
 Shape:
 {{"facts": ["...", "...", "...", "...", "...", "..."]}}
 
-Each of the 6 facts is one short, quiet, true, human sentence about air and the people living
-with it - not a tip or warning, just something that makes the problem feel human and shared.
+Topic (mandatory, every single fact): air pollution and air quality specifically - not nature in
+general, not memory, not perfume, not birds, not seeds, not weather, not any other topic. Each of
+the 6 facts must contain the word "air" (or "breath"/"breathing"/"lungs") and describe something
+true about polluted air itself: where it travels from, who breathes it and how it affects them,
+how it is measured, or what clean air feels like by contrast.
+
 {AGENTIC_TONE}
-Example style: "The air you're breathing today was somewhere else last week."
+
+Good example (about air pollution): "The air you're breathing today was somewhere else last week."
+Bad example (off-topic, do not write facts like this): "Your mother's perfume lingers in the air
+long after she's gone." (this is about memory, not air pollution)
 
 JSON:"""
 
+        AIR_KEYWORDS = ('air', 'breath', 'lung', 'smoke', 'smog', 'pollut', 'particle', 'exhaust', 'dust', 'haze')
+
+        def _is_grounded(fact):
+            lower = fact.lower()
+            return any(keyword in lower for keyword in AIR_KEYWORDS)
+
         provider_used = None
         facts = None
-        for _attempt in range(3):
+        for _attempt in range(4):
             try:
                 response_text, provider_used = chat_provider_service.generate_local_answer(
                     prompt,
@@ -1493,12 +1532,14 @@ JSON:"""
                 parsed = None
 
             candidate = (parsed or {}).get('facts')
-            if isinstance(candidate, list) and len(candidate) == 6 and all(isinstance(f, str) and f.strip() for f in candidate):
+            if isinstance(candidate, list) and len(candidate) == 6 and all(
+                isinstance(f, str) and f.strip() and _is_grounded(f) for f in candidate
+            ):
                 facts = candidate
                 break
 
         if not facts:
-            return jsonify({'success': False, 'error': 'The Ollama service did not return usable facts. Make sure Ollama is running and try again.'}), 502
+            return jsonify({'success': True, 'data': {'provider': 'fallback', 'facts': _agentic_bubbles_fallback()}}), 200
 
         _set_cached_narrative(cache_key, {'facts': facts}, provider_used)
         return jsonify({'success': True, 'data': {'provider': provider_used, 'facts': facts}}), 200
@@ -1548,7 +1589,7 @@ Return only the sentences, no preamble, no quotation marks."""
             text = None
 
         if not text:
-            return jsonify({'success': False, 'error': 'The Ollama service did not respond. Make sure Ollama is running and try again.'}), 502
+            return jsonify({'success': True, 'data': {'provider': 'fallback', 'detail': _agentic_fact_detail_fallback(fact)}}), 200
 
         _set_cached_narrative(cache_key, {'detail': text}, provider_used)
         return jsonify({
@@ -1603,7 +1644,7 @@ def generate_agentic_caption():
             text = None
 
         if not text:
-            return jsonify({'success': False, 'error': 'The Ollama service did not respond. Make sure Ollama is running and try again.'}), 502
+            return jsonify({'success': True, 'data': {'provider': 'fallback', 'text': _agentic_caption_fallback()}}), 200
 
         _set_cached_narrative(cache_key, {'text': text}, provider_used)
         return jsonify({'success': True, 'data': {'provider': provider_used, 'text': text}}), 200
@@ -1639,11 +1680,232 @@ def generate_ollama_text():
         try:
             response_text, provider_used = chat_provider_service.generate_local_answer(prompt, num_predict=num_predict)
             text = response_text.strip()
-        except Exception as e:
-            return jsonify({'success': False, 'error': str(e)}), 502
+        except Exception:
+            text = None
+            provider_used = None
 
         if not text:
-            return jsonify({'success': False, 'error': 'The Ollama service did not respond. Make sure Ollama is running and try again.'}), 502
+            return jsonify({'success': True, 'data': {'provider': 'fallback', 'text': _ollama_text_fallback()}}), 200
+
+        _set_cached_narrative(cache_key, {'text': text}, provider_used)
+        return jsonify({'success': True, 'data': {'provider': provider_used, 'text': text}}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+AGENTIC_EXPLAIN_SECTIONS = {'cigarette-equivalence', 'monthly-particle-bars', 'city-simulation'}
+
+
+@bp.route('/agentic-explain', methods=['POST'])
+def generate_agentic_explain():
+    """Generic 'what is this / how do I use it' copy generator for the three new Agentic AI
+    visualizations, mirroring the existing /inversion-chamber-explain shape ({how_to_use,
+    description}) instead of one bespoke route per new chart."""
+    try:
+        data = request.get_json() or {}
+        section = str(data.get('section', '')).strip()
+        if section not in AGENTIC_EXPLAIN_SECTIONS:
+            return jsonify({'success': False, 'error': 'Unknown section.'}), 400
+        context = str(data.get('context', '')).strip()[:2000]
+
+        cache_key = f'agentic_explain:{section}:{hashlib.sha1(context.encode("utf-8")).hexdigest()[:16]}'
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({
+                'success': True,
+                'data': {
+                    'provider': cached_provider,
+                    'how_to_use': cached_payload.get('how_to_use'),
+                    'description': cached_payload.get('description'),
+                },
+            }), 200
+
+        prompt = f"""You are writing UI copy for one interactive visualization inside an air-quality
+storytelling dashboard.
+
+Visualization: {section}
+What it shows: {context}
+
+Return valid JSON only with this exact shape:
+{{
+  "how_to_use": "...",
+  "description": "..."
+}}
+
+Rules:
+- "how_to_use" is exactly one short sentence (under 15 words) telling a first-time user how to
+  interact with it (what to click, drag, or select).
+- "description" is 1-2 sentences (under 40 words total) plainly explaining what this
+  visualization is telling the reader.
+{AGENTIC_TONE}
+- No markdown fences, no extra keys."""
+
+        provider_used = None
+        how_to_use = None
+        description = None
+        for _attempt in range(3):
+            try:
+                response_text, provider_used = chat_provider_service.generate_local_answer(
+                    prompt,
+                    model=chat_provider_service.story_ollama_model,
+                    num_predict=200,
+                    timeout_seconds=chat_provider_service.story_timeout_seconds,
+                )
+                parsed = _safe_json_loads(response_text)
+            except Exception:
+                parsed = None
+
+            candidate_how_to_use = (parsed or {}).get('how_to_use')
+            candidate_description = (parsed or {}).get('description')
+            if isinstance(candidate_how_to_use, str) and candidate_how_to_use.strip() and \
+               isinstance(candidate_description, str) and candidate_description.strip():
+                how_to_use = candidate_how_to_use
+                description = candidate_description
+                break
+
+        if not how_to_use or not description:
+            return jsonify({'success': True, 'data': {'provider': 'fallback', **_agentic_explain_fallback(section)}}), 200
+
+        payload = {'how_to_use': how_to_use.strip(), 'description': description.strip()}
+        _set_cached_narrative(cache_key, payload, provider_used)
+        return jsonify({'success': True, 'data': {'provider': provider_used, **payload}}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/agentic-cigarette-story', methods=['POST'])
+def generate_agentic_cigarette_story():
+    """'How it feels to live here' - one warm sentence translating a city's air into the
+    cigarette-equivalent framing, and (once a solution is picked) what changes."""
+    try:
+        data = request.get_json() or {}
+        city = str(data.get('city', '')).strip()[:80] or 'this city'
+        try:
+            cigarettes = max(0, int(round(float(data.get('cigarettes', 0)))))
+        except (TypeError, ValueError):
+            cigarettes = 0
+        solution_label = str(data.get('solution_label', '')).strip()[:120]
+        try:
+            reduced_cigarettes = int(round(float(data.get('reduced_cigarettes')))) if data.get('reduced_cigarettes') is not None else None
+        except (TypeError, ValueError):
+            reduced_cigarettes = None
+        try:
+            years_to_notice = int(round(float(data.get('years_to_notice')))) if data.get('years_to_notice') is not None else None
+        except (TypeError, ValueError):
+            years_to_notice = None
+
+        cache_key = 'agentic_cigarette:' + hashlib.sha1(
+            f'{city}|{cigarettes}|{solution_label}|{reduced_cigarettes}|{years_to_notice}'.encode('utf-8')
+        ).hexdigest()[:16]
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({'success': True, 'data': {'provider': cached_provider, 'text': cached_payload.get('text')}}), 200
+
+        if solution_label and reduced_cigarettes is not None:
+            prompt = f"""{AGENTIC_TONE}
+
+Breathing {city}'s air for a full day currently compares to smoking about {cigarettes}
+cigarettes, by a well-known public-health estimate. If the city adopted "{solution_label}" and
+kept it up for about {years_to_notice} years, that could fall to about {reduced_cigarettes}
+cigarettes a day.
+
+Write one encouraging sentence (about 25-35 words) that makes this improvement feel real and
+hopeful, without sounding like an ad or a guarantee.
+
+Return only the sentence, no preamble, no quotation marks."""
+        else:
+            prompt = f"""{AGENTIC_TONE}
+
+Breathing {city}'s air for a full day currently compares to smoking about {cigarettes}
+cigarettes, by a well-known public-health estimate.
+
+Write one honest, gentle sentence (about 20-30 words) that makes this number feel real without
+being frightening or preachy.
+
+Return only the sentence, no preamble, no quotation marks."""
+
+        provider_used = None
+        text = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=120,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            text = response_text.strip().strip('"')
+        except Exception:
+            text = None
+
+        if not text:
+            fallback_text = _agentic_cigarette_story_fallback(city, cigarettes, solution_label, reduced_cigarettes, years_to_notice)
+            return jsonify({'success': True, 'data': {'provider': 'fallback', 'text': fallback_text}}), 200
+
+        _set_cached_narrative(cache_key, {'text': text}, provider_used)
+        return jsonify({'success': True, 'data': {'provider': provider_used, 'text': text}}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/agentic-simulation-story', methods=['POST'])
+def generate_agentic_simulation_story():
+    """'Simulate the next years' - one warm sentence narrating the projected outcome of the
+    selected solutions after the selected number of years."""
+    try:
+        data = request.get_json() or {}
+        city = str(data.get('city', '')).strip()[:80] or 'this city'
+        try:
+            years = max(1, min(50, int(round(float(data.get('years', 10))))))
+        except (TypeError, ValueError):
+            years = 10
+        solution_labels = data.get('solution_labels')
+        if not isinstance(solution_labels, list) or not solution_labels:
+            solutions_text = 'no changes at all'
+        else:
+            solutions_text = ', '.join(str(s)[:80] for s in solution_labels[:4])
+        try:
+            start_band = str(data.get('start_band', '')).strip()[:40] or 'hazardous'
+        except Exception:
+            start_band = 'hazardous'
+        try:
+            end_band = str(data.get('end_band', '')).strip()[:40] or start_band
+        except Exception:
+            end_band = start_band
+
+        cache_key = 'agentic_simulation:' + hashlib.sha1(
+            f'{city}|{years}|{solutions_text}|{start_band}|{end_band}'.encode('utf-8')
+        ).hexdigest()[:16]
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({'success': True, 'data': {'provider': cached_provider, 'text': cached_payload.get('text')}}), 200
+
+        prompt = f"""{AGENTIC_TONE}
+
+Someone is running a {years}-year simulation for {city}, starting from air that feels
+"{start_band}" today. They chose these changes: {solutions_text}. After {years} years, the
+simulation projects the air would feel "{end_band}".
+
+Write one sentence (about 25-35 words) narrating what that shift from "{start_band}" to
+"{end_band}" over {years} years would actually mean for daily life there.
+
+Return only the sentence, no preamble, no quotation marks."""
+
+        provider_used = None
+        text = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=120,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            text = response_text.strip().strip('"')
+        except Exception:
+            text = None
+
+        if not text:
+            fallback_text = _agentic_simulation_story_fallback(city, years, solutions_text, start_band, end_band)
+            return jsonify({'success': True, 'data': {'provider': 'fallback', 'text': fallback_text}}), 200
 
         _set_cached_narrative(cache_key, {'text': text}, provider_used)
         return jsonify({'success': True, 'data': {'provider': provider_used, 'text': text}}), 200
@@ -1736,16 +1998,24 @@ Sections:
 {sections_text}
 """
 
-        response_text, provider_used = chat_provider_service.generate_local_answer(
-            humanize_prompt,
-            model=chat_provider_service.story_ollama_model,
-            num_predict=700,
-            timeout_seconds=chat_provider_service.story_timeout_seconds,
-        )
-        parsed = _safe_json_loads(response_text)
+        provider_used = 'fallback'
+        parsed = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                humanize_prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=700,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            parsed = _safe_json_loads(response_text)
+            if not parsed:
+                parsed = _parse_story_from_text(response_text, story_title, sections)
+        except Exception:
+            parsed = None
 
         if not parsed:
-            parsed = _parse_story_from_text(response_text, story_title, sections)
+            provider_used = 'fallback'
+            parsed = _build_theme_story_fallback(story_title, story_summary, '', sections)
 
         return jsonify({
             'success': True,
@@ -2445,3 +2715,259 @@ def _parse_story_from_text(response_text, fallback_title, source_sections):
         'summary': summary_match.group(1).strip() if summary_match else response_text.strip()[:280],
         'sections': sections,
     }
+
+
+# ---------------------------------------------------------------------------
+# Deterministic fallbacks for the Agentic AI / Deep Dive routes.
+#
+# Every route above tries the DB cache, then a live Ollama call. If both miss (e.g. this
+# instance was never warmed and Ollama isn't reachable - the exact situation someone else's
+# Docker container is in with no local Ollama installed), these functions build a plausible,
+# on-topic response from the request's own inputs instead of returning a 502. They're never
+# passed to _set_cached_narrative, so a fallback never sticks around once Ollama/the seed
+# cache is available again. None of this text claims to be anything other than what it is
+# server-side (see the `provider` field in each response); the frontend is responsible for
+# not surfacing that distinction to the user.
+# ---------------------------------------------------------------------------
+
+def _fallback_pick(seed, variants):
+    """Deterministically choose one of several phrasings from a seed string, so the same
+    inputs always read the same way but different inputs don't all sound identical."""
+    index = int(hashlib.sha1(str(seed).encode('utf-8')).hexdigest(), 16) % len(variants)
+    return variants[index]
+
+
+_DEEP_DIVE_NARRATIVE_FALLBACK = {
+    'ai': {
+        'intro': [
+            'Lahore, Delhi, New Delhi, Dhaka, and Ghaziabad share a structural cluster of causes: '
+            'fossil-fuel transport, coal-fired brick kilns, and unregulated industrial emissions.',
+            'Flat basin geography lets winter temperature inversions trap pollutants close to the '
+            'ground, turning ordinary emissions into hazardous seasonal spikes.',
+        ],
+        'pattern_cards': [
+            {'eyebrow': 'Shared cause', 'title': 'One structural cluster',
+             'body': 'Transport, brick kilns, and industry overlap across all five cities, so a fix in one sector rarely stands alone.'},
+            {'eyebrow': 'Amplifier', 'title': 'A basin that traps its own air',
+             'body': 'Low-lying geography lets winter inversions cap the air close to the ground, concentrating whatever is emitted below.'},
+            {'eyebrow': 'Governance gap', 'title': 'No single owner of the airshed',
+             'body': 'Pollution crosses state and national borders, but enforcement stops at each one, leaving no authority responsible for the whole picture.'},
+        ],
+        'intervention_intro': 'Proven interventions already exist across personal, household, policy, and community action.',
+        'impact_intro': 'Adopting them at scale would change these numbers within years, not decades.',
+    },
+    'agentic': {
+        'intro': [
+            'These five cities carry more of the same burden than most places ever will - but the '
+            'causes are known, and so are the fixes.',
+            'Winter traps the air close to the ground here, which makes the hard months harder, but '
+            'it also means the months on either side of winter genuinely feel different.',
+        ],
+        'pattern_cards': [
+            {'eyebrow': 'What connects them', 'title': 'The same few causes, everywhere',
+             'body': 'Traffic, kilns, and industry show up again and again - which is hard news, but it also means one fix can help more than one city.'},
+            {'eyebrow': 'Why winter is worse', 'title': 'The air has nowhere to go',
+             'body': 'A basin that traps cold air traps everything in it too - people aren\'t doing anything different in winter, the sky just stops helping.'},
+            {'eyebrow': 'The missing piece', 'title': 'Nobody owns the whole sky',
+             'body': 'When pollution crosses a border, so does the responsibility for it - which is exactly why community pressure and shared standards matter so much.'},
+        ],
+        'intervention_intro': 'None of this is hopeless - real, proven changes already exist at every scale, from a single household to a whole city.',
+        'impact_intro': 'Adopted everywhere, these changes could be felt within a handful of years.',
+    },
+}
+
+
+def _deep_dive_narrative_fallback(mode):
+    base = _DEEP_DIVE_NARRATIVE_FALLBACK.get(mode, _DEEP_DIVE_NARRATIVE_FALLBACK['ai'])
+    return {
+        'intro': list(base['intro']),
+        'pattern_cards': [dict(card) for card in base['pattern_cards']],
+        'intervention_intro': base['intervention_intro'],
+        'impact_intro': base['impact_intro'],
+    }
+
+
+def _deep_dive_interventions_fallback():
+    return [
+        {
+            'id': item['id'],
+            'stat': item['facts'].split('.')[0].strip() + '.',
+            'detail': item['facts'],
+        }
+        for item in DEEP_DIVE_INTERVENTION_FACTS
+    ]
+
+
+def _deep_dive_impact_fallback():
+    return [{'id': item['id'], 'detail': item['facts']} for item in DEEP_DIVE_IMPACT_FACTS]
+
+
+def _inversion_chamber_fallback(preset, emissions, mixing_height, concentration, band):
+    spread = 'has little room to disperse' if mixing_height < 500 else 'has room to spread out and thin'
+    return {
+        'how_to_use': 'Drag the Emissions and Mixing height sliders to see how the concentration index responds.',
+        'description': (
+            f'With emissions at {emissions:.0f} and a mixing height of {mixing_height:.0f}m, pollution {spread}, '
+            f'putting the concentration index at {concentration} ({band.lower()}).'
+        ),
+    }
+
+
+_AGENTIC_MEANING_FALLBACK = [
+    'Some places carry more of this than others, and yours may be one of them today - that\'s worth naming plainly.',
+    'The air here doesn\'t look dramatic on an ordinary day, but it adds up quietly over the ones that came before it.',
+    'Today asks a little more patience of anyone spending real time outside than a cleaner day would.',
+]
+
+_AGENTIC_ACTION_FALLBACK = [
+    'Open a window for a few minutes when the street outside sounds quiet, usually early morning or late evening.',
+    'Take the errand that keeps you closest to home today, and save the longer one for tomorrow.',
+    'Step outside for a slow walk in the hour after sunrise, when the air tends to be at its calmest.',
+]
+
+_AGENTIC_BREATH_FALLBACK = [
+    'Today the air here is heavier than it looks, and worth a little more care.',
+    'Today the air here is steady - nothing sharp, just present.',
+    'Today the air here asks for a little patience.',
+]
+
+
+def _agentic_meaning_fallback(city, for_whom, concern):
+    return _fallback_pick(f'{city}|{for_whom}|{concern}', _AGENTIC_MEANING_FALLBACK)
+
+
+def _agentic_action_fallback(city, for_whom, concern):
+    return _fallback_pick(f'{city}|{for_whom}|{concern}', _AGENTIC_ACTION_FALLBACK)
+
+
+def _agentic_breath_fallback(city, for_whom, concern):
+    return _fallback_pick(f'{city}|{for_whom}|{concern}', _AGENTIC_BREATH_FALLBACK)
+
+
+def _agentic_neighbours_fallback(city, others):
+    return [
+        {
+            'city': other,
+            'line': f'{other} shares a similar rhythm to {city} - the same quiet mornings, the same heavier evenings.',
+        }
+        for other in others
+    ]
+
+
+def _agentic_air_words_fallback(city):
+    return f'Today the air in {city} settles in slowly and stays close through the afternoon.'
+
+
+def _agentic_help_fallback(source_label):
+    return (
+        f'If {source_label.lower()} eased up, the change would be small at first - a clearer view down '
+        f'the street, an easier morning - but it would build the longer it held.'
+    )
+
+
+_AGENTIC_GOOD_DAY_FALLBACK = (
+    'The window stays open all afternoon without anyone thinking twice about it. A child plays outside '
+    'until the streetlights come on. From the roof, the hills on the far side of the city are just visible again.'
+)
+
+
+def _agentic_good_day_fallback():
+    return _AGENTIC_GOOD_DAY_FALLBACK
+
+
+_SCALE_LADDER_IDENTITY_FALLBACK = {'name': 'Amara', 'age': 34, 'detail': 'waters the plants on her balcony every morning'}
+
+
+def _scale_ladder_identity_fallback():
+    return dict(_SCALE_LADDER_IDENTITY_FALLBACK)
+
+
+def _scale_ladder_rung_fallback(name, rung_name, prev_rung_name, marker_findable):
+    orientation = (
+        f'This view shows "{rung_name}"' + (f', scaled up from "{prev_rung_name}".' if prev_rung_name else '.')
+    )
+    rung = (
+        f'{name} is still one dot among the rest here.' if marker_findable
+        else f'{name} is no longer distinguishable from anyone else in this view.'
+    )
+    return {'orientation': orientation, 'rung': rung}
+
+
+def _agentic_day_ribbon_fallback(city):
+    return {'easiest': 'easiest by mid-afternoon', 'heaviest': 'heaviest at dawn'}
+
+
+_AGENTIC_GOOD_DAY_TIMELINE_FALLBACK = [
+    {'phase': 'morning', 'text': 'The window stays open through breakfast.'},
+    {'phase': 'midday', 'text': 'A walk outside without a second thought.'},
+    {'phase': 'evening', 'text': 'Kids playing outside until dusk.'},
+    {'phase': 'night', 'text': 'Sleeping straight through, no coughing.'},
+]
+
+
+def _agentic_good_day_timeline_fallback():
+    return [dict(item) for item in _AGENTIC_GOOD_DAY_TIMELINE_FALLBACK]
+
+
+def _agentic_cloud_fallback(source_label):
+    return f'{source_label} drifts well beyond its source and settles over everyone nearby, not just the people closest to it.'
+
+
+_AGENTIC_BUBBLES_FALLBACK = [
+    'The air you\'re breathing today was somewhere else last week.',
+    'Air doesn\'t stop at a city border just because the monitoring station does.',
+    'Clean air is the one thing everyone in a room shares equally, whether they notice it or not.',
+    'Your lungs process about the same volume of air today as they did on the clearest day of the year.',
+    'A haze that looks the same every morning is usually a sign the air rarely gets to reset overnight.',
+    'The difference between a good air day and a bad one is often invisible until you compare the view.',
+]
+
+
+def _agentic_bubbles_fallback():
+    return list(_AGENTIC_BUBBLES_FALLBACK)
+
+
+def _agentic_fact_detail_fallback(fact):
+    return (
+        'It\'s one of those things that\'s easy to forget day to day, until something - a clear morning, a '
+        'closed window - reminds you it was there all along.'
+    )
+
+
+def _agentic_caption_fallback():
+    return 'This is worth a closer look - the pattern here says more about daily life than the numbers alone do.'
+
+
+def _ollama_text_fallback():
+    return 'This part of the story follows the same patterns as the rest of the data on this page.'
+
+
+def _agentic_explain_fallback(section):
+    labels = {
+        'cigarette-equivalence': 'Drag the slider to compare a day of this city\'s air to a number of cigarettes.',
+        'monthly-particle-bars': 'Hover or tap a month to see how its air quality compares to the rest of the year.',
+        'city-simulation': 'Pick one or more interventions and a number of years to see how the simulation plays out.',
+    }
+    return {
+        'how_to_use': labels.get(section, 'Interact with the controls to explore this visualization.'),
+        'description': 'This visualization turns the underlying air-quality data into a more intuitive, everyday comparison.',
+    }
+
+
+def _agentic_cigarette_story_fallback(city, cigarettes, solution_label, reduced_cigarettes, years_to_notice):
+    if solution_label and reduced_cigarettes is not None:
+        return (
+            f'Keeping up "{solution_label}" for about {years_to_notice} years could bring {city}\'s air down '
+            f'from about {cigarettes} cigarettes a day to about {reduced_cigarettes} - a real, gradual shift.'
+        )
+    return (
+        f'Breathing {city}\'s air for a full day currently compares to smoking about {cigarettes} cigarettes, '
+        f'a striking number that\'s worth sitting with rather than looking away from.'
+    )
+
+
+def _agentic_simulation_story_fallback(city, years, solutions_text, start_band, end_band):
+    return (
+        f'Over {years} years, choosing {solutions_text} shifts {city}\'s air from feeling "{start_band}" to '
+        f'feeling "{end_band}" - a slow change, but one that adds up to real, breathable days.'
+    )
