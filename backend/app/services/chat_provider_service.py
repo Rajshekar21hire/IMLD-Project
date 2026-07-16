@@ -63,11 +63,13 @@ class ChatProviderService:
 
         raise ValueError(f"Unsupported chat provider '{selected}'")
 
-    def generate_local_answer(self, prompt, model=None, num_predict=None, timeout_seconds=None):
+    def generate_local_answer(self, prompt, model=None, num_predict=None, timeout_seconds=None, json_mode=False):
         """Generate a response from Ollama only, without any paid fallback."""
-        return self._ask_ollama(prompt, model=model, num_predict=num_predict, timeout_seconds=timeout_seconds), 'ollama'
+        return self._ask_ollama(
+            prompt, model=model, num_predict=num_predict, timeout_seconds=timeout_seconds, json_mode=json_mode
+        ), 'ollama'
 
-    def _ask_ollama(self, prompt, model=None, num_predict=None, timeout_seconds=None):
+    def _ask_ollama(self, prompt, model=None, num_predict=None, timeout_seconds=None, json_mode=False):
         url = f"{self.ollama_base_url}/api/chat"
         payload = {
             "model": model or self.ollama_model,
@@ -81,6 +83,13 @@ class ChatProviderService:
             payload["options"] = {
                 "num_predict": num_predict,
             }
+
+        # Ollama's own JSON-constrained decoding, not just prompt instructions - small local
+        # models otherwise wrap valid JSON in prose or drop required keys often enough that a
+        # caller expecting strict JSON (e.g. the neighbour-comparison endpoint) falls back to
+        # static copy far more than it needs to.
+        if json_mode:
+            payload["format"] = "json"
 
         request_timeout = timeout_seconds or self.timeout_seconds
         last_error = None

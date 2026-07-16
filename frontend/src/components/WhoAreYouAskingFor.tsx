@@ -4,7 +4,19 @@ import React, { useState } from 'react';
 // coerces any unrecognised city to Delhi, so this list must never diverge from the backend's.
 // Only the Diurnal Ribbon (in the opening beat) uses this list now - the closing beat below uses
 // AGENTIC_CLOSING_CITIES instead, so the section doesn't repeat the same five cities twice.
-export const AGENTIC_CITIES_PRIMARY = ['Delhi', 'Lahore', 'Dhaka', 'Kathmandu', 'Kolkata'];
+// Two cities per real-world AQI tier (worst/medium/best - the same tiers as AGENTIC_TIERED_CITIES
+// in agenticMechanismData.ts) so the Diurnal Ribbon shows the daily pattern across the full range
+// of air quality instead of five cities that are all in the same "bad" bracket.
+export const AGENTIC_CITIES_PRIMARY = ['Delhi', 'Lahore', 'Beijing', 'Mexico City', 'Zurich', 'Wellington'];
+
+export const AGENTIC_CITIES_PRIMARY_TIER: Record<string, 'worst' | 'medium' | 'best'> = {
+  Delhi: 'worst',
+  Lahore: 'worst',
+  Beijing: 'medium',
+  'Mexico City': 'medium',
+  Zurich: 'best',
+  Wellington: 'best',
+};
 
 // Matches AGENTIC_CLOSING_CITIES in backend/app/routes/story_routes.py exactly. Deliberately a
 // fresh set of cities - not discussed anywhere else in this section - spanning worse, medium,
@@ -23,8 +35,24 @@ export const AGENTIC_CLOSING_CITY_COUNTRY: Record<string, string> = {
   Helsinki: 'Finland',
 };
 
+// Matches AGENTIC_CLOSING_CITY_DATA in backend/app/routes/story_routes.py exactly - used only to
+// keep the client-side fallback (network failure, backend unreachable) honest about whether each
+// city's air is actually good or bad, instead of a one-size-fits-all fallback sentence.
+export const AGENTIC_CLOSING_CITY_DATA: Record<string, { aqi: number; pollutant: string; trend: string }> = {
+  Ulaanbaatar: { aqi: 168, pollutant: 'PM2.5', trend: 'rising' },
+  "N'Djamena": { aqi: 152, pollutant: 'dust (PM10)', trend: 'steady' },
+  Peshawar: { aqi: 174, pollutant: 'PM2.5', trend: 'rising' },
+  Cairo: { aqi: 141, pollutant: 'PM10', trend: 'steady' },
+  Jakarta: { aqi: 88, pollutant: 'PM2.5', trend: 'falling' },
+  Vancouver: { aqi: 32, pollutant: 'PM2.5', trend: 'steady' },
+  Helsinki: { aqi: 18, pollutant: 'PM2.5', trend: 'falling' },
+};
+
 export const AGENTIC_FOR_WHOM = ['Myself', 'My child', 'My parents', 'Someone with asthma'];
 export const AGENTIC_CONCERNS = ['Going outside today', 'Sleeping better', 'Cooking at home', 'The long run'];
+
+// Matches AGENTIC_TONES in backend/app/routes/story_routes.py exactly.
+export const AGENTIC_TONES = ['Reassuring', 'Urgent', 'Playful', 'Clinical', 'Friendly'];
 
 const TEXT = 'var(--ss-text)';
 const ACCENT = '#0284c7';
@@ -33,9 +61,11 @@ type Props = {
   city: string | null;
   forWhom: string | null;
   concern: string | null;
+  tone: string | null;
   onSelectCity: (v: string) => void;
   onSelectForWhom: (v: string) => void;
   onSelectConcern: (v: string) => void;
+  onSelectTone: (v: string) => void;
 };
 
 const OptionButton: React.FC<{ opt: string; active: boolean; onSelect: (v: string) => void; caption?: string }> = ({
@@ -114,9 +144,11 @@ export const WhoAreYouAskingFor: React.FC<Props> = ({
   city,
   forWhom,
   concern,
+  tone,
   onSelectCity,
   onSelectForWhom,
   onSelectConcern,
+  onSelectTone,
 }) => {
   return (
     <div>
@@ -129,6 +161,7 @@ export const WhoAreYouAskingFor: React.FC<Props> = ({
       />
       <Row question="Who are you asking for?" options={AGENTIC_FOR_WHOM} value={forWhom} onSelect={onSelectForWhom} />
       <Row question="What's on your mind?" options={AGENTIC_CONCERNS} value={concern} onSelect={onSelectConcern} />
+      <Row question="How should it sound?" options={AGENTIC_TONES} value={tone} onSelect={onSelectTone} />
     </div>
   );
 };

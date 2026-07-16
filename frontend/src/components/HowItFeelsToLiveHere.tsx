@@ -5,7 +5,7 @@ import {
   MechanismCity,
   averageAnnualPm25,
   cigarettesPerDay,
-  AGENTIC_SOLUTIONS,
+  AGENTIC_FACTORS,
 } from '../data/agenticMechanismData';
 
 const TEXT = 'var(--ss-text)';
@@ -28,7 +28,7 @@ const RANKED_CITIES = [...AGENTIC_MECHANISM_CITIES].sort(
 );
 
 const FALLBACK_EXPLAIN = {
-  how_to_use: 'Pick a city, then tap a solution to see the number change.',
+  how_to_use: 'Pick a city, then flip a card to see how it shapes that city\'s air.',
   description:
     'Each city’s year-round air is translated into an equivalent number of cigarettes smoked per day, using a well-known public-health estimate.',
 };
@@ -37,8 +37,8 @@ function fallbackBaseText(city: string, cigs: number) {
   return `Spending a day breathing ${city}'s air right now compares to smoking about ${cigs} cigarettes - quietly, without ever lighting one.`;
 }
 
-function fallbackSolutionText(city: string, solutionLabel: string, cigs: number) {
-  return `If ${city} kept up ${solutionLabel.toLowerCase()}, the air could ease to about ${cigs} cigarettes a day - a real, livable difference.`;
+function fallbackFactorText(city: string, factorLabel: string) {
+  return `In ${city}, ${factorLabel.toLowerCase()} is one of the quiet reasons the air feels the way it does on an ordinary day.`;
 }
 
 // A single realistic, animated burning cigarette - paper with subtle shading, a printed cork
@@ -99,7 +99,7 @@ const RealisticCigarette: React.FC<{ color: string; intensity: number }> = ({ co
 
 export const HowItFeelsToLiveHere: React.FC = () => {
   const [city, setCity] = useState<MechanismCity>(RANKED_CITIES[0]);
-  const [solutionId, setSolutionId] = useState<string | null>(null);
+  const [factorId, setFactorId] = useState<string | null>(null);
   const [displayedCount, setDisplayedCount] = useState(cigarettesPerDay(averageAnnualPm25(RANKED_CITIES[0])));
   const [text, setText] = useState(fallbackBaseText(RANKED_CITIES[0], displayedCount));
   const [textStatus, setTextStatus] = useState<'idle' | 'loading' | 'done'>('idle');
@@ -107,16 +107,12 @@ export const HowItFeelsToLiveHere: React.FC = () => {
   const requestId = useRef(0);
   const animRef = useRef<number | undefined>(undefined);
 
-  const solution = AGENTIC_SOLUTIONS.find((s) => s.id === solutionId) || null;
+  const factor = AGENTIC_FACTORS.find((f) => f.id === factorId) || null;
   const color = CITY_COLORS[city];
 
   const baseAvg = useMemo(() => averageAnnualPm25(city), [city]);
   const baseCigs = useMemo(() => cigarettesPerDay(baseAvg), [baseAvg]);
-  const reducedCigs = useMemo(
-    () => (solution ? cigarettesPerDay(baseAvg * (1 - solution.pm25ReductionShare)) : null),
-    [solution, baseAvg]
-  );
-  const targetCount = reducedCigs ?? baseCigs;
+  const targetCount = baseCigs;
 
   // Fetch the "what is this" copy once, on mount.
   useEffect(() => {
@@ -124,7 +120,7 @@ export const HowItFeelsToLiveHere: React.FC = () => {
     storyAPI
       .agenticExplain({
         section: 'cigarette-equivalence',
-        context: `Ranks ${RANKED_CITIES.join(', ')} by annual average PM2.5 and shows a day of that city's air as an equivalent number of cigarettes smoked (the Berkeley Earth PM2.5-divided-by-22 estimate). Tapping one of four real interventions (ending crop burning, electrifying transport, industrial standards, urban trees) shows the cigarette count fall.`,
+        context: `Ranks ${RANKED_CITIES.join(', ')} by annual average PM2.5 and shows a day of that city's air as an equivalent number of cigarettes smoked (the Berkeley Earth PM2.5-divided-by-22 estimate). Flipping one of seven driver cards (geography & meteorology, urban sprawl & construction, governance gap, transport, brick kilns, industry & power, crop burning) reveals a sentence on how that driver plays out in the selected city.`,
       })
       .then((res) => {
         if (cancelled) return;
@@ -160,23 +156,22 @@ export const HowItFeelsToLiveHere: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [targetCount]);
 
-  // Fetch the Ollama sentence for the current (city, solution) pairing.
+  // Fetch the Ollama sentence for the current (city, factor) pairing.
   useEffect(() => {
     const myId = ++requestId.current;
     setTextStatus('loading');
-    const fallback = solution
-      ? fallbackSolutionText(city, solution.label, reducedCigs ?? baseCigs)
-      : fallbackBaseText(city, baseCigs);
+    const fallback = factor ? fallbackFactorText(city, factor.label) : fallbackBaseText(city, baseCigs);
     setText(fallback);
 
-    storyAPI
-      .agenticCigaretteStory({
-        city,
-        cigarettes: baseCigs,
-        solution_label: solution?.label,
-        reduced_cigarettes: reducedCigs ?? undefined,
-        years_to_notice: solution?.yearsToNotice,
-      })
+    const request = factor
+      ? storyAPI.agenticFactorStory({
+          city,
+          factor_label: factor.label,
+          factor_description: factor.description,
+        })
+      : storyAPI.agenticCigaretteStory({ city, cigarettes: baseCigs });
+
+    request
       .then((res) => {
         if (requestId.current !== myId) return;
         if (res.data?.success && res.data.data?.text) {
@@ -191,7 +186,7 @@ export const HowItFeelsToLiveHere: React.FC = () => {
         setTextStatus('idle');
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [city, solutionId]);
+  }, [city, factorId]);
 
   const intensity = Math.max(0.12, Math.min(1, displayedCount / 25));
 
@@ -213,7 +208,7 @@ export const HowItFeelsToLiveHere: React.FC = () => {
               type="button"
               onClick={() => {
                 setCity(c);
-                setSolutionId(null);
+                setFactorId(null);
               }}
               className="rounded-full px-3.5 py-1.5 text-sm font-semibold transition-all"
               style={{
@@ -244,33 +239,41 @@ export const HowItFeelsToLiveHere: React.FC = () => {
         <div className="mx-auto mt-3 flex justify-center">
           <RealisticCigarette color={color} intensity={intensity} />
         </div>
-
-        {solution && reducedCigs !== null && (
-          <div className="mt-4 text-sm" style={{ color: MUTED }}>
-            with <span style={{ color, fontWeight: 700 }}>{solution.label.toLowerCase()}</span>, felt within about{' '}
-            <span style={{ color, fontWeight: 700 }}>{solution.yearsToNotice} years</span>
-          </div>
-        )}
       </div>
 
-      <div className="mx-auto mt-5 flex max-w-2xl flex-wrap items-center justify-center gap-2">
-        {AGENTIC_SOLUTIONS.map((s) => {
-          const active = solutionId === s.id;
+      <div className="mx-auto mt-6 flex max-w-2xl flex-wrap justify-center gap-3">
+        {AGENTIC_FACTORS.map((f) => {
+          const active = factorId === f.id;
           return (
-            <button
-              key={s.id}
-              type="button"
-              onClick={() => setSolutionId(active ? null : s.id)}
-              className="rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all"
-              style={{
-                backgroundColor: active ? color : 'rgba(255,255,255,0.7)',
-                color: active ? '#fff' : MUTED,
-                border: `1.5px solid ${active ? color : 'var(--ss-border)'}`,
-              }}
-              aria-pressed={active}
+            <div
+              key={f.id}
+              className="hifl-flip-card w-[calc(50%-0.375rem)] sm:w-[calc(25%-0.5625rem)]"
+              style={{ perspective: '1000px' }}
             >
-              {s.shortLabel}
-            </button>
+              <button
+                type="button"
+                onClick={() => setFactorId(active ? null : f.id)}
+                aria-pressed={active}
+                className={`hifl-flip-card-inner ${active ? 'is-flipped' : ''}`}
+              >
+                <div
+                  className="hifl-flip-face hifl-flip-front"
+                  style={{ backgroundColor: 'rgba(255,255,255,0.86)', border: '1.5px solid var(--ss-border)' }}
+                >
+                  <span className="text-xl">{f.icon}</span>
+                  <span className="mt-1 text-xs font-semibold leading-tight" style={{ color: MUTED }}>
+                    {f.label}
+                  </span>
+                </div>
+                <div
+                  className="hifl-flip-face hifl-flip-back"
+                  style={{ backgroundColor: color, border: `1.5px solid ${color}` }}
+                >
+                  <span className="text-xl">{f.icon}</span>
+                  <span className="mt-1 text-xs font-semibold leading-tight text-white">{f.label}</span>
+                </div>
+              </button>
+            </div>
           );
         })}
       </div>
@@ -287,6 +290,35 @@ export const HowItFeelsToLiveHere: React.FC = () => {
       </div>
 
       <style>{`
+        .hifl-flip-card { height: 84px; }
+        .hifl-flip-card-inner {
+          position: relative;
+          width: 100%;
+          height: 100%;
+          transition: transform 0.6s;
+          transform-style: preserve-3d;
+          cursor: pointer;
+          border: none;
+          background: none;
+          padding: 0;
+        }
+        .hifl-flip-card-inner.is-flipped { transform: rotateY(180deg); }
+        .hifl-flip-face {
+          position: absolute;
+          inset: 0;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          text-align: center;
+          padding: 0.5rem;
+          border-radius: 1rem;
+          backface-visibility: hidden;
+        }
+        .hifl-flip-back { transform: rotateY(180deg); }
+        @media (prefers-reduced-motion: reduce) {
+          .hifl-flip-card-inner { transition: none; }
+        }
         .hifl-hero { overflow: visible; }
         .hifl-glow { animation: hifl-glow-pulse 1.8s ease-in-out infinite; transform-origin: 36px 68px; }
         .hifl-ember-core { animation: hifl-ember-flicker 1.1s ease-in-out infinite; transform-origin: 34px 68px; }

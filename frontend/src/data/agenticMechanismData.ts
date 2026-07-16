@@ -84,6 +84,191 @@ export function averageOf(monthly: number[]): number {
   return monthly.reduce((s, v) => s + v, 0) / monthly.length;
 }
 
+// US EPA PM2.5 -> AQI conversion (2016 breakpoint table), used to give the "Twelve months, in
+// particles" bars a scale readers already recognise instead of a raw microgram figure.
+const PM25_AQI_BREAKPOINTS: { cLow: number; cHigh: number; iLow: number; iHigh: number }[] = [
+  { cLow: 0.0, cHigh: 12.0, iLow: 0, iHigh: 50 },
+  { cLow: 12.1, cHigh: 35.4, iLow: 51, iHigh: 100 },
+  { cLow: 35.5, cHigh: 55.4, iLow: 101, iHigh: 150 },
+  { cLow: 55.5, cHigh: 150.4, iLow: 151, iHigh: 200 },
+  { cLow: 150.5, cHigh: 250.4, iLow: 201, iHigh: 300 },
+  { cLow: 250.5, cHigh: 350.4, iLow: 301, iHigh: 400 },
+  { cLow: 350.5, cHigh: 500.4, iLow: 401, iHigh: 500 },
+];
+
+export function pm25ToAqi(pm25: number): number {
+  const c = Math.max(0, pm25);
+  const bracket =
+    PM25_AQI_BREAKPOINTS.find((b) => c >= b.cLow && c <= b.cHigh) || PM25_AQI_BREAKPOINTS[PM25_AQI_BREAKPOINTS.length - 1];
+  const aqi = ((bracket.iHigh - bracket.iLow) / (bracket.cHigh - bracket.cLow)) * (c - bracket.cLow) + bracket.iLow;
+  return Math.round(Math.min(500, aqi));
+}
+
+export type AqiCategory = 'good' | 'moderate' | 'usg' | 'unhealthy' | 'very-unhealthy' | 'hazardous';
+
+export function aqiCategory(aqi: number): AqiCategory {
+  if (aqi <= 50) return 'good';
+  if (aqi <= 100) return 'moderate';
+  if (aqi <= 150) return 'usg';
+  if (aqi <= 200) return 'unhealthy';
+  if (aqi <= 300) return 'very-unhealthy';
+  return 'hazardous';
+}
+
+export const AQI_CATEGORY_INFO: Record<AqiCategory, { label: string; range: string; color: string; summary: string }> = {
+  good: {
+    label: 'Good',
+    range: '0-50',
+    color: '#3f9142',
+    summary: 'Air quality is satisfactory, and air pollution poses little or no risk.',
+  },
+  moderate: {
+    label: 'Moderate',
+    range: '51-100',
+    color: '#c9a227',
+    summary: 'Acceptable, but unusually sensitive people may notice mild symptoms.',
+  },
+  usg: {
+    label: 'Unhealthy for sensitive groups',
+    range: '101-150',
+    color: '#d9822b',
+    summary: 'Children, older adults, and people with asthma or heart disease may feel effects.',
+  },
+  unhealthy: {
+    label: 'Unhealthy',
+    range: '151-200',
+    color: '#c9483f',
+    summary: 'Everyone may begin to notice health effects; sensitive groups more seriously.',
+  },
+  'very-unhealthy': {
+    label: 'Very unhealthy',
+    range: '201-300',
+    color: '#8f4fa0',
+    summary: 'Health alert - the risk of health effects is increased for everyone.',
+  },
+  hazardous: {
+    label: 'Hazardous',
+    range: '301+',
+    color: '#7e2b3a',
+    summary: 'Health warning of emergency conditions - the entire population is likely affected.',
+  },
+};
+
+// Health issues (for polluted-air categories) or benefits (for "good" air) that real residents
+// report at each AQI band - shown as the city-specific button row under the 12-month chart, so
+// the effects on view always match the severity of the city currently selected.
+export type HealthEffect = { id: string; label: string; description: string };
+
+export const AQI_HEALTH_EFFECTS: Record<AqiCategory, HealthEffect[]> = {
+  good: [
+    {
+      id: 'healthy-lung-development',
+      label: 'Healthy lung development',
+      description: "Children's lungs develop normally, without the growth deficits seen in heavily polluted cities.",
+    },
+    {
+      id: 'longer-life-expectancy',
+      label: 'Longer life expectancy',
+      description: 'Residents gain back years of life expectancy compared to living in heavily polluted air.',
+    },
+    {
+      id: 'lower-heart-risk',
+      label: 'Lower cardiovascular risk',
+      description: 'Long-term exposure this low is not associated with increased heart attack or stroke risk.',
+    },
+    {
+      id: 'fewer-sick-days',
+      label: 'Fewer respiratory illnesses',
+      description: 'Asthma flare-ups and lower-respiratory infections stay rare across the population.',
+    },
+  ],
+  moderate: [
+    {
+      id: 'sensitive-symptoms',
+      label: 'Symptoms in sensitive people',
+      description: 'Unusually sensitive individuals (asthma, existing lung or heart conditions) may notice mild symptoms.',
+    },
+    {
+      id: 'mild-irritation',
+      label: 'Mild eye and throat irritation',
+      description: 'Some residents notice mild eye, nose, or throat irritation on the higher days of the month.',
+    },
+    {
+      id: 'reduced-outdoor-comfort',
+      label: 'Reduced outdoor comfort',
+      description: 'Prolonged outdoor exertion can feel slightly harder on higher-pollution days.',
+    },
+  ],
+  usg: [
+    {
+      id: 'child-asthma-risk',
+      label: 'More childhood asthma attacks',
+      description: 'Children, whose lungs are still developing, face a higher chance of an asthma flare-up.',
+    },
+    {
+      id: 'elderly-strain',
+      label: 'Strain on older adults',
+      description: 'Older adults and people with heart or lung disease may feel breathlessness or fatigue sooner.',
+    },
+    {
+      id: 'pregnancy-risk',
+      label: 'Pregnancy complications',
+      description: 'Sustained exposure at this level is linked to a higher risk of low birth weight.',
+    },
+  ],
+  unhealthy: [
+    {
+      id: 'reduced-lung-function',
+      label: 'Reduced lung function',
+      description: 'Everyone can experience measurable drops in lung function after outdoor activity.',
+    },
+    {
+      id: 'aggravated-heart-disease',
+      label: 'Aggravated heart and lung disease',
+      description: 'Existing heart and respiratory conditions are more likely to flare up or need medication.',
+    },
+    {
+      id: 'increased-er-visits',
+      label: 'More emergency room visits',
+      description: 'Hospitals typically see a rise in respiratory and cardiac emergency visits during these spells.',
+    },
+  ],
+  'very-unhealthy': [
+    {
+      id: 'serious-respiratory-effects',
+      label: 'Serious respiratory effects for everyone',
+      description: 'Even healthy people can develop coughing, throat irritation, and difficulty breathing outdoors.',
+    },
+    {
+      id: 'shortened-life-expectancy',
+      label: 'Shortened life expectancy',
+      description: 'Sustained exposure at this level is linked to years shaved off average life expectancy.',
+    },
+    {
+      id: 'child-development-harm',
+      label: 'Harm to child brain and lung development',
+      description: "Chronic exposure during childhood is linked to reduced lung growth and cognitive development.",
+    },
+  ],
+  hazardous: [
+    {
+      id: 'emergency-conditions',
+      label: 'Emergency health conditions',
+      description: 'The entire population is at risk of serious effects - authorities typically urge staying indoors.',
+    },
+    {
+      id: 'premature-death-risk',
+      label: 'Elevated risk of premature death',
+      description: 'Days like this are linked in epidemiological studies to a measurable rise in premature mortality.',
+    },
+    {
+      id: 'chronic-disease-worsening',
+      label: 'Worsening of chronic disease',
+      description: 'People with existing heart or lung disease face serious risk of their condition worsening sharply.',
+    },
+  ],
+};
+
 // Shared intervention presets for "How it feels to live here" and "Simulate the next years" -
 // reduction shares and notice-timeframes are drawn from the same real-world case studies already
 // cited elsewhere in the dashboard (China's 2014-2019 PM2.5 program, London ULEZ), so the two
@@ -124,5 +309,60 @@ export const AGENTIC_SOLUTIONS: AgenticSolution[] = [
     shortLabel: 'More trees',
     pm25ReductionShare: 0.15,
     yearsToNotice: 8,
+  },
+];
+
+// The root-cause drivers behind "How it feels to live here" - flip cards, not interventions,
+// so each one carries a short plain-language description used both on the card back and as
+// context for the Ollama-generated one-liner about how that driver plays out in the selected city.
+export type AgenticFactor = {
+  id: string;
+  label: string;
+  description: string;
+  icon: string;
+};
+
+export const AGENTIC_FACTORS: AgenticFactor[] = [
+  {
+    id: 'geography-meteorology',
+    label: 'Geography & meteorology',
+    description: 'valleys and still winter winds that trap pollution close to the ground',
+    icon: '\u{1F3D4}️',
+  },
+  {
+    id: 'urban-sprawl',
+    label: 'Urban sprawl & construction',
+    description: 'unpaved roads and constant construction dust from fast, sprawling growth',
+    icon: '\u{1F3D7}️',
+  },
+  {
+    id: 'governance-gap',
+    label: 'Governance gap',
+    description: 'emissions rules that exist on paper but are weakly enforced on the ground',
+    icon: '\u{1F4CB}',
+  },
+  {
+    id: 'transport',
+    label: 'Transport',
+    description: 'aging vehicle fleets, traffic congestion, and diesel exhaust',
+    icon: '\u{1F697}',
+  },
+  {
+    id: 'brick-kilns',
+    label: 'Brick kilns',
+    description: 'thousands of traditional kilns burning low-grade fuel on the outskirts',
+    icon: '\u{1F9F1}',
+  },
+  {
+    id: 'industry-power',
+    label: 'Industry & power',
+    description: 'coal-fired power plants and industrial smokestacks',
+    icon: '\u{1F3ED}',
+  },
+  {
+    id: 'crop-burning',
+    label: 'Crop burning',
+    description: 'seasonal burning of crop stubble right after harvest',
+    icon: '\u{1F525}',
   },
 ];

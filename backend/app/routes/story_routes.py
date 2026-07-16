@@ -832,7 +832,7 @@ Rules:
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
-AGENTIC_CITIES = ['Delhi', 'Lahore', 'Dhaka', 'Kathmandu', 'Kolkata']
+AGENTIC_CITIES = ['Delhi', 'Lahore', 'Beijing', 'Mexico City', 'Zurich', 'Wellington']
 
 # Cities for the closing "Make it about you" beat only - deliberately distinct from
 # AGENTIC_CITIES (still used by the Diurnal Ribbon) and from the monthly-bars tiered set, so the
@@ -841,6 +841,19 @@ AGENTIC_CLOSING_CITIES = ['Ulaanbaatar', "N'Djamena", 'Peshawar', 'Cairo', 'Jaka
 
 AGENTIC_FOR_WHOM = ['Myself', 'My child', 'My parents', 'Someone with asthma']
 AGENTIC_CONCERNS = ['Going outside today', 'Sleeping better', 'Cooking at home', 'The long run']
+AGENTIC_TONES = ['Reassuring', 'Urgent', 'Playful', 'Clinical', 'Friendly']
+
+# Matches AGENTIC_CLOSING_CITY_COUNTRY in frontend/src/components/WhoAreYouAskingFor.tsx exactly -
+# shown to the model so it can ground the briefing in a real place, not just a bare city name.
+AGENTIC_CLOSING_CITY_COUNTRY = {
+    'Ulaanbaatar': 'Mongolia',
+    "N'Djamena": 'Chad',
+    'Peshawar': 'Pakistan',
+    'Cairo': 'Egypt',
+    'Jakarta': 'Indonesia',
+    'Vancouver': 'Canada',
+    'Helsinki': 'Finland',
+}
 
 AGENTIC_TONE = (
     'Write like a thoughtful friend, not a health authority. Never say PM2.5, AQI, particulate '
@@ -849,41 +862,171 @@ AGENTIC_TONE = (
     'pretend the problem isn\'t real. Never use the word "unfortunately". Write in second person.'
 )
 
+# Static per-city readings for the "About you" briefing only. These seven cities exist purely
+# for this closing beat (see AGENTIC_CLOSING_CITIES) and have no rows in the live dataset to read
+# a real reading from, so the numbers below are fixed stand-ins spanning worse/medium/cleaner air,
+# matching the same spread the city list was chosen for.
+AGENTIC_CLOSING_CITY_DATA = {
+    'Ulaanbaatar': {'aqi': 168, 'pollutant': 'PM2.5', 'trend': 'rising'},
+    "N'Djamena": {'aqi': 152, 'pollutant': 'dust (PM10)', 'trend': 'steady'},
+    'Peshawar': {'aqi': 174, 'pollutant': 'PM2.5', 'trend': 'rising'},
+    'Cairo': {'aqi': 141, 'pollutant': 'PM10', 'trend': 'steady'},
+    'Jakarta': {'aqi': 88, 'pollutant': 'PM2.5', 'trend': 'falling'},
+    'Vancouver': {'aqi': 32, 'pollutant': 'PM2.5', 'trend': 'steady'},
+    'Helsinki': {'aqi': 18, 'pollutant': 'PM2.5', 'trend': 'falling'},
+}
 
-def _agentic_inputs(data):
-    # Validated against AGENTIC_CLOSING_CITIES, not AGENTIC_CITIES - the four routes that call
-    # this helper (meaning/action/neighbours/breath) exclusively serve the closing beat.
+# Audiences for whom the risk threshold should be tighter, regardless of the tone the visitor picked.
+_AGENTIC_VULNERABLE_FOR_WHOM = {'My child', 'My parents', 'Someone with asthma'}
+
+
+def _agentic_mood(aqi_value, for_whom):
+    # Decided from the data, not the model's own text, so a "playful" or "reassuring" tone can
+    # never quietly flip a genuinely risky reading into a happy face.
+    threshold = 100 if for_whom in _AGENTIC_VULNERABLE_FOR_WHOM else 150
+    return 'sad' if aqi_value >= threshold else 'happy'
+
+
+def _agentic_briefing_inputs(data):
     city = data.get('city') if data.get('city') in AGENTIC_CLOSING_CITIES else AGENTIC_CLOSING_CITIES[0]
     for_whom = data.get('for_whom') if data.get('for_whom') in AGENTIC_FOR_WHOM else AGENTIC_FOR_WHOM[0]
     concern = data.get('concern') if data.get('concern') in AGENTIC_CONCERNS else AGENTIC_CONCERNS[0]
-    return city, for_whom, concern
+    tone = data.get('tone') if data.get('tone') in AGENTIC_TONES else AGENTIC_TONES[0]
+    return city, for_whom, concern, tone
 
 
-def _agentic_cache_key(piece, city, for_whom, concern):
-    slug = f'{city}:{for_whom}:{concern}'.lower().replace(' ', '-')
-    return f'agentic_{piece}:{slug}'
+def _agentic_briefing_cache_key(city, for_whom, concern, tone):
+    slug = f'{city}:{for_whom}:{concern}:{tone}'.lower().replace(' ', '-')
+    return f'agentic_briefing:v1:{slug}'
 
 
-@bp.route('/agentic-meaning', methods=['POST'])
-def generate_agentic_meaning():
-    """'What this means today' - one warm, plain-language observation for the user's situation."""
+# Fallback text only ever fires when Ollama is unreachable, but it still has to tell the truth
+# about the actual reading - so it's tiered by severity (reusing the same AQI bands as
+# _agentic_mood) rather than one vague template that reads the same whether the air is clean or
+# hazardous. A short tone-flavored opener nods to the selected tone without ever softening the
+# facts or the recommendation underneath it.
+_AGENTIC_TONE_OPENERS = {
+    'Reassuring': "Here's the honest picture, gently put:",
+    'Urgent': 'Worth paying attention to today:',
+    'Playful': 'Quick air check, no drama:',
+    'Clinical': 'Current reading:',
+    'Friendly': "Hey, here's today's air:",
+}
+
+_AGENTIC_BRIEFING_FALLBACK_TEMPLATES = {
+    'clean': [
+        "{opener} {city}'s air is reading {aqi} on the AQI scale, {pollutant} included, and that's "
+        "genuinely good news for {for_whom_lower}. There's no real reason to change plans around "
+        "{concern_lower} today - it's holding {trend}, so this is a fine window to just enjoy it.",
+        "{opener} at {aqi} AQI, {city}'s air is clean today, mostly {pollutant} at low levels. For "
+        "{for_whom_lower} and {concern_lower}, there's nothing to work around right now - go ahead "
+        "as normal. It's {trend}, so tomorrow should look similar.",
+    ],
+    'caution': [
+        "{opener} {city}'s air is reading {aqi} on the AQI scale, driven mainly by {pollutant} - "
+        "something like spending the day near a busy road. For {for_whom_lower}, with "
+        "{concern_lower} in mind, the better window is early morning, before it builds up further. "
+        "That's because {pollutant} tends to settle rather than clear once levels get this high.",
+        "Right now {city} sits at an AQI of {aqi}, mostly {pollutant}, and holding {trend}. "
+        "{opener} for {for_whom_lower} and {concern_lower}, the simplest change is to keep windows "
+        "closed through the middle of the day and let fresh air in during the calmer early hours "
+        "instead. {pollutant} is the reason it's worth the small adjustment today.",
+    ],
+    'high-risk': [
+        "{opener} {city}'s air is reading {aqi} on the AQI scale today - high enough that it "
+        "matters for {for_whom_lower}, especially with {concern_lower} in mind. The safer move is "
+        "to cut back time outdoors and lean on indoor air where you can until {pollutant} levels "
+        "ease. This is the kind of reading worth actually acting on, not just noting.",
+        "{opener} at {aqi} AQI and holding {trend}, {city}'s air is unhealthy right now, mostly "
+        "{pollutant}. For {for_whom_lower}, with {concern_lower} in mind, treat today as one to "
+        "scale back outdoor time and keep indoor air as clean as you can - the precaution genuinely "
+        "matters at this level.",
+    ],
+}
+
+
+def _agentic_fallback_tier(aqi_value, for_whom):
+    # Mirrors _agentic_mood's thresholds so the fallback never reads calmer than the mood emoji
+    # it's paired with.
+    band = _inversion_chamber_band(aqi_value)
+    severity = {'Good': 0, 'Moderate': 1, 'Unhealthy for sensitive groups': 2,
+                'Unhealthy': 3, 'Very unhealthy': 4, 'Hazardous': 5}.get(band, 3)
+    vulnerable = for_whom in _AGENTIC_VULNERABLE_FOR_WHOM
+    if severity >= 3:
+        return 'high-risk'
+    if severity >= 2 or (severity >= 1 and vulnerable):
+        return 'caution'
+    return 'clean'
+
+
+def _agentic_briefing_fallback(city, for_whom, concern, tone, aqi_value, pollutant, trend):
+    tier = _agentic_fallback_tier(aqi_value, for_whom)
+    templates = _AGENTIC_BRIEFING_FALLBACK_TEMPLATES[tier]
+    template = _fallback_pick(f'{city}|{for_whom}|{concern}|{tone}', templates)
+    opener = _AGENTIC_TONE_OPENERS.get(tone, "Here's today's air:")
+    return template.format(
+        opener=opener, city=city, aqi=aqi_value, pollutant=pollutant, trend=trend,
+        for_whom_lower=for_whom.lower(), concern_lower=concern.lower(),
+    )
+
+
+@bp.route('/agentic-briefing', methods=['POST'])
+def generate_agentic_briefing():
+    """'About you' - one short personalized briefing combining city, audience, concern, and tone."""
     try:
         data = request.get_json() or {}
-        city, for_whom, concern = _agentic_inputs(data)
-        cache_key = _agentic_cache_key('meaning', city, for_whom, concern)
+        city, for_whom, concern, tone = _agentic_briefing_inputs(data)
+        city_data = AGENTIC_CLOSING_CITY_DATA[city]
+        aqi_value, pollutant, trend = city_data['aqi'], city_data['pollutant'], city_data['trend']
+        mood = _agentic_mood(aqi_value, for_whom)
 
+        cache_key = _agentic_briefing_cache_key(city, for_whom, concern, tone)
         cached_payload, cached_provider = _get_cached_narrative(cache_key)
         if cached_payload:
-            return jsonify({'success': True, 'data': {'provider': cached_provider, 'meaning': cached_payload.get('meaning')}}), 200
+            return jsonify({'success': True, 'data': {
+                'provider': cached_provider,
+                'text': cached_payload.get('text'),
+                'mood': cached_payload.get('mood', mood),
+            }}), 200
 
-        prompt = f"""{AGENTIC_TONE}
+        band = _inversion_chamber_band(aqi_value)
+        prompt = f"""You are writing a short, personalized air quality briefing for a website visitor.
 
-Context: someone in {city} is asking on behalf of {for_whom.lower()}, thinking about "{concern.lower()}".
+INPUTS:
+- City: {city}, {AGENTIC_CLOSING_CITY_COUNTRY.get(city, '')}
+- Air quality data: AQI {aqi_value} ({band}), dominant pollutant {pollutant}, trend {trend}
+- Asking for: {for_whom}
+- Concern: {concern}
+- Tone: {tone}
 
-Write one honest, gentle observation about their specific situation today - about 40 words, flowing
-prose, not a list.
+TASK:
+Write a 3-4 sentence response that:
+1. States the current air quality situation in {city} in plain language (translate the AQI number
+into a real-world comparison, not just a category label). If the band is Good or Moderate, say so
+plainly - do not invent drama or a warning that isn't there. If the band is Unhealthy or worse,
+that risk must come through clearly no matter the tone.
+2. Directly addresses the specific combination of "{for_whom}" + "{concern}" - don't write a
+generic air quality summary and bolt the persona on at the end. If the audience is vulnerable
+(child, asthma, elderly), adjust the risk threshold and language accordingly, regardless of tone.
+3. Gives ONE concrete, actionable recommendation tied to "{concern}" specifically (best time of
+day, ventilation tip, or activity modification) - not a bulleted list. If the air is genuinely
+clean, the recommendation can simply be that no adjustment is needed today.
+4. Ends with a one-line "why" grounded in the actual pollutant data above.
 
-Return only the observation, no preamble, no quotation marks."""
+STAY ON TOPIC: Every sentence must be about the effect of {city}'s air quality today on
+"{for_whom}" and "{concern}" specifically. Do not drift into unrelated advice, general health
+tips, other cities, or topics not tied to this air-quality reading.
+
+TONE HANDLING:
+Let the tone ({tone}) govern word choice, sentence rhythm, and level of formality - never the
+facts or the risk assessment. If the situation is genuinely risky for "{for_whom}", a reassuring
+or playful tone must still surface the risk clearly, just in warmer language. If the air is
+genuinely clean, an urgent or clinical tone must not manufacture false alarm just to sound serious.
+
+CONSTRAINTS: Max 80 words. No headers, no markdown, no repeating the input labels back to the
+user. Never invent numbers beyond the AQI value given above.
+
+Return only the briefing text, no preamble, no quotation marks."""
 
         provider_used = None
         text = None
@@ -891,7 +1034,7 @@ Return only the observation, no preamble, no quotation marks."""
             response_text, provider_used = chat_provider_service.generate_local_answer(
                 prompt,
                 model=chat_provider_service.story_ollama_model,
-                num_predict=150,
+                num_predict=220,
                 timeout_seconds=chat_provider_service.story_timeout_seconds,
             )
             text = response_text.strip()
@@ -899,157 +1042,11 @@ Return only the observation, no preamble, no quotation marks."""
             text = None
 
         if not text:
-            return jsonify({'success': True, 'data': {'provider': 'fallback', 'meaning': _agentic_meaning_fallback(city, for_whom, concern)}}), 200
+            fallback_text = _agentic_briefing_fallback(city, for_whom, concern, tone, aqi_value, pollutant, trend)
+            return jsonify({'success': True, 'data': {'provider': 'fallback', 'text': fallback_text, 'mood': mood}}), 200
 
-        _set_cached_narrative(cache_key, {'meaning': text}, provider_used)
-        return jsonify({'success': True, 'data': {'provider': provider_used, 'meaning': text}}), 200
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-@bp.route('/agentic-action', methods=['POST'])
-def generate_agentic_action():
-    """'One small thing' - exactly one small, free, doable action."""
-    try:
-        data = request.get_json() or {}
-        city, for_whom, concern = _agentic_inputs(data)
-        cache_key = _agentic_cache_key('action', city, for_whom, concern)
-
-        cached_payload, cached_provider = _get_cached_narrative(cache_key)
-        if cached_payload:
-            return jsonify({'success': True, 'data': {'provider': cached_provider, 'action': cached_payload.get('action')}}), 200
-
-        prompt = f"""{AGENTIC_TONE}
-
-Context: someone in {city} is asking on behalf of {for_whom.lower()}, thinking about "{concern.lower()}".
-
-Suggest exactly one small, genuinely doable action for right now - about 25 words. It must be free
-and require no special equipment or appointment.
-
-Do not suggest: buying any product (including an air purifier), seeing a doctor, contacting
-officials or policy advocacy, or anything that costs money.
-
-Return only the single action, no preamble, no quotation marks, no numbering."""
-
-        provider_used = None
-        text = None
-        try:
-            response_text, provider_used = chat_provider_service.generate_local_answer(
-                prompt,
-                model=chat_provider_service.story_ollama_model,
-                num_predict=100,
-                timeout_seconds=chat_provider_service.story_timeout_seconds,
-            )
-            text = response_text.strip()
-        except Exception:
-            text = None
-
-        if not text:
-            return jsonify({'success': True, 'data': {'provider': 'fallback', 'action': _agentic_action_fallback(city, for_whom, concern)}}), 200
-
-        _set_cached_narrative(cache_key, {'action': text}, provider_used)
-        return jsonify({'success': True, 'data': {'provider': provider_used, 'action': text}}), 200
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-@bp.route('/agentic-neighbours', methods=['POST'])
-def generate_agentic_neighbours():
-    """'The Neighbour Comparison' - one warm sentence per nearby city, not a table."""
-    try:
-        data = request.get_json() or {}
-        city, for_whom, concern = _agentic_inputs(data)
-        others = [c for c in AGENTIC_CLOSING_CITIES if c != city][:3]
-        cache_key = _agentic_cache_key('neighbours', city, for_whom, concern)
-
-        cached_payload, cached_provider = _get_cached_narrative(cache_key)
-        if cached_payload:
-            return jsonify({'success': True, 'data': {'provider': cached_provider, 'comparisons': cached_payload.get('comparisons')}}), 200
-
-        prompt = f"""{AGENTIC_TONE}
-
-Someone in {city} is asking on behalf of {for_whom.lower()}, thinking about "{concern.lower()}".
-
-Write one warm, human sentence for each of these three other places, gently comparing their air and
-daily life to {city}'s in plain human terms (weather, geography, daily rhythms) - not statistics:
-{', '.join(others)}.
-
-Return valid JSON only with this exact shape:
-{{
-  "comparisons": [
-    {{"city": "{others[0]}", "line": "..."}},
-    {{"city": "{others[1]}", "line": "..."}},
-    {{"city": "{others[2]}", "line": "..."}}
-  ]
-}}
-
-Each "line" is one short sentence. No markdown fences, no extra keys."""
-
-        provider_used = None
-        parsed = None
-        try:
-            response_text, provider_used = chat_provider_service.generate_local_answer(
-                prompt,
-                model=chat_provider_service.story_ollama_model,
-                num_predict=300,
-                timeout_seconds=chat_provider_service.story_timeout_seconds,
-            )
-            parsed = _safe_json_loads(response_text)
-        except Exception:
-            parsed = None
-
-        comparisons = (parsed or {}).get('comparisons')
-        if not isinstance(comparisons, list) or len(comparisons) != 3 or not all(
-            isinstance(item, dict) and isinstance(item.get('city'), str) and isinstance(item.get('line'), str) and item.get('line').strip()
-            for item in comparisons
-        ):
-            return jsonify({'success': True, 'data': {'provider': 'fallback', 'comparisons': _agentic_neighbours_fallback(city, others)}}), 200
-
-        _set_cached_narrative(cache_key, {'comparisons': comparisons}, provider_used)
-        return jsonify({'success': True, 'data': {'provider': provider_used, 'comparisons': comparisons}}), 200
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
-
-
-@bp.route('/agentic-breath', methods=['POST'])
-def generate_agentic_breath():
-    """'The Breathing Circle' - a short plain-language phrase for how the air feels today."""
-    try:
-        data = request.get_json() or {}
-        city, for_whom, concern = _agentic_inputs(data)
-        cache_key = _agentic_cache_key('breath', city, for_whom, concern)
-
-        cached_payload, cached_provider = _get_cached_narrative(cache_key)
-        if cached_payload:
-            return jsonify({'success': True, 'data': {'provider': cached_provider, 'phrase': cached_payload.get('phrase')}}), 200
-
-        prompt = f"""{AGENTIC_TONE}
-
-Context: someone in {city} is asking on behalf of {for_whom.lower()}, thinking about "{concern.lower()}".
-
-Write one short, plain sentence (6-12 words) describing how the air feels today, in the form
-"Today the air here is ___." Do not include any numbers.
-
-Return only that one sentence, no preamble, no quotation marks."""
-
-        provider_used = None
-        text = None
-        try:
-            response_text, provider_used = chat_provider_service.generate_local_answer(
-                prompt,
-                model=chat_provider_service.story_ollama_model,
-                num_predict=60,
-                timeout_seconds=chat_provider_service.story_timeout_seconds,
-            )
-            text = response_text.strip()
-        except Exception:
-            text = None
-
-        if not text:
-            return jsonify({'success': True, 'data': {'provider': 'fallback', 'phrase': _agentic_breath_fallback(city, for_whom, concern)}}), 200
-
-        _set_cached_narrative(cache_key, {'phrase': text}, provider_used)
-        return jsonify({'success': True, 'data': {'provider': provider_used, 'phrase': text}}), 200
+        _set_cached_narrative(cache_key, {'text': text, 'mood': mood}, provider_used)
+        return jsonify({'success': True, 'data': {'provider': provider_used, 'text': text, 'mood': mood}}), 200
     except Exception as e:
         return jsonify({'success': False, 'error': str(e)}), 500
 
@@ -1315,9 +1312,22 @@ No markdown fences, no extra keys."""
         return jsonify({'success': False, 'error': str(e)}), 500
 
 
+# Real-world tier context for the six Diurnal Ribbon cities (2 worst / 2 medium / 2 best by
+# annual PM2.5 - see AGENTIC_TIERED_CITIES in the frontend's agenticMechanismData.ts), so the
+# generated summary is calibrated to how bad or clean each city's air actually is, not generic.
+AGENTIC_DAY_RIBBON_CONTEXT = {
+    'Delhi': 'generally very poor, among the most polluted cities in the world',
+    'Lahore': 'generally very poor, frequently ranked among the most polluted cities in the world',
+    'Beijing': 'moderate - historically improved but still often elevated',
+    'Mexico City': 'moderate - shaped by altitude, traffic, and the surrounding valley',
+    'Zurich': 'generally clean and consistently within healthy guidelines',
+    'Wellington': 'generally clean, among the best air quality of any city in the world',
+}
+
+
 @bp.route('/agentic-day-ribbon', methods=['POST'])
 def generate_agentic_day_ribbon():
-    """'Today's air, in words' - the two hour labels for the Day Ribbon."""
+    """'How AQI changes over the day' - the two hour labels plus a short summary for the Day Ribbon."""
     try:
         data = request.get_json() or {}
         city = data.get('city') if data.get('city') in AGENTIC_CITIES else AGENTIC_CITIES[0]
@@ -1327,19 +1337,27 @@ def generate_agentic_day_ribbon():
         if cached_payload:
             return jsonify({'success': True, 'data': {'provider': cached_provider, **cached_payload}}), 200
 
+        city_context = AGENTIC_DAY_RIBBON_CONTEXT.get(city, 'a mix of better and worse days through the year')
+
         prompt = f"""{AGENTIC_TONE}
 
-{city}'s air is heaviest in the early morning and eases by mid-afternoon, then thickens again at night.
+{city}'s air is {city_context}. Like most cities, it still follows a daily rhythm: heavier in the
+early morning, easing by mid-afternoon, then thickening again at night.
 
 Return valid JSON only with this exact shape:
 {{
   "easiest": "...",
-  "heaviest": "..."
+  "heaviest": "...",
+  "summary": "..."
 }}
 
 Rules:
 - "easiest" is a short phrase like "easiest around 3pm" naming the lightest hour.
 - "heaviest" is a short phrase like "heaviest at dawn" naming the heaviest hour.
+- "summary" is one or two sentences (about 25-40 words) describing how the air changes over the
+  course of a day here, reflecting how clean or polluted the air generally is.
+- Do NOT name the city anywhere in "summary" - speak generically ("the air here", "this city"),
+  never "{city}".
 - No numbers beyond a simple time of day. No markdown fences, no extra keys."""
 
         provider_used = None
@@ -1348,7 +1366,7 @@ Rules:
             response_text, provider_used = chat_provider_service.generate_local_answer(
                 prompt,
                 model=chat_provider_service.story_ollama_model,
-                num_predict=150,
+                num_predict=220,
                 timeout_seconds=chat_provider_service.story_timeout_seconds,
             )
             parsed = _safe_json_loads(response_text)
@@ -1357,10 +1375,15 @@ Rules:
 
         easiest = (parsed or {}).get('easiest')
         heaviest = (parsed or {}).get('heaviest')
-        if not isinstance(easiest, str) or not easiest.strip() or not isinstance(heaviest, str) or not heaviest.strip():
+        summary = (parsed or {}).get('summary')
+        if (
+            not isinstance(easiest, str) or not easiest.strip()
+            or not isinstance(heaviest, str) or not heaviest.strip()
+            or not isinstance(summary, str) or not summary.strip()
+        ):
             return jsonify({'success': True, 'data': {'provider': 'fallback', **_agentic_day_ribbon_fallback(city)}}), 200
 
-        payload = {'easiest': easiest.strip(), 'heaviest': heaviest.strip()}
+        payload = {'easiest': easiest.strip(), 'heaviest': heaviest.strip(), 'summary': summary.strip()}
         _set_cached_narrative(cache_key, payload, provider_used)
         return jsonify({'success': True, 'data': {'provider': provider_used, **payload}}), 200
     except Exception as e:
@@ -1839,6 +1862,59 @@ Return only the sentence, no preamble, no quotation marks."""
 
         if not text:
             fallback_text = _agentic_cigarette_story_fallback(city, cigarettes, solution_label, reduced_cigarettes, years_to_notice)
+            return jsonify({'success': True, 'data': {'provider': 'fallback', 'text': fallback_text}}), 200
+
+        _set_cached_narrative(cache_key, {'text': text}, provider_used)
+        return jsonify({'success': True, 'data': {'provider': provider_used, 'text': text}}), 200
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+@bp.route('/agentic-factor-story', methods=['POST'])
+def generate_agentic_factor_story():
+    """'How it feels to live here' flip cards - one sentence on how a specific pollution
+    driver (geography, transport, brick kilns, and so on) plays out in the selected city."""
+    try:
+        data = request.get_json() or {}
+        city = str(data.get('city', '')).strip()[:80] or 'this city'
+        factor_label = str(data.get('factor_label', '')).strip()[:120]
+        factor_description = str(data.get('factor_description', '')).strip()[:200]
+        if not factor_label:
+            return jsonify({'success': False, 'error': 'factor_label is required'}), 400
+
+        cache_key = 'agentic_factor:' + hashlib.sha1(
+            f'{city}|{factor_label}'.encode('utf-8')
+        ).hexdigest()[:16]
+        cached_payload, cached_provider = _get_cached_narrative(cache_key)
+        if cached_payload:
+            return jsonify({'success': True, 'data': {'provider': cached_provider, 'text': cached_payload.get('text')}}), 200
+
+        driver_detail = f'{factor_label} ({factor_description})' if factor_description else factor_label
+
+        prompt = f"""{AGENTIC_TONE}
+
+One of the biggest drivers behind {city}'s air quality is {driver_detail.lower()}.
+
+Write one honest, specific sentence (about 20-30 words) about how this shows up in {city}'s
+air, day to day.
+
+Return only the sentence, no preamble, no quotation marks."""
+
+        provider_used = None
+        text = None
+        try:
+            response_text, provider_used = chat_provider_service.generate_local_answer(
+                prompt,
+                model=chat_provider_service.story_ollama_model,
+                num_predict=120,
+                timeout_seconds=chat_provider_service.story_timeout_seconds,
+            )
+            text = response_text.strip().strip('"')
+        except Exception:
+            text = None
+
+        if not text:
+            fallback_text = _agentic_factor_story_fallback(city, factor_label)
             return jsonify({'success': True, 'data': {'provider': 'fallback', 'text': fallback_text}}), 200
 
         _set_cached_narrative(cache_key, {'text': text}, provider_used)
@@ -2813,47 +2889,6 @@ def _inversion_chamber_fallback(preset, emissions, mixing_height, concentration,
     }
 
 
-_AGENTIC_MEANING_FALLBACK = [
-    'Some places carry more of this than others, and yours may be one of them today - that\'s worth naming plainly.',
-    'The air here doesn\'t look dramatic on an ordinary day, but it adds up quietly over the ones that came before it.',
-    'Today asks a little more patience of anyone spending real time outside than a cleaner day would.',
-]
-
-_AGENTIC_ACTION_FALLBACK = [
-    'Open a window for a few minutes when the street outside sounds quiet, usually early morning or late evening.',
-    'Take the errand that keeps you closest to home today, and save the longer one for tomorrow.',
-    'Step outside for a slow walk in the hour after sunrise, when the air tends to be at its calmest.',
-]
-
-_AGENTIC_BREATH_FALLBACK = [
-    'Today the air here is heavier than it looks, and worth a little more care.',
-    'Today the air here is steady - nothing sharp, just present.',
-    'Today the air here asks for a little patience.',
-]
-
-
-def _agentic_meaning_fallback(city, for_whom, concern):
-    return _fallback_pick(f'{city}|{for_whom}|{concern}', _AGENTIC_MEANING_FALLBACK)
-
-
-def _agentic_action_fallback(city, for_whom, concern):
-    return _fallback_pick(f'{city}|{for_whom}|{concern}', _AGENTIC_ACTION_FALLBACK)
-
-
-def _agentic_breath_fallback(city, for_whom, concern):
-    return _fallback_pick(f'{city}|{for_whom}|{concern}', _AGENTIC_BREATH_FALLBACK)
-
-
-def _agentic_neighbours_fallback(city, others):
-    return [
-        {
-            'city': other,
-            'line': f'{other} shares a similar rhythm to {city} - the same quiet mornings, the same heavier evenings.',
-        }
-        for other in others
-    ]
-
-
 def _agentic_air_words_fallback(city):
     return f'Today the air in {city} settles in slowly and stays close through the afternoon.'
 
@@ -2894,7 +2929,15 @@ def _scale_ladder_rung_fallback(name, rung_name, prev_rung_name, marker_findable
 
 
 def _agentic_day_ribbon_fallback(city):
-    return {'easiest': 'easiest by mid-afternoon', 'heaviest': 'heaviest at dawn'}
+    context = AGENTIC_DAY_RIBBON_CONTEXT.get(city, 'somewhere between the two extremes')
+    return {
+        'easiest': 'easiest by mid-afternoon',
+        'heaviest': 'heaviest at dawn',
+        'summary': (
+            f'Air quality here is {context}, and it still follows the same daily shape most cities do - '
+            f'thickest at dawn, clearest by mid-afternoon, then building again after dark.'
+        ),
+    }
 
 
 _AGENTIC_GOOD_DAY_TIMELINE_FALLBACK = [
@@ -2963,6 +3006,13 @@ def _agentic_cigarette_story_fallback(city, cigarettes, solution_label, reduced_
     return (
         f'Breathing {city}\'s air for a full day currently compares to smoking about {cigarettes} cigarettes, '
         f'a striking number that\'s worth sitting with rather than looking away from.'
+    )
+
+
+def _agentic_factor_story_fallback(city, factor_label):
+    return (
+        f'In {city}, {factor_label.lower()} is one of the quiet reasons the air feels the way it '
+        f'does on an ordinary day.'
     )
 
 

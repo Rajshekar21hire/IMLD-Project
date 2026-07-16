@@ -1,83 +1,137 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { storyAPI } from '../services/api';
-import { WhoAreYouAskingFor, AGENTIC_CLOSING_CITIES, AGENTIC_CLOSING_CITY_COUNTRY } from './WhoAreYouAskingFor';
+import { WhoAreYouAskingFor, AGENTIC_CLOSING_CITIES, AGENTIC_CLOSING_CITY_DATA } from './WhoAreYouAskingFor';
 
 const TEXT = 'var(--ss-text)';
 const MUTED = 'var(--ss-muted)';
-const ACCENT = '#0284c7';
 const SERIF = "Georgia, 'Iowan Old Style', 'Palatino Linotype', serif";
 
 const CITY_PALETTE = ['#8fa77c', '#c9a86a', '#c17f5e', '#5b9aa8', '#a78bfa', '#e08a86', '#7bc9b8'];
 const colorForCity = (city: string) => CITY_PALETTE[AGENTIC_CLOSING_CITIES.indexOf(city) % CITY_PALETTE.length] || CITY_PALETTE[0];
 
-type Comparison = { city: string; line: string };
-type Result = {
-  meaning?: string;
-  action?: string;
-  comparisons?: Comparison[];
-  phrase?: string;
+type Mood = 'happy' | 'sad';
+type Result = { text?: string; mood?: Mood };
+
+// A stable (non-cryptographic) string hash so the same city/for-whom/concern/tone combination
+// always lands on the same fallback phrasing, while different combinations don't all read
+// identically - this only matters when a request genuinely fails (network error, Ollama
+// unreachable), since a successful response already carries text written for that combination.
+function hashString(value: string): number {
+  let hash = 5381;
+  for (let i = 0; i < value.length; i++) {
+    hash = ((hash * 33) ^ value.charCodeAt(i)) >>> 0;
+  }
+  return hash;
+}
+
+function pick<T>(seed: string, variants: T[]): T {
+  return variants[hashString(seed) % variants.length];
+}
+
+// Audiences for whom the risk threshold should be tighter, regardless of tone - mirrors
+// _AGENTIC_VULNERABLE_FOR_WHOM in story_routes.py.
+const VULNERABLE_FOR_WHOM = new Set(['My child', 'My parents', 'Someone with asthma']);
+
+function moodFor(aqi: number, forWhom: string): Mood {
+  const threshold = VULNERABLE_FOR_WHOM.has(forWhom) ? 100 : 150;
+  return aqi >= threshold ? 'sad' : 'happy';
+}
+
+// Mirrors the backend's own severity-tiered fallback phrasing (see _agentic_briefing_fallback in
+// story_routes.py) so a client-side failure - the request never even reaching the backend - still
+// tells the truth about whether the air is actually good or bad, instead of one vague sentence
+// that reads the same regardless of the real AQI reading.
+function fallbackTier(aqi: number, forWhom: string): 'clean' | 'caution' | 'high-risk' {
+  const vulnerable = VULNERABLE_FOR_WHOM.has(forWhom);
+  if (aqi > 150) return 'high-risk';
+  if (aqi > 100 || (aqi > 50 && vulnerable)) return 'caution';
+  return 'clean';
+}
+
+const TONE_OPENERS: Record<string, string> = {
+  Reassuring: "Here's the honest picture, gently put:",
+  Urgent: 'Worth paying attention to today:',
+  Playful: 'Quick air check, no drama:',
+  Clinical: 'Current reading:',
+  Friendly: "Hey, here's today's air:",
 };
 
-// A pre-warmed cache can answer all four calls below in well under a second combined, which
-// reads as "this was already here," not "written just now." Holding the loading state open this
-// long keeps the "Writing something for..." moment legible regardless of where the text came from.
-const MIN_VISIBLE_LOADING_MS = 1400;
+const TEXT_FALLBACK: Record<'clean' | 'caution' | 'high-risk', string[]> = {
+  clean: [
+    "{opener} {city}'s air is reading {aqi} on the AQI scale, {pollutant} included, and that's " +
+      "genuinely good news for {forWhom}. There's no real reason to change plans around {concern} " +
+      'today - it stays {trend}, so this is a fine window to just enjoy it.',
+    '{opener} at {aqi} AQI, {city}\'s air is clean today, mostly {pollutant} at low levels. For ' +
+      '{forWhom} and {concern}, there\'s nothing to work around right now - go ahead as normal.',
+  ],
+  caution: [
+    "{opener} {city}'s air is reading {aqi} on the AQI scale, driven mainly by {pollutant} - " +
+      'something like spending the day near a busy road. For {forWhom}, with {concern} in mind, ' +
+      'the better window is early morning, before it builds up further.',
+    'Right now {city} sits at an AQI of {aqi}, mostly {pollutant}, and holding {trend}. {opener} ' +
+      'for {forWhom} and {concern}, the simplest change is to keep windows closed through the ' +
+      'middle of the day and let fresh air in during the calmer early hours instead.',
+  ],
+  'high-risk': [
+    "{opener} {city}'s air is reading {aqi} on the AQI scale today - high enough that it matters " +
+      'for {forWhom}, especially with {concern} in mind. The safer move is to cut back time ' +
+      'outdoors and lean on indoor air where you can until {pollutant} levels ease.',
+    '{opener} at {aqi} AQI and holding {trend}, {city}\'s air is unhealthy right now, mostly ' +
+      '{pollutant}. For {forWhom}, with {concern} in mind, treat today as one to scale back ' +
+      'outdoor time - the precaution genuinely matters at this level.',
+  ],
+};
 
-function wait(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-function settle<T>(res: PromiseSettledResult<any>, extract: (data: any) => T, fallback: T): T {
-  if (res.status === 'fulfilled' && res.value?.data?.success) {
-    try {
-      return extract(res.value.data.data);
-    } catch {
-      return fallback;
-    }
-  }
-  return fallback;
-}
+const fallbackText = (city: string, forWhom: string, concern: string, tone: string) => {
+  const cityData = AGENTIC_CLOSING_CITY_DATA[city];
+  const tier = fallbackTier(cityData.aqi, forWhom);
+  const template = pick(`${city}|${forWhom}|${concern}|${tone}`, TEXT_FALLBACK[tier]);
+  return template
+    .replace(/{opener}/g, TONE_OPENERS[tone] || "Here's today's air:")
+    .replace(/{city}/g, city)
+    .replace(/{aqi}/g, String(cityData.aqi))
+    .replace(/{pollutant}/g, cityData.pollutant)
+    .replace(/{trend}/g, cityData.trend)
+    .replace(/{forWhom}/g, forWhom.toLowerCase())
+    .replace(/{concern}/g, concern.toLowerCase());
+};
 
 export const PersonalizedClosing: React.FC = () => {
   const [city, setCity] = useState<string | null>(null);
   const [forWhom, setForWhom] = useState<string | null>(null);
   const [concern, setConcern] = useState<string | null>(null);
+  const [tone, setTone] = useState<string | null>(null);
   const [status, setStatus] = useState<'idle' | 'loading' | 'done'>('idle');
   const [result, setResult] = useState<Result>({});
+  const requestIdRef = useRef(0);
 
-  const allSelected = Boolean(city && forWhom && concern);
+  // Regenerates automatically whenever any of the four picks changes, once all four are set - no
+  // separate "Generate" click needed, and no manual "start over" needed either since picking a
+  // different city/for-whom/concern/tone here just re-fires this effect in place.
+  useEffect(() => {
+    if (!city || !forWhom || !concern || !tone) return;
 
-  const generate = async () => {
-    if (!city || !forWhom || !concern) return;
+    const myRequestId = ++requestIdRef.current;
     setStatus('loading');
-    const args = { city, for_whom: forWhom, concern };
-    const startedAt = Date.now();
-
-    const [meaning, action, neighbours, breath] = await Promise.allSettled([
-      storyAPI.agenticMeaning(args),
-      storyAPI.agenticAction(args),
-      storyAPI.agenticNeighbours(args),
-      storyAPI.agenticBreath(args),
-    ]);
-
-    await wait(Math.max(0, MIN_VISIBLE_LOADING_MS - (Date.now() - startedAt)));
-
-    setResult({
-      meaning: settle(meaning, (d) => String(d.meaning), 'Some places carry more of this than others - yours may be one of them today.'),
-      action: settle(action, (d) => String(d.action), 'Open a window for a few minutes when the street outside sounds quiet.'),
-      comparisons: settle(neighbours, (d) => d.comparisons as Comparison[], []),
-      phrase: settle(breath, (d) => String(d.phrase), 'Today the air here asks for a little patience.'),
-    });
-    setStatus('done');
-  };
-
-  const reset = () => {
-    setCity(null);
-    setForWhom(null);
-    setConcern(null);
-    setStatus('idle');
     setResult({});
-  };
+
+    (async () => {
+      try {
+        const res = await storyAPI.agenticBriefing({ city, for_whom: forWhom, concern, tone });
+        if (requestIdRef.current !== myRequestId) return;
+        if (res?.data?.success) {
+          setResult({ text: String(res.data.data.text), mood: res.data.data.mood === 'sad' ? 'sad' : 'happy' });
+        } else {
+          setResult({ text: fallbackText(city, forWhom, concern, tone), mood: moodFor(AGENTIC_CLOSING_CITY_DATA[city].aqi, forWhom) });
+        }
+      } catch {
+        if (requestIdRef.current !== myRequestId) return;
+        setResult({ text: fallbackText(city, forWhom, concern, tone), mood: moodFor(AGENTIC_CLOSING_CITY_DATA[city].aqi, forWhom) });
+      } finally {
+        if (requestIdRef.current === myRequestId) setStatus('done');
+      }
+    })();
+  }, [city, forWhom, concern, tone]);
 
   return (
     <div>
@@ -85,82 +139,37 @@ export const PersonalizedClosing: React.FC = () => {
         city={city}
         forWhom={forWhom}
         concern={concern}
+        tone={tone}
         onSelectCity={setCity}
         onSelectForWhom={setForWhom}
         onSelectConcern={setConcern}
+        onSelectTone={setTone}
       />
-
-      {allSelected && status === 'idle' && (
-        <div className="mt-8 text-center">
-          <button
-            type="button"
-            onClick={generate}
-            style={{ background: ACCENT, border: 'none', cursor: 'pointer', color: '#fff' }}
-            className="rounded-full px-8 py-3 text-base font-semibold shadow-lg transition-transform duration-200 hover:scale-105"
-          >
-            Generate my answer
-          </button>
-        </div>
-      )}
 
       {status !== 'idle' && (
         <div
           className="mx-auto mt-8 max-w-xl rounded-[24px] px-6 py-8 text-center md:px-10"
           style={{ backgroundColor: 'rgba(255,255,255,0.86)', border: '1px solid var(--ss-border)', minHeight: 320 }}
         >
-          {status === 'loading' && (
+          {!result.text && (
             <div className="text-base" style={{ color: MUTED }}>
               Writing something for {forWhom?.toLowerCase()}, about {concern?.toLowerCase()}, for {city}…
             </div>
           )}
 
-          {status === 'done' && (
+          {result.text && (
             <>
               <div className="text-xl leading-relaxed" style={{ fontFamily: SERIF, color: TEXT }}>
-                {result.meaning}
+                <span className="mr-2" aria-hidden="true">{result.mood === 'sad' ? '😔' : '🙂'}</span>
+                {result.text}
               </div>
-
-              {result.action && (
-                <div
-                  className="mx-auto mt-6 max-w-md rounded-2xl px-5 py-4 text-base"
-                  style={{ backgroundColor: 'rgba(122,184,230,0.14)', border: '1px solid rgba(122,184,230,0.32)', color: TEXT, fontFamily: SERIF }}
-                >
-                  {result.action}
-                </div>
-              )}
-
-              {result.comparisons && result.comparisons.length > 0 && (
-                <div className="mt-6 grid grid-cols-1 gap-3 text-left sm:grid-cols-3">
-                  {result.comparisons.map((c) => (
-                    <div key={c.city} className="rounded-xl px-4 py-3" style={{ backgroundColor: 'rgba(23,50,74,0.04)' }}>
-                      <div className="text-xs font-bold uppercase tracking-[0.15em]" style={{ color: MUTED }}>
-                        {c.city}
-                        {AGENTIC_CLOSING_CITY_COUNTRY[c.city] ? `, ${AGENTIC_CLOSING_CITY_COUNTRY[c.city]}` : ''}
-                      </div>
-                      <div className="mt-1 text-sm leading-snug" style={{ fontFamily: SERIF, color: TEXT }}>{c.line}</div>
-                    </div>
-                  ))}
-                </div>
-              )}
 
               <div className="mt-8 flex flex-col items-center">
                 <div
                   className="agentic-closing-breathe"
                   style={{ width: 64, height: 64, borderRadius: '50%', backgroundColor: colorForCity(city!), opacity: 0.55 }}
                 />
-                <div className="mt-4 max-w-sm text-base leading-relaxed" style={{ fontFamily: SERIF, color: MUTED }}>
-                  {result.phrase}
-                </div>
               </div>
-
-              <button
-                type="button"
-                onClick={reset}
-                className="mt-8 text-sm font-semibold hover:underline"
-                style={{ color: ACCENT, background: 'none', border: 'none', cursor: 'pointer' }}
-              >
-                Ask about someone else
-              </button>
             </>
           )}
         </div>

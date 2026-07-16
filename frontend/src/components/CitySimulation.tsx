@@ -17,7 +17,6 @@ const CANVAS_W = 340;
 const CANVAS_H = 260;
 const GROUND_Y = CANVAS_H - 46;
 const PARTICLE_SCALE = 2.1;
-const REVEAL_DELAY_MS = 2600;
 
 type Particle = { x: number; y: number; vy: number; wobble: number; alpha: number; dying: boolean };
 
@@ -38,7 +37,7 @@ function hexToRgba(hex: string, alpha: number) {
 }
 
 const FALLBACK_EXPLAIN = {
-  how_to_use: 'Pick a city and some solutions, choose how many years, then press play.',
+  how_to_use: 'Pick a city and some solutions, then drag the years slider to see the projection.',
   description:
     'This projects how a city\'s air might change if the selected solutions stayed in place for the chosen number of years - effects build up gradually, not instantly.',
 };
@@ -55,14 +54,11 @@ export const CitySimulation: React.FC = () => {
   const [city, setCity] = useState(defaultCity);
   const [solutionIds, setSolutionIds] = useState<string[]>([]);
   const [years, setYears] = useState(10);
-  const [playing, setPlaying] = useState(false);
-  const [revealed, setRevealed] = useState(false);
-  const [beforeAfter, setBeforeAfter] = useState<'before' | 'after'>('before');
+  const [interacted, setInteracted] = useState(false);
   const [explain, setExplain] = useState(FALLBACK_EXPLAIN);
   const [story, setStory] = useState('');
   const [storyStatus, setStoryStatus] = useState<'idle' | 'loading' | 'done'>('idle');
 
-  const revealTimerRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const requestId = useRef(0);
 
   const tieredCity = useMemo(() => getTieredCity(city), [city]);
@@ -90,51 +86,14 @@ export const CitySimulation: React.FC = () => {
   // Reset the live scene back to "today" whenever the city changes.
   useEffect(() => {
     targetConcentrationRef.current = currentPm25;
-    setRevealed(false);
-    setPlaying(false);
-    setBeforeAfter('before');
-    if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
+    setInteracted(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [city]);
 
+  // Once the user has touched the controls, the scene tracks the projected concentration live.
   useEffect(() => {
-    if (!playing) return;
-    targetConcentrationRef.current = projectedPm25;
-    if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
-    revealTimerRef.current = setTimeout(() => {
-      setRevealed(true);
-      setPlaying(false);
-      setBeforeAfter('after');
-    }, REVEAL_DELAY_MS);
-    return () => {
-      if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playing]);
-
-  const handlePlay = () => {
-    setRevealed(false);
-    setPlaying(true);
-  };
-
-  const handleReset = () => {
-    setPlaying(false);
-    setRevealed(false);
-    setBeforeAfter('before');
-    targetConcentrationRef.current = currentPm25;
-    if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
-  };
-
-  // Instant alternative to "Play" - flips straight to the projected state (or back) without
-  // waiting for the eased animation, so the two states can be compared quickly.
-  const handleToggleBeforeAfter = () => {
-    const next = beforeAfter === 'before' ? 'after' : 'before';
-    setPlaying(false);
-    if (revealTimerRef.current) clearTimeout(revealTimerRef.current);
-    setBeforeAfter(next);
-    targetConcentrationRef.current = next === 'after' ? projectedPm25 : currentPm25;
-    setRevealed(next === 'after');
-  };
+    targetConcentrationRef.current = interacted ? projectedPm25 : currentPm25;
+  }, [interacted, projectedPm25, currentPm25]);
 
   useEffect(() => {
     let cancelled = false;
@@ -142,7 +101,7 @@ export const CitySimulation: React.FC = () => {
       .agenticExplain({
         section: 'city-simulation',
         context:
-          'Pick a city (from worst/medium/best air-quality tiers), toggle any of four real interventions, choose a number of years from 1 to 50, then press play to watch particles in a cityscape thin out or thicken as the projection runs, ending on a projected air-quality band.',
+          'Pick a city (from worst/medium/best air-quality tiers), toggle any of four real interventions, then drag a years-from-now slider (1 to 50) to watch particles in a cityscape thin out or thicken live, landing on a projected air-quality band.',
       })
       .then((res) => {
         if (cancelled) return;
@@ -157,7 +116,7 @@ export const CitySimulation: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (!revealed) return;
+    if (!interacted) return;
     const myId = ++requestId.current;
     setStoryStatus('loading');
     setStory(fallbackStoryText(city, years, startBand.label, endBand.label));
@@ -183,7 +142,7 @@ export const CitySimulation: React.FC = () => {
         setStoryStatus('idle');
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [revealed]);
+  }, [interacted, city, years, solutionIds]);
 
   // Canvas + particle system, modeled directly on InversionChamber.tsx: particles spawn/die
   // toward a live target count, drifting through a small cityscape rather than a physical lid.
@@ -371,10 +330,7 @@ export const CitySimulation: React.FC = () => {
                     type="button"
                     onClick={() => {
                       setSolutionIds((cur) => (active ? cur.filter((id) => id !== s.id) : [...cur, s.id]));
-                      setRevealed(false);
-                      setPlaying(false);
-                      setBeforeAfter('before');
-                      targetConcentrationRef.current = currentPm25;
+                      setInteracted(true);
                     }}
                     className="rounded-full px-3.5 py-1.5 text-xs font-semibold transition-all"
                     style={{
@@ -405,65 +361,14 @@ export const CitySimulation: React.FC = () => {
               value={years}
               onChange={(e) => {
                 setYears(Number(e.target.value));
-                setRevealed(false);
-                setPlaying(false);
-                setBeforeAfter('before');
-                targetConcentrationRef.current = currentPm25;
+                setInteracted(true);
               }}
               className="sim-slider mt-2 w-full"
               style={{ background: `linear-gradient(90deg, #d97706 0%, #d97706 ${((years - 1) / 49) * 100}%, rgba(148,163,184,0.3) ${((years - 1) / 49) * 100}%, rgba(148,163,184,0.3) 100%)` }}
             />
           </div>
 
-          <div className="flex items-center justify-center gap-2.5">
-            <span className="text-xs font-semibold" style={{ color: beforeAfter === 'before' ? TEXT : MUTED }}>
-              Before
-            </span>
-            <button
-              type="button"
-              role="switch"
-              aria-checked={beforeAfter === 'after'}
-              aria-label="Switch instantly between today's air and the projected air"
-              onClick={handleToggleBeforeAfter}
-              className="sim-switch"
-              style={{ background: beforeAfter === 'after' ? '#d97706' : 'rgba(148,163,184,0.4)' }}
-            >
-              <span
-                className="sim-switch-thumb"
-                style={{ transform: beforeAfter === 'after' ? 'translateX(18px)' : 'translateX(0)' }}
-              />
-            </button>
-            <span className="text-xs font-semibold" style={{ color: beforeAfter === 'after' ? TEXT : MUTED }}>
-              After
-            </span>
-          </div>
-
-          <div className="flex items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={handlePlay}
-              disabled={playing}
-              className="rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-[0.1em] transition-all"
-              style={{
-                backgroundColor: playing ? 'rgba(255,255,255,0.7)' : '#d97706',
-                color: playing ? '#d97706' : '#fff',
-                border: '1.5px solid #d97706',
-                cursor: playing ? 'default' : 'pointer',
-              }}
-            >
-              {playing ? 'Simulating…' : '▶ Play the simulation'}
-            </button>
-            <button
-              type="button"
-              onClick={handleReset}
-              className="rounded-full px-3.5 py-1.5 text-xs font-semibold"
-              style={{ background: 'none', border: '1.5px solid var(--ss-border)', color: MUTED, cursor: 'pointer' }}
-            >
-              Back to today
-            </button>
-          </div>
-
-          {revealed && (
+          {interacted && (
             <div
               className="rounded-2xl px-5 py-4 text-center"
               style={{ backgroundColor: 'rgba(255,255,255,0.86)', border: '1px solid var(--ss-border)' }}
@@ -494,28 +399,6 @@ export const CitySimulation: React.FC = () => {
       </div>
 
       <style>{`
-        .sim-switch {
-          position: relative;
-          width: 40px;
-          height: 22px;
-          border-radius: 9999px;
-          border: none;
-          padding: 0;
-          cursor: pointer;
-          transition: background 200ms ease;
-        }
-        .sim-switch-thumb {
-          position: absolute;
-          top: 2px;
-          left: 2px;
-          width: 18px;
-          height: 18px;
-          border-radius: 9999px;
-          background: #fff;
-          box-shadow: 0 1px 3px rgba(15,36,55,0.35);
-          display: block;
-          transition: transform 200ms ease;
-        }
         .sim-slider {
           -webkit-appearance: none;
           appearance: none;
