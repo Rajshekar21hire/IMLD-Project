@@ -27,10 +27,12 @@ class ChatProviderService:
         self.ollama_model = os.getenv('OLLAMA_MODEL', 'llama3.2:3b')
         self.story_ollama_model = os.getenv('OLLAMA_STORY_MODEL', self.ollama_model)
         self.story_timeout_seconds = float(os.getenv('OLLAMA_STORY_TIMEOUT_SECONDS', '180'))
+        self.ollama_keep_alive = os.getenv('OLLAMA_KEEP_ALIVE', '30m')
         self.gemini_api_key = os.getenv('GEMINI_API_KEY') or os.getenv('GOOGLE_API_KEY')
         self.gemini_model = os.getenv('GEMINI_MODEL', 'gemini-2.5-flash')
         self.timeout_seconds = float(os.getenv('CHAT_TIMEOUT_SECONDS', '60'))
         self.ollama_retries = max(1, int(os.getenv('OLLAMA_RETRIES', '2')))
+        self._http = requests.Session()
 
     def supported_providers(self):
         return ['ollama', 'gemini']
@@ -77,6 +79,7 @@ class ChatProviderService:
                 {"role": "user", "content": prompt}
             ],
             "stream": False,
+            "keep_alive": self.ollama_keep_alive,
         }
 
         if num_predict is not None:
@@ -99,7 +102,7 @@ class ChatProviderService:
             # agentic cards doesn't queue up inside Ollama and time each other out.
             with _ollama_semaphore:
                 try:
-                    response = requests.post(url, json=payload, timeout=request_timeout)
+                    response = self._http.post(url, json=payload, timeout=request_timeout)
                     response.raise_for_status()
                     data = response.json()
                 except requests.RequestException as exc:

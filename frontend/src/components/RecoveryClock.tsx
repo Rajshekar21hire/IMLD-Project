@@ -218,7 +218,7 @@ export const RecoveryClock: React.FC = () => {
             <>
               <div
                 className="text-lg leading-relaxed"
-                style={{ fontFamily: "Georgia, 'Iowan Old Style', 'Palatino Linotype', serif", color: TEXT }}
+                style={{ fontFamily: 'inherit', color: TEXT }}
               >
                 {texts[activeArc.id]}
                 {status[activeArc.id] === 'streaming' && <span className="rc-cursor">|</span>}

@@ -5,7 +5,7 @@ import { AgenticTypingDots } from './AgenticTypingDots';
 const TEXT = 'var(--ss-text)';
 const MUTED = 'var(--ss-muted)';
 const PANEL_BG = 'rgba(255,255,255,0.86)';
-const SERIF = "Georgia, 'Iowan Old Style', 'Palatino Linotype', serif";
+const SERIF = 'inherit';
 
 const FALLBACK_FACTS = [
   'Children breathe faster than adults, so they take in more of the same air.',

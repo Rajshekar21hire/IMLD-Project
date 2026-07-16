@@ -370,17 +370,17 @@ export const RootCauseExplorerSection: React.FC = () => {
 
   return (
     <section className="bg-white py-16 px-6 md:px-12">
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-[90rem]">
         <div className="space-y-5">
-          <div>
+          <div className="text-center">
             <p className="font-mono text-xs uppercase tracking-[0.2em] transition-colors duration-300 font-bold" style={{ color: theme.solid }}>Root-cause explorer</p>
              <h2 className="mt-4 text-4xl font-black leading-[1.02] tracking-tight text-slate-950 md:text-6xl"> Pick a <span style={{ color: '#00a5cf' }}> City. </span> See What&apos;s Actually In Its Air.</h2>
-              <p className="mt-4 w-full text-justify text-base leading-relaxed text-slate-700">
+              <p className="mt-4 w-full text-center text-base leading-relaxed text-slate-700">
               Each city shares the same seven root causes, but the mix and severity are different everywhere. Select a city to break down its air quality index and what&apos;s driving it.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="flex flex-wrap justify-center gap-2">
             {CITIES.map((city) => {
               const active = city.id === selectedCityId;
               return (

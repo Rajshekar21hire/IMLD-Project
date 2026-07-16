@@ -1,6 +1,6 @@
 import React from 'react';
 
-const SERIF = "Georgia, 'Iowan Old Style', 'Palatino Linotype', serif";
+const SERIF = 'inherit';
 const MUTED = '#8b8780';
 
 type Props = {

@@ -3,12 +3,14 @@ import { storyAPI } from '../services/api';
 
 export type OllamaTextStatus = 'idle' | 'loading' | 'done' | 'error';
 
+const inflightRequests = new Map<string, Promise<string>>();
+
 // The backend now answers almost every one of these requests from a pre-warmed cache (see
 // backend/scripts/warm_ollama_cache.py), which can return in well under 100ms - too fast to read
 // as "an AI just wrote this." Holding the loading state open for at least this long keeps the
 // generating animation visible long enough to feel real, whether the text came from a live
 // Ollama call, the cache, or (only if both of those miss) local fallback copy.
-const MIN_VISIBLE_LOADING_MS = 1100;
+const MIN_VISIBLE_LOADING_MS = 0;
 
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -19,7 +21,7 @@ function wait(ms: number) {
 // developer's own machine - it breaks for anyone else running this via Docker or a remote
 // deploy, and it bypasses the backend's shared concurrency throttle and Gemini fallback. The
 // backend already retries internally, so no client-side retry loop is needed here.
-export function useOllamaText(prompt: string | null, fallback: string, debounceMs = 400) {
+export function useOllamaText(prompt: string | null, fallback: string, debounceMs = 120) {
   const [text, setText] = useState('');
   const [status, setStatus] = useState<OllamaTextStatus>('idle');
   const requestId = useRef(0);
@@ -37,11 +39,28 @@ export function useOllamaText(prompt: string | null, fallback: string, debounceM
     const timer = setTimeout(() => {
       (async () => {
         const startedAt = Date.now();
+        const promptKey = prompt.trim();
+
+        const requestPromise = (() => {
+          const existing = inflightRequests.get(promptKey);
+          if (existing) return existing;
+          const created = storyAPI
+            .ollamaText({ prompt })
+            .then((res) => {
+              const responseText = res.data?.success ? String(res.data.data?.text || '').trim() : '';
+              if (!responseText) throw new Error('empty response');
+              return responseText;
+            })
+            .finally(() => {
+              inflightRequests.delete(promptKey);
+            });
+          inflightRequests.set(promptKey, created);
+          return created;
+        })();
+
         try {
-          const res = await storyAPI.ollamaText({ prompt });
+          const responseText = await requestPromise;
           if (requestId.current !== myId) return;
-          const responseText = res.data?.success ? String(res.data.data?.text || '').trim() : '';
-          if (!responseText) throw new Error('empty response');
           await wait(Math.max(0, MIN_VISIBLE_LOADING_MS - (Date.now() - startedAt)));
           if (requestId.current !== myId) return;
           setText(responseText);

@@ -114,14 +114,14 @@ export const BestWorstAirQualitySection: React.FC = () => {
 
   return (
     <section className="bg-transparent py-16 px-6 md:px-12">
-      <div className="mx-auto max-w-5xl">
+      <div className="mx-auto max-w-[90rem] text-center">
         <p className="font-mono text-xs uppercase tracking-[0.2em] text-sky-700 font-bold">
           Why These Five
         </p>
         <h2 className="mt-4 text-4xl font-black leading-[1.02] tracking-tight text-slate-950 md:text-6xl">
           The <span style={{ color: '#ba324f' }}>Worst-Affected </span> Places, By The Numbers
         </h2>
-        <p className="mt-4 w-full text-justify text-base leading-relaxed text-slate-700">
+        <p className="mt-4 w-full text-center text-base leading-relaxed text-slate-700">
           To deep-dive responsibly, we first had to establish which cities actually
           rank as the best and worst by air quality index. These five share a
           structural cluster of causes, fossil-fuel transport, coal-fired brick
@@ -158,7 +158,7 @@ export const BestWorstAirQualitySection: React.FC = () => {
               </article>
             </div>
             <br />
-            <p className="text-sm text-slate-500">Based on average PM2.5, 2015-2026.</p>
+            <p className="text-center text-sm text-slate-500">Based on average PM2.5, 2015-2026.</p>
       </div>
     </section>
   );

@@ -12,7 +12,7 @@ const apiClient = axios.create({
 
 const storyApiClient = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 390000,
+  timeout: 90000,
   headers: {
     'Content-Type': 'application/json',
   },

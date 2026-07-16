@@ -4,7 +4,7 @@ import { WhoAreYouAskingFor, AGENTIC_CLOSING_CITIES, AGENTIC_CLOSING_CITY_DATA }
 
 const TEXT = 'var(--ss-text)';
 const MUTED = 'var(--ss-muted)';
-const SERIF = "Georgia, 'Iowan Old Style', 'Palatino Linotype', serif";
+const SERIF = 'inherit';
 
 const CITY_PALETTE = ['#8fa77c', '#c9a86a', '#c17f5e', '#5b9aa8', '#a78bfa', '#e08a86', '#7bc9b8'];
 const colorForCity = (city: string) => CITY_PALETTE[AGENTIC_CLOSING_CITIES.indexOf(city) % CITY_PALETTE.length] || CITY_PALETTE[0];

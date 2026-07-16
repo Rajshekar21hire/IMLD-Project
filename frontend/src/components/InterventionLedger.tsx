@@ -162,14 +162,14 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
   return (
     <section className="il-root w-full bg-transparent px-6 py-10 md:px-10" style={{ color: PANEL_TEXT }}>
       <div className="mx-auto max-w-[61rem]">
-        <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: LABEL_COLOR, margin: 0 }}>
+        <p className="text-base font-semibold" style={{ color: LABEL_COLOR, margin: 0 }}>
           Intervention Ledger
         </p>
         <div style={{ borderBottom: `1px solid ${PANEL_BORDER}`, marginTop: '16px', marginBottom: '32px' }} />
 
-        <div className="flex flex-wrap gap-8 font-mono">
+        <div className="flex flex-wrap gap-8">
           <div>
-            <div className="text-[10px] uppercase" style={{ letterSpacing: '0.2em', color: SECONDARY_TEXT }}>Budget spent</div>
+            <div className="text-sm" style={{ color: SECONDARY_TEXT }}>Budget spent</div>
             <div className="mt-1 text-lg" style={{ color: overBudget ? BUDGET_OVER : PRIMARY_NUM }}>
               ${totalCost}M <span style={{ color: SECONDARY_TEXT }}>/ ${BUDGET_CAP}M</span>
             </div>
@@ -182,12 +182,12 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
           </div>
 
           <div>
-            <div className="text-[10px] uppercase" style={{ letterSpacing: '0.2em', color: SECONDARY_TEXT }}>Combined AQI reduction</div>
+            <div className="text-sm" style={{ color: SECONDARY_TEXT }}>Combined AQI reduction</div>
             <div className="mt-1 text-lg" style={{ color: PRIMARY_NUM }}>{combinedAqi.toFixed(1)} pts</div>
           </div>
 
           <div>
-            <div className="text-[10px] uppercase" style={{ letterSpacing: '0.2em', color: SECONDARY_TEXT }}>First measurable change in</div>
+            <div className="text-sm" style={{ color: SECONDARY_TEXT }}>First measurable change in</div>
             <div className="mt-1 text-lg" style={{ color: PRIMARY_NUM }}>
               {firstEffectYears === null ? '—' : `${firstEffectYears} yr${firstEffectYears === 1 ? '' : 's'}`}
             </div>
@@ -216,12 +216,12 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
                   x1={xToPx(t)} y1={VB_H - MARGIN.bottom} x2={xToPx(t)} y2={VB_H - MARGIN.bottom + 4}
                   stroke={AXIS_LINE} strokeWidth={1}
                 />
-                <text x={xToPx(t)} y={VB_H - MARGIN.bottom + 16} fontSize={10} fill={TICK_LABEL} textAnchor="middle" fontFamily="monospace">
+                <text x={xToPx(t)} y={VB_H - MARGIN.bottom + 16} fontSize={10} fill={TICK_LABEL} textAnchor="middle">
                   {t}
                 </text>
               </React.Fragment>
             ))}
-            <text x={VB_W - MARGIN.right} y={VB_H - 4} fontSize={10} fill={TICK_LABEL} textAnchor="end" fontFamily="monospace">
+            <text x={VB_W - MARGIN.right} y={VB_H - 4} fontSize={10} fill={TICK_LABEL} textAnchor="end">
               years to effect
             </text>
 
@@ -231,12 +231,12 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
                   x1={MARGIN.left - 4} y1={yToPx(t)} x2={MARGIN.left} y2={yToPx(t)}
                   stroke={AXIS_LINE} strokeWidth={1}
                 />
-                <text x={MARGIN.left - 8} y={yToPx(t) + 3} fontSize={10} fill={TICK_LABEL} textAnchor="end" fontFamily="monospace">
+                <text x={MARGIN.left - 8} y={yToPx(t) + 3} fontSize={10} fill={TICK_LABEL} textAnchor="end">
                   {t}
                 </text>
               </React.Fragment>
             ))}
-            <text x={MARGIN.left} y={10} fontSize={10} fill={TICK_LABEL} textAnchor="start" fontFamily="monospace">
+            <text x={MARGIN.left} y={10} fontSize={10} fill={TICK_LABEL} textAnchor="start">
               AQI points removed
             </text>
 
@@ -270,12 +270,12 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
           </svg>
 
           <div
-            className="w-full rounded-2xl border p-4 font-mono text-sm lg:w-64"
+            className="w-full rounded-2xl border p-4 text-sm lg:w-64"
             style={{ borderColor: PANEL_BORDER, background: 'rgba(255,255,255,0.6)' }}
           >
             {hoveredItem ? (
               <>
-                <div className="text-xs uppercase" style={{ letterSpacing: '0.15em', color: CATEGORY_COLORS[hoveredItem.category] }}>
+                <div className="text-sm font-medium" style={{ color: CATEGORY_COLORS[hoveredItem.category] }}>
                   {hoveredItem.category}
                 </div>
                 <div className="mt-1 font-semibold" style={{ color: PRIMARY_NUM }}>{hoveredItem.name}</div>
@@ -292,7 +292,7 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
             {selectedItems.map((item) => (
               <div
                 key={item.id}
-                className="flex items-center justify-between py-2 font-mono text-sm"
+                className="flex items-center justify-between py-2 text-sm"
                 style={{ borderBottom: `1px solid ${PANEL_BORDER}`, color: PRIMARY_NUM }}
               >
                 <span>{item.name}</span>
@@ -316,17 +316,17 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
               cursor: selectedItems.length < 3 || drafting ? 'not-allowed' : 'pointer',
               background: 'transparent',
             }}
-            className="px-4 py-2 font-mono text-xs uppercase"
+            className="px-4 py-2 text-sm"
           >
             {drafting ? 'Drafting…' : 'Draft the plan'}
           </button>
           {selectedItems.length < 3 && (
-            <span className="ml-3 font-mono text-xs" style={{ color: SECONDARY_TEXT }}>select at least 3</span>
+            <span className="ml-3 text-sm" style={{ color: SECONDARY_TEXT }}>select at least 3</span>
           )}
 
           {(drafting || draftVisible || draftError) && (
             <div
-              className="mt-4 max-w-2xl rounded-2xl p-4 font-mono text-sm leading-relaxed"
+              className="mt-4 max-w-2xl rounded-2xl p-4 text-sm leading-relaxed"
               style={{ border: `1px solid ${PANEL_BORDER}`, background: 'rgba(255,255,255,0.6)', color: PRIMARY_NUM }}
             >
               {draftError && <span style={{ color: SECONDARY_TEXT }}>{draftError}</span>}

@@ -10,7 +10,7 @@ import {
 
 const TEXT = 'var(--ss-text)';
 const MUTED = 'var(--ss-muted)';
-const SERIF = "Georgia, 'Iowan Old Style', 'Palatino Linotype', serif";
+const SERIF = 'inherit';
 const COUNT_ANIM_MS = 900;
 
 // Same five-colour palette used for these cities everywhere else in the section (PersonalizedClosing's
@@ -247,7 +247,7 @@ export const HowItFeelsToLiveHere: React.FC = () => {
           return (
             <div
               key={f.id}
-              className="hifl-flip-card w-[calc(50%-0.375rem)] sm:w-[calc(25%-0.5625rem)]"
+              className="hifl-flip-card"
               style={{ perspective: '1000px' }}
             >
               <button
@@ -260,8 +260,8 @@ export const HowItFeelsToLiveHere: React.FC = () => {
                   className="hifl-flip-face hifl-flip-front"
                   style={{ backgroundColor: 'rgba(255,255,255,0.86)', border: '1.5px solid var(--ss-border)' }}
                 >
-                  <span className="text-xl">{f.icon}</span>
-                  <span className="mt-1 text-xs font-semibold leading-tight" style={{ color: MUTED }}>
+                  <span className="hifl-card-icon text-2xl" aria-hidden="true">{f.icon}</span>
+                  <span className="hifl-card-label mt-1 text-sm font-semibold" style={{ color: MUTED }}>
                     {f.label}
                   </span>
                 </div>
@@ -269,8 +269,8 @@ export const HowItFeelsToLiveHere: React.FC = () => {
                   className="hifl-flip-face hifl-flip-back"
                   style={{ backgroundColor: color, border: `1.5px solid ${color}` }}
                 >
-                  <span className="text-xl">{f.icon}</span>
-                  <span className="mt-1 text-xs font-semibold leading-tight text-white">{f.label}</span>
+                  <span className="hifl-card-icon text-2xl" aria-hidden="true">{f.icon}</span>
+                  <span className="hifl-card-label mt-1 text-sm font-semibold text-white">{f.label}</span>
                 </div>
               </button>
             </div>
@@ -290,7 +290,11 @@ export const HowItFeelsToLiveHere: React.FC = () => {
       </div>
 
       <style>{`
-        .hifl-flip-card { height: 84px; }
+        .hifl-flip-card {
+          width: 10.75rem;
+          height: 6.25rem;
+          flex: 0 0 auto;
+        }
         .hifl-flip-card-inner {
           position: relative;
           width: 100%;
@@ -309,11 +313,24 @@ export const HowItFeelsToLiveHere: React.FC = () => {
           display: flex;
           flex-direction: column;
           align-items: center;
-          justify-content: center;
+          justify-content: flex-start;
           text-align: center;
-          padding: 0.5rem;
+          padding: 0.5rem 0.6rem;
           border-radius: 1rem;
           backface-visibility: hidden;
+        }
+        .hifl-card-icon {
+          line-height: 1;
+          margin-top: 0.05rem;
+        }
+        .hifl-card-label {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          min-height: 2.6rem;
+          line-height: 1.2;
+          overflow-wrap: anywhere;
+          width: 100%;
         }
         .hifl-flip-back { transform: rotateY(180deg); }
         @media (prefers-reduced-motion: reduce) {

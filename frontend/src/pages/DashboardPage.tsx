@@ -1260,7 +1260,10 @@ export const DashboardPage: React.FC = () => {
   }, []);
 
   return (
-    <div id="story-studio-top" className="story-studio-page story-studio-theme relative min-h-screen overflow-hidden bg-transparent">
+    <div
+      id="story-studio-top"
+      className={`story-studio-page story-studio-theme ss-mode-${selectedMode} relative min-h-screen overflow-hidden bg-transparent`}
+    >
       <SkyBackground />
 
       <style>{`
@@ -1344,9 +1347,9 @@ export const DashboardPage: React.FC = () => {
 
         .story-studio-theme .ss-section-container {
           width: 100%;
-          max-width: 1600px;
+          max-width: 1800px;
           margin-inline: auto;
-          padding-inline: 1rem;
+          padding-inline: 0.75rem;
         }
 
         .story-studio-theme .ss-section {
@@ -1380,9 +1383,41 @@ export const DashboardPage: React.FC = () => {
           line-height: 1.8 !important;
         }
 
+        /* Keep AI/Ollama and Agentic typography at the same readable scale as Human mode,
+           including small utility text used in buttons and cards. */
+        .story-studio-page.ss-mode-ai .text-xs,
+        .story-studio-page.ss-mode-ai .text-sm,
+        .story-studio-page.ss-mode-ai .text-base,
+        .story-studio-page.ss-mode-agentic .text-xs,
+        .story-studio-page.ss-mode-agentic .text-sm,
+        .story-studio-page.ss-mode-agentic .text-base {
+          font-size: 1.125rem !important;
+          line-height: 1.8 !important;
+        }
+
+        .story-studio-page.ss-mode-ai button,
+        .story-studio-page.ss-mode-agentic button {
+          font-size: 1.125rem;
+          line-height: 1.6;
+        }
+
         @media (min-width: 768px) {
           .story-studio-theme p {
             font-size: 1.25rem !important;
+          }
+
+          .story-studio-page.ss-mode-ai .text-xs,
+          .story-studio-page.ss-mode-ai .text-sm,
+          .story-studio-page.ss-mode-ai .text-base,
+          .story-studio-page.ss-mode-agentic .text-xs,
+          .story-studio-page.ss-mode-agentic .text-sm,
+          .story-studio-page.ss-mode-agentic .text-base {
+            font-size: 1.25rem !important;
+          }
+
+          .story-studio-page.ss-mode-ai button,
+          .story-studio-page.ss-mode-agentic button {
+            font-size: 1.25rem;
           }
         }
 
@@ -1587,7 +1622,7 @@ export const DashboardPage: React.FC = () => {
                       ) : (
                         <h2 className="ss-theme-title">{selectedTheme.title}</h2>
                       )}
-                      <p className="mt-4 text-lg text-slate-600 leading-relaxed md:text-xl">
+                      <p className="mt-4 text-center text-lg text-slate-600 leading-relaxed md:text-xl">
                         {selectedTheme.status === 'awaiting-source'
                           ? 'This theme is waiting for the story text you will send next.'
                           : selectedMode === 'human'
@@ -1649,7 +1684,7 @@ export const DashboardPage: React.FC = () => {
                     .map((section, index) => (
                     <React.Fragment key={`${selectedTheme.id}-${selectedMode}-${section.title}`}>
                     <article
-                      className=" border-slate-200 bg-transparent p-6 "
+                      className="mx-auto w-full border-slate-200 bg-transparent p-6"
                     >
                       {isDeepDivesTheme ? (
                         section.title === 'Deep dives: the worst-affected places' ? (
@@ -1660,8 +1695,8 @@ export const DashboardPage: React.FC = () => {
                           </h3>
                         )
                       ) : (
-                        <div className="flex items-start justify-between gap-4">
-                          <div>
+                        <div className={`gap-4 ${selectedMode === 'human' ? 'flex flex-col items-center text-center' : 'flex items-start justify-between'}`}>
+                          <div className={selectedMode === 'human' ? 'text-center' : ''}>
                             <div className="text-xs font-bold uppercase tracking-[0.22em] text-sky-700">
                               Subtopic {index + 1}
                             </div>
@@ -1676,7 +1711,7 @@ export const DashboardPage: React.FC = () => {
                       )}
 
                       {section.title !== 'Deep dives: the worst-affected places' && section.body.split('\n\n').map((paragraph, paragraphIndex) => (
-                        <p key={paragraphIndex} className="mt-4 text-slate-700 leading-relaxed">
+                        <p key={paragraphIndex} className={`mt-4 text-slate-700 leading-relaxed ${selectedMode === 'human' ? 'text-center' : ''}`}>
                           {paragraph}
                         </p>
                       ))}
@@ -2615,7 +2650,7 @@ export const DashboardPage: React.FC = () => {
                       }
                     `}</style>
 
-                    <div className="mx-auto max-w-5xl">
+                    <div className="mx-auto max-w-[90rem]">
                   
                       {selectedMode === 'human' ? (
                         <>
@@ -2624,7 +2659,7 @@ export const DashboardPage: React.FC = () => {
                       </div>
 
                       <section className="ss-structural pt-4 pb-16 px-6 md:px-12">
-                        <div className="mb-6 flex flex-wrap items-center gap-3">
+                        <div className="mb-6 flex flex-wrap items-center justify-center gap-3">
                           {storyFourHumanCategoryTabs.map((tab) => {
                             const active = storyFourHumanCategory === tab.id;
                             const palette = storyFourHumanPalette[tab.id];

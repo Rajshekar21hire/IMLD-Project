@@ -118,7 +118,7 @@ const Row: React.FC<{
       <div className="text-lg font-semibold" style={{ color: TEXT }}>
         {question}
       </div>
-      <div className="mt-3 flex flex-wrap items-center gap-3">
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-3">
         {options.map((opt) => (
           <OptionButton key={opt} opt={opt} active={value === opt} onSelect={onSelect} caption={captions?.[opt]} />
         ))}
