@@ -1,7 +1,75 @@
-import React, { useEffect, useRef } from 'react';
-import { Chart, ChartConfiguration, registerables } from 'chart.js';
+import React, { useEffect, useRef, useState } from 'react';
+import { Chart, ChartConfiguration, Plugin, registerables } from 'chart.js';
 
 Chart.register(...registerables);
+
+function shiftHexColor(hex: string, amount: number): string {
+  const normalized = hex.replace('#', '');
+  if (normalized.length !== 6) return hex;
+
+  const clamp = (value: number) => Math.max(0, Math.min(255, value));
+  const read = (index: number) => parseInt(normalized.slice(index, index + 2), 16);
+  const write = (value: number) => clamp(value).toString(16).padStart(2, '0');
+
+  return `#${write(read(0) + amount)}${write(read(2) + amount)}${write(read(4) + amount)}`;
+}
+
+const threeDBarPlugin: Plugin<'bar'> = {
+  id: 'threeDBarPlugin',
+  afterDatasetDraw(chart, args) {
+    const dataset = chart.data.datasets[args.index];
+    const meta = chart.getDatasetMeta(args.index);
+    const colors = dataset.backgroundColor;
+    const ctx = chart.ctx;
+
+    meta.data.forEach((element, index) => {
+      const fill = Array.isArray(colors) ? colors[index] : colors;
+      if (typeof fill !== 'string') return;
+
+      const bar = element as unknown as {
+        x: number;
+        y: number;
+        base: number;
+        width: number;
+      };
+
+      const left = bar.x - bar.width / 2;
+      const right = bar.x + bar.width / 2;
+      const top = Math.min(bar.y, bar.base);
+      const bottom = Math.max(bar.y, bar.base);
+      const depth = Math.min(12, Math.max(6, bar.width * 0.28));
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(left, top);
+      ctx.lineTo(left + depth, top - depth);
+      ctx.lineTo(right + depth, top - depth);
+      ctx.lineTo(right, top);
+      ctx.closePath();
+      ctx.fillStyle = shiftHexColor(fill, 50);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(right, top);
+      ctx.lineTo(right + depth, top - depth);
+      ctx.lineTo(right + depth, bottom - depth);
+      ctx.lineTo(right, bottom);
+      ctx.closePath();
+      ctx.fillStyle = shiftHexColor(fill, -60);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(left + Math.max(2, bar.width * 0.18), top + 8);
+      ctx.lineTo(left + Math.max(4, bar.width * 0.32), top + 4);
+      ctx.lineTo(left + Math.max(4, bar.width * 0.32), bottom - 6);
+      ctx.lineTo(left + Math.max(2, bar.width * 0.18), bottom - 2);
+      ctx.closePath();
+      ctx.fillStyle = 'rgba(255,255,255,0.18)';
+      ctx.fill();
+      ctx.restore();
+    });
+  },
+};
 
 const bestAirQualityData = [
   { city: 'Plovdiv', value: 2 },
@@ -19,10 +87,17 @@ const worstAirQualityData = [
   { city: 'Lahore', value: 195 },
 ];
 
+type HoverTrend = 'increase' | 'decrease' | null;
+
 const commonOptions = {
-  indexAxis: 'y' as const,
   responsive: true,
   maintainAspectRatio: false,
+  layout: {
+    padding: {
+      top: 22,
+      right: 18,
+    },
+  },
   plugins: {
     legend: { display: false },
     tooltip: {
@@ -33,25 +108,38 @@ const commonOptions = {
   },
   scales: {
     x: {
-      grid: { color: 'rgb(226, 232, 240)' },
-      ticks: { color: 'rgb(148, 163, 184)', font: { size: 11 } },
-      border: { color: 'rgb(226, 232, 240)' },
-    },
-    y: {
       grid: { display: false },
       ticks: { color: 'rgb(100, 116, 139)', font: { size: 11 } },
       border: { display: false },
+    },
+    y: {
+      beginAtZero: true,
+      grid: { color: 'rgb(226, 232, 240)' },
+      ticks: { color: 'rgb(148, 163, 184)', font: { size: 11 } },
+      border: { color: 'rgb(226, 232, 240)' },
     },
   },
 };
 
 export const BestWorstAirQualitySection: React.FC = () => {
+  const [bestHoverTrend, setBestHoverTrend] = useState<HoverTrend>(null);
+  const [worstHoverTrend, setWorstHoverTrend] = useState<HoverTrend>(null);
   const bestCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const worstCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const bestChartRef = useRef<Chart<'bar'> | null>(null);
   const worstChartRef = useRef<Chart<'bar'> | null>(null);
+  const bestPointerXRef = useRef<number | null>(null);
+  const worstPointerXRef = useRef<number | null>(null);
 
   useEffect(() => {
+    const buildOptions = () => ({
+      ...commonOptions,
+      interaction: {
+        mode: 'nearest' as const,
+        intersect: true,
+      },
+    });
+
     if (bestCanvasRef.current) {
       const bestConfig: ChartConfiguration<'bar'> = {
         type: 'bar',
@@ -67,13 +155,16 @@ export const BestWorstAirQualitySection: React.FC = () => {
                 '#86efac',
                 '#bbf7d0',
               ],
-              borderRadius: 4,
+              borderRadius: 2,
               borderSkipped: false,
-              maxBarThickness: 20,
+              maxBarThickness: 34,
+              categoryPercentage: 0.7,
+              barPercentage: 0.72,
             },
           ],
         },
-        options: commonOptions,
+        options: buildOptions(),
+        plugins: [threeDBarPlugin],
       };
 
       bestChartRef.current = new Chart(bestCanvasRef.current, bestConfig);
@@ -94,13 +185,16 @@ export const BestWorstAirQualitySection: React.FC = () => {
                 '#ef4444',
                 '#b91c1c',
               ],
-              borderRadius: 4,
+              borderRadius: 2,
               borderSkipped: false,
-              maxBarThickness: 20,
+              maxBarThickness: 34,
+              categoryPercentage: 0.7,
+              barPercentage: 0.72,
             },
           ],
         },
-        options: commonOptions,
+        options: buildOptions(),
+        plugins: [threeDBarPlugin],
       };
 
       worstChartRef.current = new Chart(worstCanvasRef.current, worstConfig);
@@ -111,6 +205,33 @@ export const BestWorstAirQualitySection: React.FC = () => {
       worstChartRef.current?.destroy();
     };
   }, []);
+
+  const updateHoverTrend = (
+    event: React.MouseEvent<HTMLDivElement>,
+    pointerXRef: React.MutableRefObject<number | null>,
+    setHoverTrend: React.Dispatch<React.SetStateAction<HoverTrend>>
+  ) => {
+    const { left } = event.currentTarget.getBoundingClientRect();
+    const currentX = event.clientX - left;
+    const previousX = pointerXRef.current;
+
+    if (previousX !== null) {
+      const delta = currentX - previousX;
+      if (Math.abs(delta) >= 3) {
+        setHoverTrend(delta > 0 ? 'increase' : 'decrease');
+      }
+    }
+
+    pointerXRef.current = currentX;
+  };
+
+  const clearHoverTrend = (
+    pointerXRef: React.MutableRefObject<number | null>,
+    setHoverTrend: React.Dispatch<React.SetStateAction<HoverTrend>>
+  ) => {
+    pointerXRef.current = null;
+    setHoverTrend(null);
+  };
 
   return (
     <section className="bg-transparent py-16 px-6 md:px-12">
@@ -137,22 +258,54 @@ export const BestWorstAirQualitySection: React.FC = () => {
             <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
               <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
                 <p className="text-sm font-semibold text-slate-700">Best Air Quality</p>
-                <div className="mt-3 h-[200px]">
+                <div
+                  className="relative mt-3 h-[280px] md:h-[320px]"
+                  onMouseMove={(event) => updateHoverTrend(event, bestPointerXRef, setBestHoverTrend)}
+                  onMouseLeave={() => clearHoverTrend(bestPointerXRef, setBestHoverTrend)}
+                >
+                  {bestHoverTrend && (
+                    <div
+                      className={`pointer-events-none absolute left-1/2 top-2 z-10 -translate-x-1/2 inline-flex items-center gap-2 rounded-full px-4 py-1 text-xs font-bold uppercase tracking-[0.18em] shadow-sm ${
+                        bestHoverTrend === 'increase'
+                          ? 'bg-emerald-100 text-emerald-800'
+                          : 'bg-sky-100 text-sky-800'
+                      }`}
+                    >
+                      <span>{bestHoverTrend === 'increase' ? '->' : '<-'}</span>
+                      <span>PM2.5 Getting {bestHoverTrend === 'increase' ? 'Increase' : 'Decrease'}</span>
+                    </div>
+                  )}
                   <canvas
                     ref={bestCanvasRef}
                     role="img"
-                    aria-label="Horizontal bar chart showing best air quality cities and PM2.5 values"
+                    aria-label="Vertical 3D bar chart showing best air quality cities and PM2.5 values"
                   />
                 </div>
               </article>
 
               <article className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-sky-400 hover:shadow-md">
                 <p className="text-sm font-semibold text-slate-700">Worst Air Quality</p>
-                <div className="mt-3 h-[200px]">
+                <div
+                  className="relative mt-3 h-[280px] md:h-[320px]"
+                  onMouseMove={(event) => updateHoverTrend(event, worstPointerXRef, setWorstHoverTrend)}
+                  onMouseLeave={() => clearHoverTrend(worstPointerXRef, setWorstHoverTrend)}
+                >
+                  {worstHoverTrend && (
+                    <div
+                      className={`pointer-events-none absolute left-1/2 top-2 z-10 -translate-x-1/2 inline-flex items-center gap-2 rounded-full px-4 py-1 text-xs font-bold uppercase tracking-[0.18em] shadow-sm ${
+                        worstHoverTrend === 'increase'
+                          ? 'bg-rose-100 text-rose-800'
+                          : 'bg-sky-100 text-sky-800'
+                      }`}
+                    >
+                      <span>{worstHoverTrend === 'increase' ? '->' : '<-'}</span>
+                      <span>PM2.5 Getting {worstHoverTrend === 'increase' ? 'Increase' : 'Decrease'}</span>
+                    </div>
+                  )}
                   <canvas
                     ref={worstCanvasRef}
                     role="img"
-                    aria-label="Horizontal bar chart showing worst air quality cities and PM2.5 values"
+                    aria-label="Vertical 3D bar chart showing worst air quality cities and PM2.5 values"
                   />
                 </div>
               </article>

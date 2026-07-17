@@ -80,6 +80,66 @@ interface DeepDiveImpactText {
   detail: string;
 }
 
+interface ThreeDBarShapeProps {
+  fill?: string;
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+}
+
+function shiftHexColor(hex: string, amount: number): string {
+  const normalized = hex.replace('#', '');
+  if (normalized.length !== 6) return hex;
+
+  const clamp = (value: number) => Math.max(0, Math.min(255, value));
+  const read = (index: number) => parseInt(normalized.slice(index, index + 2), 16);
+  const write = (value: number) => clamp(value).toString(16).padStart(2, '0');
+
+  return `#${write(read(0) + amount)}${write(read(2) + amount)}${write(read(4) + amount)}`;
+}
+
+function ThreeDBarShape({ fill = '#60a5fa', x = 0, y = 0, width = 0, height = 0 }: ThreeDBarShapeProps) {
+  if (width <= 0 || height <= 0) return null;
+  if (width < 10 || height < 10) {
+    return <rect x={x} y={y} width={width} height={height} rx={4} ry={4} fill={fill} />;
+  }
+
+  const depth = Math.min(12, Math.max(6, width * 0.24, height * 0.08));
+  const frontWidth = Math.max(0, width - depth);
+  const frontHeight = Math.max(0, height - depth);
+  const frontY = y + depth;
+  const topPoints = [
+    `${x},${frontY}`,
+    `${x + depth},${y}`,
+    `${x + width},${y}`,
+    `${x + frontWidth},${frontY}`,
+  ].join(' ');
+  const sidePoints = [
+    `${x + frontWidth},${frontY}`,
+    `${x + width},${y}`,
+    `${x + width},${y + frontHeight}`,
+    `${x + frontWidth},${y + height}`,
+  ].join(' ');
+
+  return (
+    <g>
+      <polygon points={topPoints} fill={shiftHexColor(fill, 55)} />
+      <polygon points={sidePoints} fill={shiftHexColor(fill, -60)} />
+      <rect x={x} y={frontY} width={frontWidth} height={frontHeight} rx={7} ry={7} fill={fill} />
+      <rect
+        x={x + Math.max(2, frontWidth * 0.12)}
+        y={frontY + Math.max(3, frontHeight * 0.05)}
+        width={Math.max(4, frontWidth * 0.16)}
+        height={Math.max(10, frontHeight * 0.82)}
+        rx={4}
+        ry={4}
+        fill="rgba(255,255,255,0.24)"
+      />
+    </g>
+  );
+}
+
 interface StoryFourHumanIntervention {
   id: string;
   category: StoryFourHumanCategory;
@@ -2300,7 +2360,12 @@ export const DashboardPage: React.FC = () => {
                                   <div className="h-96 w-full rounded-xl border border-red-100 bg-red-50/30 p-2">
                                     <div className="px-2 text-xs font-semibold uppercase tracking-[0.18em] text-red-700">Worst cities</div>
                                     <ResponsiveContainer width="100%" height="92%">
-                                      <BarChart data={worstRankingRows} margin={{ top: 8, right: 16, left: 12, bottom: 78 }}>
+                                      <BarChart
+                                        data={worstRankingRows}
+                                        layout="horizontal"
+                                        barCategoryGap="18%"
+                                        margin={{ top: 20, right: 24, left: 12, bottom: 78 }}
+                                      >
                                         <defs>
                                           <linearGradient id="worstMiniGrad" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="0%" stopColor="#f87171" />
@@ -2332,8 +2397,8 @@ export const DashboardPage: React.FC = () => {
                                             return [`${value.toFixed(2)} ug/m3`, 'Worst city PM2.5'];
                                           }}
                                         />
-                                        <Bar dataKey="avg_pm25" fill="url(#worstMiniGrad)" radius={[10, 10, 0, 0]} />
-                                        <Bar dataKey="standard_pm25" fill="url(#worstMiniStandardGrad)" radius={[10, 10, 0, 0]} />
+                                        <Bar dataKey="avg_pm25" fill="#ef4444" shape={<ThreeDBarShape />} barSize={26} />
+                                        <Bar dataKey="standard_pm25" fill="#6366f1" shape={<ThreeDBarShape />} barSize={26} />
                                       </BarChart>
                                     </ResponsiveContainer>
                                   </div>
@@ -2341,7 +2406,12 @@ export const DashboardPage: React.FC = () => {
                                   <div className="h-96 w-full rounded-xl border border-emerald-100 bg-emerald-50/30 p-2">
                                     <div className="px-2 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Best cities</div>
                                     <ResponsiveContainer width="100%" height="92%">
-                                      <BarChart data={bestRankingRows} margin={{ top: 8, right: 16, left: 12, bottom: 78 }}>
+                                      <BarChart
+                                        data={bestRankingRows}
+                                        layout="horizontal"
+                                        barCategoryGap="18%"
+                                        margin={{ top: 20, right: 24, left: 12, bottom: 78 }}
+                                      >
                                         <defs>
                                           <linearGradient id="bestMiniGrad" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="0%" stopColor="#4ade80" />
@@ -2373,8 +2443,8 @@ export const DashboardPage: React.FC = () => {
                                             return [`${value.toFixed(2)} ug/m3`, 'Best city PM2.5'];
                                           }}
                                         />
-                                        <Bar dataKey="avg_pm25" fill="url(#bestMiniGrad)" radius={[10, 10, 0, 0]} />
-                                        <Bar dataKey="standard_pm25" fill="url(#bestMiniStandardGrad)" radius={[10, 10, 0, 0]} />
+                                        <Bar dataKey="avg_pm25" fill="#22c55e" shape={<ThreeDBarShape />} barSize={26} />
+                                        <Bar dataKey="standard_pm25" fill="#6366f1" shape={<ThreeDBarShape />} barSize={26} />
                                       </BarChart>
                                     </ResponsiveContainer>
                                   </div>
