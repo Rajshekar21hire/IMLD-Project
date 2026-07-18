@@ -70,7 +70,7 @@ export const AgenticAiSection: React.FC = () => {
       <PollutionScrollField severity={haze} />
       <AgenticFogWipe triggerKey={wipeKey} />
 
-      <div className="relative z-[1] mx-auto max-w-4xl px-6 py-4 text-center md:px-10">
+      <div className="relative z-[1] mx-auto max-w-[170rem] px-6 py-4 text-center md:px-10">
         <p className="truncate text-sm" style={{ color: 'var(--ss-muted)' }}>
           <span className="font-bold uppercase tracking-[0.25em]" style={{ color: 'var(--ss-accent)' }}>
             Agentic AI
@@ -124,7 +124,7 @@ export const AgenticAiSection: React.FC = () => {
             eyebrow="Finally"
             title="Make it about you"
             accent="#7ab8e6"
-            className="relative z-[1] mx-auto w-full max-w-6xl px-6 pb-16 pt-20 text-center md:px-10"
+            className="relative z-[1] mx-auto w-full max-w-[170rem] px-6 pb-16 pt-20 text-center md:px-10"
           >
             <p className="mx-auto -mt-3 mb-6 max-w-xl text-center text-sm" style={{ color: 'var(--ss-muted)' }}>
               Pick your city, who you're asking for, and what's on your mind - we'll write something just for that.

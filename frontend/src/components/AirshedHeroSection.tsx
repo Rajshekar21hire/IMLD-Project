@@ -58,15 +58,15 @@ export const AirshedHeroSection: React.FC = () => {
     <section className="bg-white py-16 px-6 md:px-12">
       <div className="mx-auto max-w-[90rem] text-center">
        
-          <p className="font-mono text-xs uppercase tracking-[0.2em] text-sky-700 font-bold">
+          <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#0C447C] font-bold">
             Current Situation
           </p>
 
           <h2 className="mt-4 text-4xl font-black leading-[1.02] tracking-tight text-slate-950 md:text-6xl">
-            Five cities. One <span className="text-sky-700">Airshed.</span> A Shared Crisis.
+            Five cities. One <span style={{ color: '#00A5CF' }}>Airshed.</span> A Shared Crisis.
           </h2>
 
-          <p className="mt-4 w-full text-center text-base leading-relaxed text-slate-700">
+          <p className="mt-5 w-full text-center text-base leading-relaxed text-slate-700">
             Lahore, Delhi, New Delhi, Dhaka and Ghaziabad top the world&apos;s worst
             air-quality rankings. Their pollution isn&apos;t five separate stories. It&apos;s
             one structural pattern of transport, kilns and industry, trapped by

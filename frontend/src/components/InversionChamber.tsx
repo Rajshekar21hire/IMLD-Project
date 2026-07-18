@@ -285,12 +285,18 @@ export const InversionChamber: React.FC = () => {
         }
       `}</style>
 
-      <div className="mx-auto max-w-[61rem]">
-        <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: band.color }}>
-          The Inversion Chamber
-        </p>
+      <div className="s4h-root mx-auto max-w-[170rem]">
+        <div className="text-center">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#0C447C]">Inversion chamber</p>
+          <h2 className="mt-3 text-4xl font-black leading-[1.02] tracking-tight text-slate-950 md:text-6xl">
+            See <span style={{ color: '#d17117' }}>Pollution</span> in Motion
+          </h2>
+          <p className="mx-auto mt-2 max-w-4xl text-base leading-relaxed text-slate-600">
+            Adjust emissions and mixing height to see how a lower atmospheric lid traps pollution and spikes concentration.
+          </p>
+        </div>
 
-        <div className="mt-8 flex flex-col gap-10 md:flex-row md:items-start">
+        <div className="mt-8 flex flex-col items-center gap-10 md:flex-row md:items-center md:justify-center">
           <div
             className="relative shrink-0 self-center overflow-hidden rounded-2xl border md:self-start"
             style={{ borderColor: 'var(--ss-border)', boxShadow: '0 8px 24px rgba(15,36,55,0.1)' }}
@@ -332,7 +338,7 @@ export const InversionChamber: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex w-full flex-col gap-8">
+          <div className="flex w-full max-w-2xl flex-col items-center gap-8 text-center">
             <div>
               <div className="text-6xl font-black leading-none" style={{ color: band.color }}>
                 {displayValue}
@@ -343,10 +349,10 @@ export const InversionChamber: React.FC = () => {
               </div>
             </div>
 
-            <div className="border-t" style={{ borderColor: 'var(--ss-border)' }} />
+            <div className="w-full border-t" style={{ borderColor: 'var(--ss-border)' }} />
 
-            <div>
-              <div className="flex items-baseline justify-between text-sm uppercase tracking-[0.2em]" style={{ color: 'var(--ss-muted)' }}>
+            <div className="w-full">
+              <div className="flex items-baseline justify-center gap-4 text-sm uppercase tracking-[0.2em]" style={{ color: 'var(--ss-muted)' }}>
                 <span>Emissions</span>
                 <span className="text-lg font-bold" style={{ color: band.color }}>{emissions}</span>
               </div>
@@ -364,8 +370,8 @@ export const InversionChamber: React.FC = () => {
               />
             </div>
 
-            <div>
-              <div className="flex items-baseline justify-between text-sm uppercase tracking-[0.2em]" style={{ color: 'var(--ss-muted)' }}>
+            <div className="w-full">
+              <div className="flex items-baseline justify-center gap-4 text-sm uppercase tracking-[0.2em]" style={{ color: 'var(--ss-muted)' }}>
                 <span>Mixing height</span>
                 <span className="text-lg font-bold" style={{ color: band.color }}>{mixingHeight}m</span>
               </div>
@@ -385,9 +391,9 @@ export const InversionChamber: React.FC = () => {
               />
             </div>
 
-            <div className="border-t" style={{ borderColor: 'var(--ss-border)' }} />
+            <div className="w-full border-t" style={{ borderColor: 'var(--ss-border)' }} />
 
-            <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap items-center justify-center gap-3">
               {PRESETS.map((preset) => {
                 const presetConcentration = Math.min(500, Math.round((preset.emissions / preset.height) * 1000));
                 const presetBand = getBand(presetConcentration);
@@ -429,7 +435,7 @@ export const InversionChamber: React.FC = () => {
             </div>
 
             <div
-              className="rounded-2xl border-l-[6px] bg-white/70 p-4"
+              className="w-full rounded-2xl border-l-[6px] bg-white/70 p-4 text-center"
               style={{ borderColor: 'var(--ss-border)', borderLeftColor: band.color }}
             >
               {explainLoading && (

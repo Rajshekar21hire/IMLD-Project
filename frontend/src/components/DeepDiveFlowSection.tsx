@@ -5,7 +5,6 @@ import { InversionChamber } from './InversionChamber';
 import { InterventionLedger } from './InterventionLedger';
 import { SourceMixComparator } from './SourceMixComparator';
 import { InterventionImpactScenario } from './InterventionImpactScenario';
-import { GeneratedByOllama } from './GeneratedByOllama';
 
 // One continuous flow (no per-item boxed-card chrome, no opaque canvas of its own) so the
 // page's own ambient sky background (SkyBackground.tsx, fixed behind everything) shows straight
@@ -16,11 +15,10 @@ import { GeneratedByOllama } from './GeneratedByOllama';
 // moderate severity (no per-beat severity data exists here like in Agentic AI) so it still
 // answers scroll direction, just without the beat-to-beat colour swing.
 export const DeepDiveFlowSection: React.FC = () => (
-  <div className="relative w-full overflow-hidden bg-transparent">
+  <div className="s4h-root relative w-full overflow-hidden bg-transparent">
     <FogDriftLayer opacity={0.7} />
     <PollutionScrollField severity={0.4} />
     <div className="relative z-[1] flex flex-col gap-16 py-4">
-      <GeneratedByOllama />
       <SourceMixComparator />
       <InterventionImpactScenario />
       <InterventionLedger />

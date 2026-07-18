@@ -1,5 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { storyAPI } from '../services/api';
+import { useOllamaText } from './useOllamaText';
+import { OllamaCommentaryBody } from './OllamaCommentary';
 
 type Category = 'transport' | 'industry' | 'household' | 'agriculture';
 
@@ -66,6 +68,8 @@ const xToPx = (years: number) => MARGIN.left + (years / X_MAX_YEARS) * PLOT_W;
 const yToPx = (aqi: number) => MARGIN.top + PLOT_H - (aqi / Y_MAX_AQI) * PLOT_H;
 const radiusFor = (cost: number) => 4 + (cost / MAX_COST) * 16;
 
+const LEDGER_FALLBACK = 'Select interventions to compare cost, speed, and AQI impact before drafting a plan.';
+
 export const InterventionLedger: React.FC = () => {
   const [selected, setSelected] = useState<string[]>([]);
   const [hoveredId, setHoveredId] = useState<string | null>(null);
@@ -97,6 +101,10 @@ export const InterventionLedger: React.FC = () => {
   };
 
   const hoveredItem = hoveredId ? INTERVENTIONS.find((item) => item.id === hoveredId) : null;
+
+  const ledgerPrompt =
+    'Write one short sentence that explains this Intervention Ledger section: it lets readers compare air-quality interventions by cost, years to effect, and AQI reduction before drafting a plan. Return only the sentence.';
+  const { text: ledgerText, status: ledgerStatus } = useOllamaText(ledgerPrompt, LEDGER_FALLBACK);
 
   useEffect(() => {
     if (!draftFull) {
@@ -161,19 +169,25 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
 
   return (
     <section className="il-root w-full bg-transparent px-6 py-10 md:px-10" style={{ color: PANEL_TEXT }}>
-      <div className="mx-auto max-w-[61rem]">
-        <p className="text-base font-semibold" style={{ color: LABEL_COLOR, margin: 0 }}>
-          Intervention Ledger
+      <div className="mx-auto max-w-[170rem] text-center">
+        <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: '#0C447C', margin: 0 }}>
+          Intervention ledger
         </p>
-        <div style={{ borderBottom: `1px solid ${PANEL_BORDER}`, marginTop: '16px', marginBottom: '32px' }} />
+        <h2 className="mt-3 text-4xl font-black leading-[1.02] tracking-tight text-slate-950 md:text-6xl">
+          Impact Studio For <span style={{ color: '#368566' }}>Air Quality Prevention</span>
+        </h2>
+        <div className="mx-auto mt-2 max-w-4xl text-base leading-relaxed text-slate-600">
+          <OllamaCommentaryBody status={ledgerStatus} text={ledgerText} />
+        </div>
+        <div style={{ marginTop: '20px', marginBottom: '24px' }} />
 
-        <div className="flex flex-wrap gap-8">
-          <div>
+        <div className="flex flex-wrap justify-center gap-8">
+          <div className="text-center">
             <div className="text-sm" style={{ color: SECONDARY_TEXT }}>Budget spent</div>
             <div className="mt-1 text-lg" style={{ color: overBudget ? BUDGET_OVER : PRIMARY_NUM }}>
               ${totalCost}M <span style={{ color: SECONDARY_TEXT }}>/ ${BUDGET_CAP}M</span>
             </div>
-            <div className="mt-1 h-[2px] w-40" style={{ backgroundColor: BUDGET_TRACK }}>
+            <div className="mx-auto mt-1 h-[2px] w-40" style={{ backgroundColor: BUDGET_TRACK }}>
               <div
                 className="h-full"
                 style={{ width: `${budgetPct}%`, backgroundColor: overBudget ? BUDGET_OVER : BUDGET_FILL }}
@@ -181,12 +195,12 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
             </div>
           </div>
 
-          <div>
+          <div className="text-center">
             <div className="text-sm" style={{ color: SECONDARY_TEXT }}>Combined AQI reduction</div>
             <div className="mt-1 text-lg" style={{ color: PRIMARY_NUM }}>{combinedAqi.toFixed(1)} pts</div>
           </div>
 
-          <div>
+          <div className="text-center">
             <div className="text-sm" style={{ color: SECONDARY_TEXT }}>First measurable change in</div>
             <div className="mt-1 text-lg" style={{ color: PRIMARY_NUM }}>
               {firstEffectYears === null ? '—' : `${firstEffectYears} yr${firstEffectYears === 1 ? '' : 's'}`}
@@ -194,7 +208,28 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col gap-6 lg:flex-row">
+        <div className="mt-6 text-center">
+          <button
+            type="button"
+            disabled={selectedItems.length < 3 || drafting}
+            onClick={draftPlan}
+            style={{
+              border: `1px solid ${selectedItems.length < 3 || drafting ? PANEL_BORDER : 'rgba(28,27,24,0.5)'}`,
+              color: PRIMARY_NUM,
+              opacity: selectedItems.length < 3 ? 0.3 : 1,
+              cursor: selectedItems.length < 3 || drafting ? 'not-allowed' : 'pointer',
+              background: 'transparent',
+            }}
+            className="px-4 py-2 text-sm"
+          >
+            {drafting ? 'Drafting…' : 'Draft the plan'}
+          </button>
+          {selectedItems.length < 3 && (
+            <span className="ml-3 text-sm" style={{ color: SECONDARY_TEXT }}>select at least 3</span>
+          )}
+        </div>
+
+        <div className="mt-10 flex flex-col items-center gap-6 lg:flex-row lg:justify-center">
           <svg
             viewBox={`0 0 ${VB_W} ${VB_H}`}
             className="rounded-2xl border"
@@ -288,7 +323,7 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
         </div>
 
         {selectedItems.length > 0 && (
-          <div className="mt-8 pt-4" style={{ borderTop: `1px solid ${PANEL_BORDER}` }}>
+          <div className="mx-auto mt-8 max-w-4xl pt-4" style={{ borderTop: `1px solid ${PANEL_BORDER}` }}>
             {selectedItems.map((item) => (
               <div
                 key={item.id}
@@ -304,41 +339,21 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
           </div>
         )}
 
-        <div className="mt-8">
-          <button
-            type="button"
-            disabled={selectedItems.length < 3 || drafting}
-            onClick={draftPlan}
-            style={{
-              border: `1px solid ${selectedItems.length < 3 || drafting ? PANEL_BORDER : 'rgba(28,27,24,0.5)'}`,
-              color: PRIMARY_NUM,
-              opacity: selectedItems.length < 3 ? 0.3 : 1,
-              cursor: selectedItems.length < 3 || drafting ? 'not-allowed' : 'pointer',
-              background: 'transparent',
-            }}
-            className="px-4 py-2 text-sm"
+        {(drafting || draftVisible || draftError) && (
+          <div
+            className="mx-auto mt-6 max-w-2xl rounded-2xl p-4 text-sm leading-relaxed"
+            style={{ border: `1px solid ${PANEL_BORDER}`, background: 'rgba(255,255,255,0.6)', color: PRIMARY_NUM }}
           >
-            {drafting ? 'Drafting…' : 'Draft the plan'}
-          </button>
-          {selectedItems.length < 3 && (
-            <span className="ml-3 text-sm" style={{ color: SECONDARY_TEXT }}>select at least 3</span>
-          )}
+            {draftError && <span style={{ color: SECONDARY_TEXT }}>{draftError}</span>}
+            {!draftError && (
+              <span>
+                {draftVisible}
+                {draftVisible.length < draftFull.length && <span className="ic-cursor">▍</span>}
+              </span>
+            )}
+          </div>
+        )}
 
-          {(drafting || draftVisible || draftError) && (
-            <div
-              className="mt-4 max-w-2xl rounded-2xl p-4 text-sm leading-relaxed"
-              style={{ border: `1px solid ${PANEL_BORDER}`, background: 'rgba(255,255,255,0.6)', color: PRIMARY_NUM }}
-            >
-              {draftError && <span style={{ color: SECONDARY_TEXT }}>{draftError}</span>}
-              {!draftError && (
-                <span>
-                  {draftVisible}
-                  {draftVisible.length < draftFull.length && <span className="ic-cursor">▍</span>}
-                </span>
-              )}
-            </div>
-          )}
-        </div>
       </div>
 
       <style>{`

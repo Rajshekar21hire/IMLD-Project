@@ -26,7 +26,7 @@ export const AgenticBeat: React.FC<Props> = ({ eyebrow, title, accent, children,
       whileInView={whileInView}
       viewport={{ once: true, margin: '-80px' }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
-      className={className ?? 'relative z-[1] mx-auto w-full max-w-6xl px-6 py-20 md:px-10'}
+      className={className ?? 'relative z-[1] mx-auto w-full max-w-[170rem] px-6 py-20 md:px-10'}
     >
       <div className="flex items-center gap-2.5">
         <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: accent }} />

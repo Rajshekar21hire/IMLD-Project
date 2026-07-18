@@ -4,7 +4,7 @@ export const DeepDivesWorstAffectedSection: React.FC = () => {
   return (
     <section className="ss-structural-section py-16 px-6 md:px-12 bg-transparent">
       <div className="mx-auto max-w-[90rem] bg-transparent text-center">
-         <p className="font-mono text-xs uppercase tracking-[0.2em] text-sky-700 font-bold">
+         <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#0C447C] font-bold">
           Deep Dives
         </p>
         <h2 className="mt-4 text-4xl font-black leading-[1.02] tracking-tight text-slate-950 md:text-6xl">

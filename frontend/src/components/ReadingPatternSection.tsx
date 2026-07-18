@@ -27,7 +27,7 @@ export const ReadingPatternSection: React.FC = () => {
       <div className="mx-auto max-w-[90rem] bg-transparent">
         <div className="space-y-5">
           <div className="text-center">
-            <p className="font-mono text-xs uppercase tracking-[0.2em] text-sky-700 font-bold">Reading the pattern</p>
+            <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#0C447C] font-bold">Reading the pattern</p>
              <h2 className="mt-4 text-4xl font-black leading-[1.02] tracking-tight text-slate-950 md:text-6xl">Not Five Crises. <span style={{ color: '#ff6d00' }}>  One Mechanism, </span> Repeated.</h2>
           </div>
 
