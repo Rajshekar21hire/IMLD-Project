@@ -12,7 +12,7 @@ type Props = {
 // Shared caption slot for the new Agentic AI visualizations - accepts the LLM-written
 // (or fallback) caption text as a prop so each chart stays a pure presentation component.
 export const AgenticCaption: React.FC<Props> = ({ text, loading, generated }) => (
-  <div className="mx-auto mt-4 max-w-2xl text-center transition-opacity duration-500" style={{ opacity: loading ? 0.5 : 1 }}>
+  <div className="mx-auto mt-4 max-w-[84rem] text-center transition-opacity duration-500" style={{ opacity: loading ? 0.5 : 1 }}>
     <p className="text-base leading-relaxed" style={{ fontFamily: SERIF, color: MUTED }}>
       {text}
     </p>

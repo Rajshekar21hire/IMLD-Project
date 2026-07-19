@@ -183,7 +183,7 @@ export const RecoveryClock: React.FC = () => {
         </div>
       </div>
 
-      <div className="w-full max-w-md">
+      <div className="w-full max-w-[56rem]">
         <div className="flex flex-col gap-2">
           {ARCS.map((arc, i) => {
             const isActive = Boolean(activated[arc.id]);

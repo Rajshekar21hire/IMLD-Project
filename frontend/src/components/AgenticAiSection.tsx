@@ -70,7 +70,7 @@ export const AgenticAiSection: React.FC = () => {
       <PollutionScrollField severity={haze} />
       <AgenticFogWipe triggerKey={wipeKey} />
 
-      <div className="relative z-[1] mx-auto max-w-[170rem] px-6 py-4 text-center md:px-10">
+      <div className="relative z-[1] mx-auto max-w-[510rem] px-6 py-4 text-center md:px-10">
         <p className="truncate text-sm" style={{ color: 'var(--ss-muted)' }}>
           <span className="font-bold uppercase tracking-[0.25em]" style={{ color: 'var(--ss-accent)' }}>
             Agentic AI
@@ -86,32 +86,32 @@ export const AgenticAiSection: React.FC = () => {
 
       <div className="relative z-[1]">
         <div ref={setSlideRef(0)} className="agentic-slide flex min-h-[42.5vh] flex-col justify-center">
-          <AgenticBeat eyebrow="In plain terms" title="How it feels to live here" accent="#f87171">
+          <AgenticBeat eyebrow="In plain terms" title="How It Feels To Live Here" accent="#f87171">
             <HowItFeelsToLiveHere />
             <DiurnalRibbon />
           </AgenticBeat>
         </div>
 
         <div ref={setSlideRef(1)} className="agentic-slide flex min-h-[42.5vh] flex-col justify-center">
-          <AgenticBeat eyebrow="The shape of a year" title="Twelve months, in particles" accent="#38bdf8">
+          <AgenticBeat eyebrow="The shape of a year" title="Twelve Months, in Particles" accent="#38bdf8">
             <MonthlyParticleBars />
           </AgenticBeat>
         </div>
 
         <div ref={setSlideRef(2)} className="agentic-slide flex min-h-[42.5vh] flex-col justify-center">
-          <AgenticBeat eyebrow="Play it forward" title="Simulate the next years" accent="#f59e0b">
+          <AgenticBeat eyebrow="Play it forward" title="Simulate The Next Years" accent="#f59e0b">
             <CitySimulation />
           </AgenticBeat>
         </div>
 
         <div ref={setSlideRef(3)} className="agentic-slide flex min-h-[42.5vh] flex-col justify-center">
-          <AgenticBeat eyebrow="The reversal" title="One recovery, at every scale" accent="#16a34a">
+          <AgenticBeat eyebrow="The reversal" title="One Recovery, at Every Scale" accent="#16a34a">
             <RecoveryClock />
           </AgenticBeat>
         </div>
 
         <div ref={setSlideRef(4)} className="agentic-slide flex min-h-[42.5vh] flex-col justify-center">
-          <AgenticBeat eyebrow="Reminders" title="Quiet truths about the air" accent="#38bdf8">
+          <AgenticBeat eyebrow="Reminders" title="Quiet Truths About the Air" accent="#38bdf8">
             <p className="mx-auto -mt-3 mb-6 max-w-xl text-center text-sm" style={{ color: 'var(--ss-muted)' }}>
               Six small, true things about air and the people who breathe it - tap a card to read one more thought.
             </p>
@@ -122,9 +122,9 @@ export const AgenticAiSection: React.FC = () => {
         <div ref={setSlideRef(5)} className="agentic-slide flex min-h-[42.5vh] flex-col justify-center">
           <AgenticBeat
             eyebrow="Finally"
-            title="Make it about you"
+            title="Make It About You"
             accent="#7ab8e6"
-            className="relative z-[1] mx-auto w-full max-w-[170rem] px-6 pb-16 pt-20 text-center md:px-10"
+            className="relative z-[1] mx-auto w-full max-w-[510rem] px-6 pb-16 pt-20 text-center md:px-10"
           >
             <p className="mx-auto -mt-3 mb-6 max-w-xl text-center text-sm" style={{ color: 'var(--ss-muted)' }}>
               Pick your city, who you're asking for, and what's on your mind - we'll write something just for that.

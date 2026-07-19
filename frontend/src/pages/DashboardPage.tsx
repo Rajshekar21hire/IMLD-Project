@@ -1412,6 +1412,10 @@ export const DashboardPage: React.FC = () => {
           padding-inline: 0.75rem;
         }
 
+        .story-studio-theme.ss-mode-agentic .ss-section-container {
+          max-width: 9000px;
+        }
+
         .story-studio-theme .ss-section {
           width: 100%;
           max-width: 100%;

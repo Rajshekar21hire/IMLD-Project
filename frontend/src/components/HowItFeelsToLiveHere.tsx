@@ -192,10 +192,10 @@ export const HowItFeelsToLiveHere: React.FC = () => {
 
   return (
     <div>
-      <div className="mx-auto mb-1 max-w-xl text-center text-sm" style={{ color: MUTED }}>
+      <div className="mx-auto mb-1 max-w-[72rem] text-center text-sm" style={{ color: MUTED }}>
         {explain.how_to_use}
       </div>
-      <div className="mx-auto mb-6 max-w-xl text-center text-sm" style={{ color: MUTED }}>
+      <div className="mx-auto mb-6 max-w-[72rem] text-center text-sm" style={{ color: MUTED }}>
         {explain.description}
       </div>
 
@@ -226,7 +226,7 @@ export const HowItFeelsToLiveHere: React.FC = () => {
       </div>
 
       <div
-        className="mx-auto mt-6 max-w-2xl rounded-2xl p-6 text-center"
+        className="mx-auto mt-6 max-w-[84rem] rounded-2xl p-6 text-center"
         style={{ backgroundColor: 'rgba(255,255,255,0.86)', border: `1px solid ${color}33` }}
       >
         <div className="text-5xl font-black leading-none" style={{ color }}>
@@ -241,7 +241,7 @@ export const HowItFeelsToLiveHere: React.FC = () => {
         </div>
       </div>
 
-      <div className="mx-auto mt-6 flex max-w-2xl flex-wrap justify-center gap-3">
+      <div className="mx-auto mt-6 flex max-w-[84rem] flex-wrap justify-center gap-3">
         {AGENTIC_FACTORS.map((f) => {
           const active = factorId === f.id;
           return (
@@ -278,7 +278,7 @@ export const HowItFeelsToLiveHere: React.FC = () => {
         })}
       </div>
 
-      <div className="mx-auto mt-5 max-w-2xl text-center transition-opacity duration-300" style={{ opacity: textStatus === 'loading' ? 0.5 : 1 }}>
+      <div className="mx-auto mt-5 max-w-[84rem] text-center transition-opacity duration-300" style={{ opacity: textStatus === 'loading' ? 0.5 : 1 }}>
         <p className="text-base leading-relaxed" style={{ fontFamily: SERIF, color: MUTED }}>
           {text}
         </p>

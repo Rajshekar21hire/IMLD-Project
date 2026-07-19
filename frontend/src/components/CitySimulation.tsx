@@ -270,10 +270,10 @@ export const CitySimulation: React.FC = () => {
 
   return (
     <div>
-      <div className="mx-auto mb-1 max-w-xl text-center text-sm" style={{ color: MUTED }}>
+      <div className="mx-auto mb-1 max-w-[72rem] text-center text-sm" style={{ color: MUTED }}>
         {explain.how_to_use}
       </div>
-      <div className="mx-auto mb-6 max-w-xl text-center text-sm" style={{ color: MUTED }}>
+      <div className="mx-auto mb-6 max-w-[72rem] text-center text-sm" style={{ color: MUTED }}>
         {explain.description}
       </div>
 
@@ -316,7 +316,7 @@ export const CitySimulation: React.FC = () => {
           <canvas ref={canvasRef} width={CANVAS_W} height={CANVAS_H} style={{ display: 'block' }} />
         </div>
 
-        <div className="flex w-full max-w-sm flex-col gap-6">
+        <div className="flex w-full max-w-[48rem] flex-col gap-6">
           <div>
             <div className="text-sm font-semibold" style={{ color: TEXT }}>
               Solutions to try

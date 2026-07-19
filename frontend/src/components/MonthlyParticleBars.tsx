@@ -200,10 +200,10 @@ export const MonthlyParticleBars: React.FC = () => {
 
   return (
     <div>
-      <div className="mx-auto mb-1 max-w-xl text-center text-sm" style={{ color: MUTED }}>
+      <div className="mx-auto mb-1 max-w-[72rem] text-center text-sm" style={{ color: MUTED }}>
         {explain.how_to_use}
       </div>
-      <div className="mx-auto mb-6 max-w-xl text-center text-sm" style={{ color: MUTED }}>
+      <div className="mx-auto mb-6 max-w-[72rem] text-center text-sm" style={{ color: MUTED }}>
         {explain.description}
       </div>
 
@@ -242,7 +242,7 @@ export const MonthlyParticleBars: React.FC = () => {
         ))}
       </div>
 
-      <div className="relative mx-auto mt-6 flex max-w-3xl items-end justify-center gap-2 sm:gap-3">
+      <div className="relative mx-auto mt-6 flex max-w-[96rem] items-end justify-center gap-2 sm:gap-3">
         {MONTH_LABELS.map((month, monthIdx) => {
           const aqi = monthlyAqi[monthIdx];
           const rgb = aqiToRgb(aqi);
@@ -321,7 +321,7 @@ export const MonthlyParticleBars: React.FC = () => {
         More particles and a redder tint mean worse air that month; fewer particles and green mean cleaner air. Hover or tap any bar to see its AQI.
       </div>
 
-      <div className="mx-auto mt-8 flex max-w-2xl flex-col items-center gap-2">
+      <div className="mx-auto mt-8 flex max-w-[84rem] flex-col items-center gap-2">
         <div className="text-sm font-semibold" style={{ color: TEXT }}>
           {cityCategory === 'good' ? `Health benefits of ${city}'s air` : `Health issues linked to ${city}'s air`}
         </div>
@@ -348,7 +348,7 @@ export const MonthlyParticleBars: React.FC = () => {
           })}
         </div>
         {activeEffect && (
-          <div className="mt-1 max-w-md text-center text-xs" style={{ color: MUTED }}>
+          <div className="mt-1 max-w-[56rem] text-center text-xs" style={{ color: MUTED }}>
             {activeEffect.description}
           </div>
         )}

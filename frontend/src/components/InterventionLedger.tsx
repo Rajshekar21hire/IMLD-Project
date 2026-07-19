@@ -173,7 +173,10 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
         <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: '#0C447C', margin: 0 }}>
           Intervention ledger
         </p>
-        <h2 className="mt-3 text-4xl font-black leading-[1.02] tracking-tight text-slate-950 md:text-6xl">
+        <h2
+          className="mt-3 text-4xl font-black leading-[1.02] tracking-tight text-slate-950 md:text-6xl"
+          style={{ fontFamily: 'Inter, sans-serif' }}
+        >
           Impact Studio For <span style={{ color: '#368566' }}>Air Quality Prevention</span>
         </h2>
         <div className="mx-auto mt-2 max-w-4xl text-base leading-relaxed text-slate-600">

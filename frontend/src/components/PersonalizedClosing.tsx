@@ -148,7 +148,7 @@ export const PersonalizedClosing: React.FC = () => {
 
       {status !== 'idle' && (
         <div
-          className="mx-auto mt-8 max-w-xl rounded-[24px] px-6 py-8 text-center md:px-10"
+          className="mx-auto mt-8 max-w-[72rem] rounded-[24px] px-6 py-8 text-center md:px-10"
           style={{ backgroundColor: 'rgba(255,255,255,0.86)', border: '1px solid var(--ss-border)', minHeight: 320 }}
         >
           {!result.text && (

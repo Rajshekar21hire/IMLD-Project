@@ -53,7 +53,10 @@ export const SourceMixComparator: React.FC = () => {
     <div className="s4h-root mx-auto w-full max-w-[170rem] px-6 md:px-10">
       <div className="text-center">
         <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#0C447C]">Pollution source profile</p>
-        <h2 className="mt-3 text-4xl font-black leading-[1.02] tracking-tight text-slate-950 md:text-6xl">
+        <h2
+          className="mt-3 text-4xl font-black leading-[1.02] tracking-tight text-slate-950 md:text-6xl"
+          style={{ fontFamily: 'Inter, sans-serif' }}
+        >
           Same <span style={{ color: '#00A5CF' }}>Ingredients,</span> Different <span style={{ color: '#FF6D00' }}>Proportions</span>
         </h2>
         <p className="mt-2 text-base leading-relaxed text-slate-600">
