@@ -86,7 +86,11 @@ export const AgenticAiSection: React.FC = () => {
 
       <div className="relative z-[1]">
         <div ref={setSlideRef(0)} className="agentic-slide flex min-h-[42.5vh] flex-col justify-center">
-          <AgenticBeat eyebrow="In plain terms" title="How It Feels To Live Here" accent="#f87171">
+          <AgenticBeat
+            eyebrow="In plain terms"
+            title={<>How It Feels To <span style={{ color: '#FF6D00' }}>Live</span> Here</>}
+            accent="#f87171"
+          >
             <HowItFeelsToLiveHere />
             <DiurnalRibbon />
           </AgenticBeat>

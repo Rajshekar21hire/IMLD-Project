@@ -217,7 +217,7 @@ export const RealtimePollutionPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-transparent">
       <AirParticlesBackground />
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow">
+      <div className="bg-[#0284C7] text-white shadow">
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="flex items-center gap-3 mb-2">
             <Activity className="w-8 h-8" />
@@ -283,7 +283,7 @@ export const RealtimePollutionPage: React.FC = () => {
                     onClick={() => toggleCity(city)}
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       selectedCities.includes(city)
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-[#0284C7] text-white'
                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                     }`}
                   >
@@ -298,7 +298,7 @@ export const RealtimePollutionPage: React.FC = () => {
             <button
               onClick={loadReadings}
               disabled={loading}
-              className="flex items-center gap-2 bg-blue-600 text-white px-6 py-2 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 bg-[#0284C7] text-white px-6 py-2 rounded-lg font-semibold hover:brightness-110 transition-colors disabled:opacity-50"
             >
               <RefreshCw size={18} />
               {loading ? 'Loading...' : 'Load Data'}

@@ -2,10 +2,14 @@ import React from 'react';
 import { Wind } from 'lucide-react';
 
 export const AboutPage: React.FC = () => {
+  const ACCENT = '#0284C7';
+  const ACCENT_SOFT = 'rgba(2,132,199,0.10)';
+  const ACCENT_BORDER = 'rgba(2,132,199,0.28)';
+
   return (
     <div className="min-h-screen bg-[#FBFAFC]">
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+      <div className="bg-[#0284C7] text-white">
         <div className="max-w-4xl mx-auto px-6 py-16 text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-white/20 rounded-2xl mb-6">
             <Wind className="w-8 h-8 text-white" />
@@ -13,7 +17,7 @@ export const AboutPage: React.FC = () => {
           <h1 className="text-6xl md:text-7xl font-extrabold mb-4 leading-tight">
             The Silent Crisis: Air Quality, Health, and the Path Forward
           </h1>
-          <p className="text-blue-100 text-2xl max-w-4xl mx-auto leading-relaxed">
+          <p className="text-white/90 text-2xl max-w-4xl mx-auto leading-relaxed">
             Bridging the gap between complex air quality data and the people it affects.
           </p>
         </div>
@@ -48,8 +52,8 @@ export const AboutPage: React.FC = () => {
               { label: 'Raise awareness', desc: 'about the importance of clean air and the need for informed environmental decisions.' },
               { label: 'Demonstrate', desc: 'how data storytelling can transform complex datasets into meaningful insights.' },
             ].map((item) => (
-              <li key={item.label} className="flex gap-3 rounded-2xl bg-[#EEF3F8] px-5 py-4 text-slate-700 text-xl">
-                <span className="font-bold text-blue-700 shrink-0">{item.label}</span>
+              <li key={item.label} className="flex gap-3 rounded-2xl px-5 py-4 text-slate-700 text-xl" style={{ backgroundColor: ACCENT_SOFT }}>
+                <span className="font-bold shrink-0" style={{ color: ACCENT }}>{item.label}</span>
                 <span>{item.desc}</span>
               </li>
             ))}
@@ -66,8 +70,8 @@ export const AboutPage: React.FC = () => {
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
             {['Manasa Suresh Bhat', 'W. V. Subodhi Kalpani Wasalthilaka', 'Rajshekar Hiremath'].map((name) => (
-              <div key={name} className="rounded-2xl border border-[#CBD5E1] bg-white px-6 py-5 text-center shadow-sm">
-                <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center mx-auto mb-3">
+              <div key={name} className="rounded-2xl border bg-white px-6 py-5 text-center shadow-sm" style={{ borderColor: ACCENT_BORDER }}>
+                <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: ACCENT }}>
                   <span className="text-white text-3xl font-bold">{name[0]}</span>
                 </div>
                 <p className="font-semibold text-slate-900 text-xl">{name}</p>
@@ -89,7 +93,7 @@ export const AboutPage: React.FC = () => {
           </p>
           <div className="flex flex-wrap gap-3">
             {['World Health Organization (WHO)', 'OpenAQ', 'World Air Quality Index (WAQI)', 'Other publicly available environmental monitoring datasets'].map((src) => (
-              <span key={src} className="rounded-full bg-[#EEF3F8] border border-[#CBD5E1] px-4 py-2 text-lg font-semibold text-slate-700">
+              <span key={src} className="rounded-full px-4 py-2 text-lg font-semibold text-slate-700" style={{ backgroundColor: ACCENT_SOFT, border: `1px solid ${ACCENT_BORDER}` }}>
                 {src}
               </span>
             ))}
@@ -106,7 +110,7 @@ export const AboutPage: React.FC = () => {
           </p>
           <div className="flex flex-wrap gap-3">
             {['React', 'TypeScript', 'D3.js', 'Leaflet', 'JavaScript', 'HTML5 & CSS3', 'Tailwind CSS', 'Flask (Python)'].map((tech) => (
-              <span key={tech} className="rounded-full bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 px-4 py-2 text-lg font-semibold text-blue-700">
+              <span key={tech} className="rounded-full px-4 py-2 text-lg font-semibold" style={{ backgroundColor: ACCENT_SOFT, border: `1px solid ${ACCENT_BORDER}`, color: ACCENT }}>
                 {tech}
               </span>
             ))}
@@ -118,7 +122,7 @@ export const AboutPage: React.FC = () => {
         {/* Vision */}
         <section>
           <h2 className="text-5xl font-bold text-slate-900 mb-6">Our Vision</h2>
-          <blockquote className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 p-8 text-white text-3xl font-semibold leading-relaxed text-center shadow-lg">
+          <blockquote className="rounded-2xl p-8 text-white text-3xl font-semibold leading-relaxed text-center shadow-lg" style={{ backgroundColor: ACCENT }}>
             "Every breath matters. By making air quality data more accessible and understandable, we hope to inspire greater awareness of one of the world's most pressing environmental challenges and encourage informed conversations about creating a healthier, more sustainable future."
           </blockquote>
         </section>

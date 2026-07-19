@@ -211,151 +211,155 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
           </div>
         </div>
 
-        <div className="mt-6 text-center">
-          <button
-            type="button"
-            disabled={selectedItems.length < 3 || drafting}
-            onClick={draftPlan}
-            style={{
-              border: `1px solid ${selectedItems.length < 3 || drafting ? PANEL_BORDER : 'rgba(28,27,24,0.5)'}`,
-              color: PRIMARY_NUM,
-              opacity: selectedItems.length < 3 ? 0.3 : 1,
-              cursor: selectedItems.length < 3 || drafting ? 'not-allowed' : 'pointer',
-              background: 'transparent',
-            }}
-            className="px-4 py-2 text-sm"
-          >
-            {drafting ? 'Drafting…' : 'Draft the plan'}
-          </button>
-          {selectedItems.length < 3 && (
-            <span className="ml-3 text-sm" style={{ color: SECONDARY_TEXT }}>select at least 3</span>
-          )}
-        </div>
-
-        <div className="mt-10 flex flex-col items-center gap-6 lg:flex-row lg:justify-center">
-          <svg
-            viewBox={`0 0 ${VB_W} ${VB_H}`}
-            className="rounded-2xl border"
-            style={{ width: '100%', maxWidth: '640px', height: '420px', display: 'block', borderColor: PANEL_BORDER, background: 'rgba(255,255,255,0.6)' }}
-          >
-            <rect x={0} y={0} width={VB_W} height={VB_H} fill="transparent" />
-            <line
-              x1={MARGIN.left} y1={MARGIN.top} x2={MARGIN.left} y2={VB_H - MARGIN.bottom}
-              stroke={AXIS_LINE} strokeWidth={1}
-            />
-            <line
-              x1={MARGIN.left} y1={VB_H - MARGIN.bottom} x2={VB_W - MARGIN.right} y2={VB_H - MARGIN.bottom}
-              stroke={AXIS_LINE} strokeWidth={1}
-            />
-
-            {xTicks.map((t) => (
-              <React.Fragment key={`x-${t}`}>
-                <line
-                  x1={xToPx(t)} y1={VB_H - MARGIN.bottom} x2={xToPx(t)} y2={VB_H - MARGIN.bottom + 4}
-                  stroke={AXIS_LINE} strokeWidth={1}
-                />
-                <text x={xToPx(t)} y={VB_H - MARGIN.bottom + 16} fontSize={10} fill={TICK_LABEL} textAnchor="middle">
-                  {t}
-                </text>
-              </React.Fragment>
-            ))}
-            <text x={VB_W - MARGIN.right} y={VB_H - 4} fontSize={10} fill={TICK_LABEL} textAnchor="end">
-              years to effect
-            </text>
-
-            {yTicks.map((t) => (
-              <React.Fragment key={`y-${t}`}>
-                <line
-                  x1={MARGIN.left - 4} y1={yToPx(t)} x2={MARGIN.left} y2={yToPx(t)}
-                  stroke={AXIS_LINE} strokeWidth={1}
-                />
-                <text x={MARGIN.left - 8} y={yToPx(t) + 3} fontSize={10} fill={TICK_LABEL} textAnchor="end">
-                  {t}
-                </text>
-              </React.Fragment>
-            ))}
-            <text x={MARGIN.left} y={10} fontSize={10} fill={TICK_LABEL} textAnchor="start">
-              AQI points removed
-            </text>
-
-            {INTERVENTIONS.map((item) => {
-              const cx = xToPx(item.yearsToEffect);
-              const cy = yToPx(item.aqiPointsRemoved);
-              const r = radiusFor(item.costMillionsUSD);
-              const isSelected = selected.includes(item.id);
-              const isHovered = hoveredId === item.id;
-              return (
-                <g key={item.id}>
-                  {isSelected && (
-                    <circle cx={cx} cy={cy} r={r + 4} fill="none" stroke={SELECTED_RING} strokeWidth={2} />
-                  )}
-                  <circle
-                    cx={cx}
-                    cy={cy}
-                    r={r}
-                    fill={CATEGORY_COLORS[item.category]}
-                    fillOpacity={isSelected || isHovered ? 1 : 0.55}
-                    stroke={isHovered ? HOVER_STROKE : 'transparent'}
-                    strokeWidth={1}
-                    style={{ cursor: 'pointer' }}
-                    onMouseEnter={() => setHoveredId(item.id)}
-                    onMouseLeave={() => setHoveredId((current) => (current === item.id ? null : current))}
-                    onClick={() => toggleSelect(item.id)}
-                  />
-                </g>
-              );
-            })}
-          </svg>
-
-          <div
-            className="w-full rounded-2xl border p-4 text-sm lg:w-64"
-            style={{ borderColor: PANEL_BORDER, background: 'rgba(255,255,255,0.6)' }}
-          >
-            {hoveredItem ? (
-              <>
-                <div className="text-sm font-medium" style={{ color: CATEGORY_COLORS[hoveredItem.category] }}>
-                  {hoveredItem.category}
-                </div>
-                <div className="mt-1 font-semibold" style={{ color: PRIMARY_NUM }}>{hoveredItem.name}</div>
-                <div className="mt-2 leading-relaxed" style={{ color: SECONDARY_TEXT }}>{hoveredItem.mechanism}</div>
-              </>
-            ) : (
-              <div style={{ color: SECONDARY_TEXT }}>Hover a point for its mechanism.</div>
-            )}
-          </div>
-        </div>
-
-        {selectedItems.length > 0 && (
-          <div className="mx-auto mt-8 max-w-4xl pt-4" style={{ borderTop: `1px solid ${PANEL_BORDER}` }}>
-            {selectedItems.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between py-2 text-sm"
-                style={{ borderBottom: `1px solid ${PANEL_BORDER}`, color: PRIMARY_NUM }}
+        <div className="mx-auto mt-10 grid max-w-[90rem] gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(24rem,0.8fr)] lg:items-start lg:justify-center">
+          <div className="flex flex-col items-center gap-0">
+            <div className="mb-3 rounded-2xl border p-4 text-center" style={{ borderColor: PANEL_BORDER, background: 'rgba(255,255,255,0.6)', width: '100%', maxWidth: '760px' }}>
+              <button
+                type="button"
+                disabled={selectedItems.length < 3 || drafting}
+                onClick={draftPlan}
+                style={{
+                  border: `1px solid ${selectedItems.length < 3 || drafting ? PANEL_BORDER : 'rgba(28,27,24,0.5)'}`,
+                  color: PRIMARY_NUM,
+                  opacity: selectedItems.length < 3 ? 0.3 : 1,
+                  cursor: selectedItems.length < 3 || drafting ? 'not-allowed' : 'pointer',
+                  background: 'transparent',
+                }}
+                className="px-4 py-2 text-sm"
               >
-                <span>{item.name}</span>
-                <span style={{ color: SECONDARY_TEXT }}>
-                  ${item.costMillionsUSD}M · {item.yearsToEffect}yr · {item.aqiPointsRemoved} pts
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
+                {drafting ? 'Drafting…' : 'Draft the plan'}
+              </button>
+              {selectedItems.length < 3 && (
+                <span className="ml-3 text-sm" style={{ color: SECONDARY_TEXT }}>select at least 3</span>
+              )}
+            </div>
 
-        {(drafting || draftVisible || draftError) && (
-          <div
-            className="mx-auto mt-6 max-w-2xl rounded-2xl p-4 text-sm leading-relaxed"
-            style={{ border: `1px solid ${PANEL_BORDER}`, background: 'rgba(255,255,255,0.6)', color: PRIMARY_NUM }}
-          >
-            {draftError && <span style={{ color: SECONDARY_TEXT }}>{draftError}</span>}
-            {!draftError && (
-              <span>
-                {draftVisible}
-                {draftVisible.length < draftFull.length && <span className="ic-cursor">▍</span>}
-              </span>
+            <svg
+              viewBox={`0 0 ${VB_W} ${VB_H}`}
+              className="rounded-2xl border"
+              style={{ width: '100%', maxWidth: '760px', height: '440px', display: 'block', borderColor: PANEL_BORDER, background: 'rgba(255,255,255,0.6)' }}
+            >
+              <rect x={0} y={0} width={VB_W} height={VB_H} fill="transparent" />
+              <line
+                x1={MARGIN.left} y1={MARGIN.top} x2={MARGIN.left} y2={VB_H - MARGIN.bottom}
+                stroke={AXIS_LINE} strokeWidth={1}
+              />
+              <line
+                x1={MARGIN.left} y1={VB_H - MARGIN.bottom} x2={VB_W - MARGIN.right} y2={VB_H - MARGIN.bottom}
+                stroke={AXIS_LINE} strokeWidth={1}
+              />
+
+              {xTicks.map((t) => (
+                <React.Fragment key={`x-${t}`}>
+                  <line
+                    x1={xToPx(t)} y1={VB_H - MARGIN.bottom} x2={xToPx(t)} y2={VB_H - MARGIN.bottom + 4}
+                    stroke={AXIS_LINE} strokeWidth={1}
+                  />
+                  <text x={xToPx(t)} y={VB_H - MARGIN.bottom + 16} fontSize={10} fill={TICK_LABEL} textAnchor="middle">
+                    {t}
+                  </text>
+                </React.Fragment>
+              ))}
+              <text x={VB_W - MARGIN.right} y={VB_H - 4} fontSize={10} fill={TICK_LABEL} textAnchor="end">
+                years to effect
+              </text>
+
+              {yTicks.map((t) => (
+                <React.Fragment key={`y-${t}`}>
+                  <line
+                    x1={MARGIN.left - 4} y1={yToPx(t)} x2={MARGIN.left} y2={yToPx(t)}
+                    stroke={AXIS_LINE} strokeWidth={1}
+                  />
+                  <text x={MARGIN.left - 8} y={yToPx(t) + 3} fontSize={10} fill={TICK_LABEL} textAnchor="end">
+                    {t}
+                  </text>
+                </React.Fragment>
+              ))}
+              <text x={MARGIN.left} y={10} fontSize={10} fill={TICK_LABEL} textAnchor="start">
+                AQI points removed
+              </text>
+
+              {INTERVENTIONS.map((item) => {
+                const cx = xToPx(item.yearsToEffect);
+                const cy = yToPx(item.aqiPointsRemoved);
+                const r = radiusFor(item.costMillionsUSD);
+                const isSelected = selected.includes(item.id);
+                const isHovered = hoveredId === item.id;
+                return (
+                  <g key={item.id}>
+                    {isSelected && (
+                      <circle cx={cx} cy={cy} r={r + 4} fill="none" stroke={SELECTED_RING} strokeWidth={2} />
+                    )}
+                    <circle
+                      cx={cx}
+                      cy={cy}
+                      r={r}
+                      fill={CATEGORY_COLORS[item.category]}
+                      fillOpacity={isSelected || isHovered ? 1 : 0.55}
+                      stroke={isHovered ? HOVER_STROKE : 'transparent'}
+                      strokeWidth={1}
+                      style={{ cursor: 'pointer' }}
+                      onMouseEnter={() => setHoveredId(item.id)}
+                      onMouseLeave={() => setHoveredId((current) => (current === item.id ? null : current))}
+                      onClick={() => toggleSelect(item.id)}
+                    />
+                  </g>
+                );
+              })}
+            </svg>
+
+            {selectedItems.length > 0 && (
+              <div className="mt-4 w-full max-w-4xl pt-4" style={{ borderTop: `1px solid ${PANEL_BORDER}` }}>
+                {selectedItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="flex items-center justify-between py-2 text-sm"
+                    style={{ borderBottom: `1px solid ${PANEL_BORDER}`, color: PRIMARY_NUM }}
+                  >
+                    <span>{item.name}</span>
+                    <span style={{ color: SECONDARY_TEXT }}>
+                      ${item.costMillionsUSD}M · {item.yearsToEffect}yr · {item.aqiPointsRemoved} pts
+                    </span>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
-        )}
+
+          <div className="flex w-full flex-col gap-3">
+            <div
+              className="w-full rounded-2xl border p-4 text-center text-sm"
+              style={{ borderColor: PANEL_BORDER, background: 'rgba(255,255,255,0.6)' }}
+            >
+              {hoveredItem ? (
+                <>
+                  <div className="text-sm font-medium" style={{ color: CATEGORY_COLORS[hoveredItem.category] }}>
+                    {hoveredItem.category}
+                  </div>
+                  <div className="mt-1 font-semibold" style={{ color: PRIMARY_NUM }}>{hoveredItem.name}</div>
+                  <div className="mt-2 leading-relaxed" style={{ color: SECONDARY_TEXT }}>{hoveredItem.mechanism}</div>
+                </>
+              ) : (
+                <div style={{ color: SECONDARY_TEXT }}>Hover a point for its mechanism.</div>
+              )}
+            </div>
+
+            {(drafting || draftVisible || draftError) && (
+              <div
+                className="w-full rounded-2xl p-4 text-sm leading-relaxed"
+                style={{ border: `1px solid ${PANEL_BORDER}`, background: 'rgba(255,255,255,0.6)', color: PRIMARY_NUM }}
+              >
+                {draftError && <span style={{ color: SECONDARY_TEXT }}>{draftError}</span>}
+                {!draftError && (
+                  <span>
+                    {draftVisible}
+                    {draftVisible.length < draftFull.length && <span className="ic-cursor">▍</span>}
+                  </span>
+                )}
+              </div>
+            )}
+          </div>
+        </div>
 
       </div>
 

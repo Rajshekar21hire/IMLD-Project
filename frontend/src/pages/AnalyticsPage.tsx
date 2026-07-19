@@ -326,7 +326,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
   return (
     <div className="min-h-screen bg-transparent">
       <AirParticlesBackground />
-      <div className="border-b border-blue-700 bg-gradient-to-r from-blue-600 to-indigo-600 text-white">
+      <div className="border-b border-[#0284C7] bg-[#0284C7] text-white">
         <div className="max-w-7xl mx-auto px-4 py-7">
           <div className="flex items-center gap-3">
             <BarChart3 className="w-8 h-8 text-sky-300" />
@@ -442,7 +442,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
                     onClick={() => setChartType(type.value as any)}
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       chartType === type.value
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-[#0284C7] text-white'
                         : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
                     }`}
                   >
@@ -475,7 +475,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
                     onClick={() => togglePollutant(type.value)}
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       selectedPollutants.includes(type.value)
-                        ? 'bg-blue-600 text-white'
+                        ? 'bg-[#0284C7] text-white'
                         : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
                     }`}
                   >
@@ -487,10 +487,11 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
           )}
 
           <div className="flex flex-col gap-2">
-            <button
+              <button
               onClick={handleLoadData}
               disabled={loading || summaryLoading}
-              className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="w-full text-white py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              style={{ backgroundColor: '#0284C7' }}
             >
               {loading || summaryLoading ? (
                 <>

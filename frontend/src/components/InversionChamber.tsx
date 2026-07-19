@@ -22,15 +22,15 @@ const heightToY = (heightM: number) => {
   return CANVAS_H - GROUND_MARGIN - t * usable;
 };
 
-// Softer, lower-contrast pastel tones - same AQI ordering as everywhere else on the page, just
-// muted a step further so the readout sits quietly on a light background instead of shouting.
+// Darker AQI tones - same ordering as everywhere else on the page, but with more depth so the
+// readout and controls carry the same color language as the active buttons.
 const getBand = (value: number) => {
-  if (value <= 50) return { label: 'Good', color: '#7bc9b8' };
-  if (value <= 100) return { label: 'Moderate', color: '#e0be6b' };
-  if (value <= 150) return { label: 'Unhealthy for sensitive groups', color: '#e3a374' };
-  if (value <= 200) return { label: 'Unhealthy', color: '#dd8f8f' };
-  if (value <= 300) return { label: 'Very unhealthy', color: '#c99bd6' };
-  return { label: 'Hazardous', color: '#d992a3' };
+  if (value <= 50) return { label: 'Good', color: '#2f8f7d' };
+  if (value <= 100) return { label: 'Moderate', color: '#b88722' };
+  if (value <= 150) return { label: 'Unhealthy for sensitive groups', color: '#bf7131' };
+  if (value <= 200) return { label: 'Unhealthy', color: '#b35555' };
+  if (value <= 300) return { label: 'Very unhealthy', color: '#9258ad' };
+  return { label: 'Hazardous', color: '#a64f6d' };
 };
 
 const PRESETS = [
@@ -285,7 +285,7 @@ export const InversionChamber: React.FC = () => {
         }
       `}</style>
 
-      <div className="s4h-root mx-auto max-w-[170rem]">
+      <div className="s4h-root mx-auto max-w-[112rem]">
         <div className="text-center">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#0C447C]">Inversion chamber</p>
           <h2
@@ -299,10 +299,10 @@ export const InversionChamber: React.FC = () => {
           </p>
         </div>
 
-        <div className="mt-8 flex flex-col items-center gap-10 md:flex-row md:items-center md:justify-center">
+        <div className="mx-auto mt-8 grid max-w-[94rem] grid-cols-1 gap-8 xl:grid-cols-[auto_minmax(0,1fr)_minmax(22rem,0.9fr)] xl:items-start xl:justify-center">
           <div
-            className="relative shrink-0 self-center overflow-hidden rounded-2xl border md:self-start"
-            style={{ borderColor: 'var(--ss-border)', boxShadow: '0 8px 24px rgba(15,36,55,0.1)' }}
+            className="relative shrink-0 self-center overflow-hidden rounded-2xl border xl:self-start"
+            style={{ borderColor: 'var(--ss-border)', boxShadow: '0 8px 24px rgba(15,36,55,0.1)', width: CANVAS_W }}
           >
             <canvas
               ref={canvasRef}
@@ -341,7 +341,7 @@ export const InversionChamber: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex w-full max-w-2xl flex-col items-center gap-8 text-center">
+          <div className="flex w-full max-w-2xl flex-col items-center gap-8 text-center xl:justify-self-center">
             <div>
               <div className="text-6xl font-black leading-none" style={{ color: band.color }}>
                 {displayValue}
@@ -413,8 +413,8 @@ export const InversionChamber: React.FC = () => {
                     }}
                     style={{
                       color: isActive ? '#ffffff' : presetBand.color,
-                      backgroundColor: isActive ? presetBand.color : hexToRgba(presetBand.color, 0.12),
-                      border: `1.5px solid ${isActive ? presetBand.color : hexToRgba(presetBand.color, 0.3)}`,
+                      backgroundColor: isActive ? presetBand.color : hexToRgba(presetBand.color, 0.16),
+                      border: `1.5px solid ${isActive ? presetBand.color : hexToRgba(presetBand.color, 0.45)}`,
                     }}
                     className="rounded-full px-3.5 py-1.5 text-xs font-semibold uppercase tracking-[0.1em] transition-all"
                   >
@@ -437,27 +437,28 @@ export const InversionChamber: React.FC = () => {
               </button>
             </div>
 
-            <div
-              className="w-full rounded-2xl border-l-[6px] bg-white/70 p-4 text-center"
-              style={{ borderColor: 'var(--ss-border)', borderLeftColor: band.color }}
-            >
-              {explainLoading && (
-                <p className="text-xs uppercase tracking-[0.15em]" style={{ color: 'var(--ss-muted)' }}>
-                  Generating…
+          </div>
+
+          <div
+            className="w-full rounded-2xl border-l-[6px] bg-white/70 p-4 text-center xl:self-center"
+            style={{ borderColor: 'var(--ss-border)', borderLeftColor: band.color }}
+          >
+            {explainLoading && (
+              <p className="text-xs uppercase tracking-[0.15em]" style={{ color: 'var(--ss-muted)' }}>
+                Generating…
+              </p>
+            )}
+            {!explainLoading && explainError && (
+              <p className="text-xs" style={{ color: 'var(--ss-muted)' }}>{explainError}</p>
+            )}
+            {!explainLoading && !explainError && howToUse && (
+              <>
+                <p className="text-sm font-bold" style={{ color: band.color }}>{howToUse}</p>
+                <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--ss-text)' }}>
+                  {description}
                 </p>
-              )}
-              {!explainLoading && explainError && (
-                <p className="text-xs" style={{ color: 'var(--ss-muted)' }}>{explainError}</p>
-              )}
-              {!explainLoading && !explainError && howToUse && (
-                <>
-                  <p className="text-sm font-bold" style={{ color: band.color }}>{howToUse}</p>
-                  <p className="mt-2 text-sm leading-relaxed" style={{ color: 'var(--ss-text)' }}>
-                    {description}
-                  </p>
-                </>
-              )}
-            </div>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -18,7 +18,7 @@ export const DeepDiveFlowSection: React.FC = () => (
   <div className="s4h-root relative w-full overflow-hidden bg-transparent">
     <FogDriftLayer opacity={0.7} />
     <PollutionScrollField severity={0.4} />
-    <div className="relative z-[1] flex flex-col gap-16 py-4">
+    <div className="relative z-[1] flex flex-col gap-8 py-4">
       <SourceMixComparator />
       <InterventionImpactScenario />
       <InterventionLedger />

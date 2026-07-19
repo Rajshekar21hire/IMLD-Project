@@ -1324,25 +1324,73 @@ AGENTIC_DAY_RIBBON_CONTEXT = {
     'Wellington': 'generally clean, among the best air quality of any city in the world',
 }
 
+AGENTIC_DAY_RIBBON_TIER_CONTEXT = {
+    'worst': 'generally very poor, among the most polluted air in the world',
+    'medium': 'moderate - often mixed, with cleaner and heavier periods in the same week',
+    'best': 'generally clean and consistently within healthy guidelines',
+}
+
+AGENTIC_DAY_RIBBON_TIER_LABEL = {
+    'worst': 'worst-air cities',
+    'medium': 'mid-tier cities',
+    'best': 'clean-air cities',
+}
+
+AGENTIC_DAY_RIBBON_CITY_TIER = {
+    'Delhi': 'worst',
+    'Lahore': 'worst',
+    'Beijing': 'medium',
+    'Mexico City': 'medium',
+    'Zurich': 'best',
+    'Wellington': 'best',
+}
+
 
 @bp.route('/agentic-day-ribbon', methods=['POST'])
 def generate_agentic_day_ribbon():
     """'How AQI changes over the day' - the two hour labels plus a short summary for the Day Ribbon."""
     try:
         data = request.get_json() or {}
-        city = data.get('city') if data.get('city') in AGENTIC_CITIES else AGENTIC_CITIES[0]
-        cache_key = f'agentic_dayribbon:{city.lower()}'
+        city = data.get('city') if data.get('city') in AGENTIC_CITIES else None
+        requested_tier = str(data.get('tier') or '').strip().lower()
+        if requested_tier in AGENTIC_DAY_RIBBON_TIER_CONTEXT:
+            tier = requested_tier
+        elif city:
+            tier = AGENTIC_DAY_RIBBON_CITY_TIER.get(city, 'medium')
+        else:
+            tier = 'worst'
+
+        cache_key = f'agentic_dayribbon:tier:{tier}'
 
         cached_payload, cached_provider = _get_cached_narrative(cache_key)
         if cached_payload:
             return jsonify({'success': True, 'data': {'provider': cached_provider, **cached_payload}}), 200
 
-        city_context = AGENTIC_DAY_RIBBON_CONTEXT.get(city, 'a mix of better and worse days through the year')
+        tier_context = AGENTIC_DAY_RIBBON_TIER_CONTEXT.get(tier, AGENTIC_DAY_RIBBON_TIER_CONTEXT['medium'])
+        tier_label = AGENTIC_DAY_RIBBON_TIER_LABEL.get(tier, AGENTIC_DAY_RIBBON_TIER_LABEL['medium'])
+
+        tier_specific_rule = {
+            'worst': (
+                'Emphasize that even at the easiest hour, the air is still not truly clean. '
+                'The day should feel heavy for longer stretches.'
+            ),
+            'medium': (
+                'Emphasize mixed conditions: some meaningful relief by afternoon, but frequent return to heavier air '
+                'in morning/night transitions.'
+            ),
+            'best': (
+                'Emphasize mostly clean air through most hours, with only a mild rise around dawn/night. '
+                'Keep it realistic and not perfect.'
+            ),
+        }.get(tier, '')
 
         prompt = f"""{AGENTIC_TONE}
 
-{city}'s air is {city_context}. Like most cities, it still follows a daily rhythm: heavier in the
-early morning, easing by mid-afternoon, then thickening again at night.
+This button represents {tier_label}. The air here is {tier_context}. Like most cities, it still
+follows a daily rhythm: heavier in the early morning, easing by mid-afternoon, then thickening
+again at night.
+
+{tier_specific_rule}
 
 Return valid JSON only with this exact shape:
 {{
@@ -1355,9 +1403,10 @@ Rules:
 - "easiest" is a short phrase like "easiest around 3pm" naming the lightest hour.
 - "heaviest" is a short phrase like "heaviest at dawn" naming the heaviest hour.
 - "summary" is one or two sentences (about 25-40 words) describing how the air changes over the
-  course of a day here, reflecting how clean or polluted the air generally is.
-- Do NOT name the city anywhere in "summary" - speak generically ("the air here", "this city"),
-  never "{city}".
+    course of a day here, reflecting this button's severity level.
+- In "summary", mention that the ribbon darkens when air gets heavier and lightens when it eases,
+    so the visual contrast feels clear.
+- Do NOT name any city in "summary" - speak generically ("the air here", "this place").
 - No numbers beyond a simple time of day. No markdown fences, no extra keys."""
 
         provider_used = None
@@ -1381,7 +1430,7 @@ Rules:
             or not isinstance(heaviest, str) or not heaviest.strip()
             or not isinstance(summary, str) or not summary.strip()
         ):
-            return jsonify({'success': True, 'data': {'provider': 'fallback', **_agentic_day_ribbon_fallback(city)}}), 200
+            return jsonify({'success': True, 'data': {'provider': 'fallback', **_agentic_day_ribbon_fallback(tier)}}), 200
 
         payload = {'easiest': easiest.strip(), 'heaviest': heaviest.strip(), 'summary': summary.strip()}
         _set_cached_narrative(cache_key, payload, provider_used)
@@ -2929,13 +2978,18 @@ def _scale_ladder_rung_fallback(name, rung_name, prev_rung_name, marker_findable
 
 
 def _agentic_day_ribbon_fallback(city):
-    context = AGENTIC_DAY_RIBBON_CONTEXT.get(city, 'somewhere between the two extremes')
+    tier = city if city in AGENTIC_DAY_RIBBON_TIER_CONTEXT else AGENTIC_DAY_RIBBON_CITY_TIER.get(city, 'medium')
+    context = AGENTIC_DAY_RIBBON_TIER_CONTEXT.get(tier, AGENTIC_DAY_RIBBON_TIER_CONTEXT['medium'])
+    shape_by_tier = {
+        'worst': 'it stays heavy for long stretches, eases slightly by mid-afternoon, then thickens again after dark',
+        'medium': 'it gets noticeably easier by mid-afternoon, but often swings heavier around morning and late evening',
+        'best': 'it stays mostly light through the day, with only a mild thickening around dawn and after dark',
+    }
     return {
         'easiest': 'easiest by mid-afternoon',
         'heaviest': 'heaviest at dawn',
         'summary': (
-            f'Air quality here is {context}, and it still follows the same daily shape most cities do - '
-            f'thickest at dawn, clearest by mid-afternoon, then building again after dark.'
+            f'Air quality here is {context}; across a day, {shape_by_tier.get(tier, shape_by_tier["medium"])}.'
         ),
     }
 

@@ -91,7 +91,7 @@ function App() {
                   <h4 className="text-lg font-semibold mb-4">Information</h4>
                   <ul className="space-y-2 text-gray-400">
                     <li><Link to="/about" className="hover:text-white transition-colors">About</Link></li>
-                    <li><a href="mailto:support@airstory.local" className="hover:text-white transition-colors">Contact</a></li>
+                    <li><span className="hover:text-white transition-colors cursor-default">Feedback</span></li>
                   </ul>
                 </div>
               </div>

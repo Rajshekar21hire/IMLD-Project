@@ -27,6 +27,14 @@ const RANKED_CITIES = [...AGENTIC_MECHANISM_CITIES].sort(
   (a, b) => averageAnnualPm25(b) - averageAnnualPm25(a)
 );
 
+// Ranked worst->best colors for the city selector pills, intentionally moving from
+// purple (worst burden) toward green (cleaner burden).
+const RANK_BUTTON_COLORS = ['#a78bfa', '#8b9be6', '#7ea6d6', '#83b39d', '#8fa77c'];
+const BUTTON_COLOR_BY_CITY: Record<MechanismCity, string> = RANKED_CITIES.reduce((acc, city, index) => {
+  acc[city] = RANK_BUTTON_COLORS[index] || RANK_BUTTON_COLORS[RANK_BUTTON_COLORS.length - 1];
+  return acc;
+}, {} as Record<MechanismCity, string>);
+
 const FALLBACK_EXPLAIN = {
   how_to_use: 'Pick a city, then flip a card to see how it shapes that city\'s air.',
   description:
@@ -39,6 +47,14 @@ function fallbackBaseText(city: string, cigs: number) {
 
 function fallbackFactorText(city: string, factorLabel: string) {
   return `In ${city}, ${factorLabel.toLowerCase()} is one of the quiet reasons the air feels the way it does on an ordinary day.`;
+}
+
+function hexToRgba(hex: string, alpha: number) {
+  const n = parseInt(hex.slice(1), 16);
+  const r = (n >> 16) & 255;
+  const g = (n >> 8) & 255;
+  const b = n & 255;
+  return `rgba(${r},${g},${b},${alpha})`;
 }
 
 // A single realistic, animated burning cigarette - paper with subtle shading, a printed cork
@@ -109,6 +125,7 @@ export const HowItFeelsToLiveHere: React.FC = () => {
 
   const factor = AGENTIC_FACTORS.find((f) => f.id === factorId) || null;
   const color = CITY_COLORS[city];
+  const activeButtonColor = BUTTON_COLOR_BY_CITY[city];
 
   const baseAvg = useMemo(() => averageAnnualPm25(city), [city]);
   const baseCigs = useMemo(() => cigarettesPerDay(baseAvg), [baseAvg]);
@@ -212,10 +229,10 @@ export const HowItFeelsToLiveHere: React.FC = () => {
               }}
               className="rounded-full px-3.5 py-1.5 text-sm font-semibold transition-all"
               style={{
-                backgroundColor: active ? CITY_COLORS[c] : 'rgba(255,255,255,0.7)',
+                backgroundColor: active ? BUTTON_COLOR_BY_CITY[c] : 'rgba(255,255,255,0.7)',
                 color: active ? '#fff' : MUTED,
-                border: `1.5px solid ${active ? CITY_COLORS[c] : 'var(--ss-border)'}`,
-                boxShadow: active ? `0 6px 16px ${CITY_COLORS[c]}55` : 'none',
+                border: `1.5px solid ${active ? BUTTON_COLOR_BY_CITY[c] : 'var(--ss-border)'}`,
+                boxShadow: active ? `0 6px 16px ${BUTTON_COLOR_BY_CITY[c]}55` : 'none',
               }}
               aria-pressed={active}
             >
@@ -278,15 +295,19 @@ export const HowItFeelsToLiveHere: React.FC = () => {
         })}
       </div>
 
-      <div className="mx-auto mt-5 max-w-[84rem] text-center transition-opacity duration-300" style={{ opacity: textStatus === 'loading' ? 0.5 : 1 }}>
-        <p className="text-base leading-relaxed" style={{ fontFamily: SERIF, color: MUTED }}>
-          {text}
-        </p>
-        {textStatus === 'done' && (
-          <p className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: '#b8b2a6' }}>
-            Ollama generated
+      <div className="mx-auto mt-5 max-w-[84rem] transition-opacity duration-300" style={{ opacity: textStatus === 'loading' ? 0.5 : 1 }}>
+        <div
+          className="rounded-2xl p-5 text-center"
+          style={{
+            background: `linear-gradient(180deg, ${hexToRgba(activeButtonColor, 0.18)} 0%, rgba(255,255,255,0.94) 58%)`,
+            border: `1.5px solid ${hexToRgba(activeButtonColor, 0.5)}`,
+            boxShadow: `0 8px 22px ${hexToRgba(activeButtonColor, 0.16)}`,
+          }}
+        >
+          <p className="text-base leading-relaxed" style={{ fontFamily: SERIF, color: MUTED }}>
+            {text}
           </p>
-        )}
+        </div>
       </div>
 
       <style>{`

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { storyAPI } from '../services/api';
-import { AGENTIC_CITIES_PRIMARY, AGENTIC_CITIES_PRIMARY_TIER } from './WhoAreYouAskingFor';
 import { AGENTIC_TIER_LABELS, AgenticCityTier } from '../data/agenticMechanismData';
 
 const TEXT = 'var(--ss-text)';
@@ -33,9 +32,9 @@ function tierIntensity(tier: AgenticCityTier, hour: number) {
   return lo + norm * (hi - lo);
 }
 
-const SAGE = [143, 167, 124];
-const AMBER = [201, 168, 106];
-const TERRACOTTA = [193, 127, 94];
+const SAGE = [126, 150, 104];
+const AMBER = [176, 132, 72];
+const TERRACOTTA = [129, 67, 47];
 
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
@@ -70,54 +69,78 @@ function fallbackSummary(tier: AgenticCityTier) {
 }
 
 export const DiurnalRibbon: React.FC = () => {
-  const [city, setCity] = useState<string>(AGENTIC_CITIES_PRIMARY[0]);
-  const [labels, setLabels] = useState<DayRibbonLabels | null>(null);
-  const activeTier = AGENTIC_CITIES_PRIMARY_TIER[city];
+  const [activeTier, setActiveTier] = useState<AgenticCityTier>('worst');
+  const [labelsByTier, setLabelsByTier] = useState<Record<AgenticCityTier, DayRibbonLabels | null>>({
+    worst: null,
+    medium: null,
+    best: null,
+  });
+
+  const labels = labelsByTier[activeTier];
 
   useEffect(() => {
     let cancelled = false;
-    const tier = AGENTIC_CITIES_PRIMARY_TIER[city];
-    setLabels(null);
-    storyAPI
-      .agenticDayRibbon({ city })
-      .then((res) => {
-        if (cancelled) return;
-        if (res.data?.success) {
-          setLabels({
-            easiest: res.data.data.easiest,
-            heaviest: res.data.data.heaviest,
-            summary: res.data.data.summary,
-          });
+
+    Promise.all(
+      TIER_ORDER.map(async (tier) => {
+        try {
+          const res = await storyAPI.agenticDayRibbon({ tier });
+          if (res.data?.success && res.data?.data) {
+            return [
+              tier,
+              {
+                easiest: res.data.data.easiest,
+                heaviest: res.data.data.heaviest,
+                summary: res.data.data.summary,
+              } as DayRibbonLabels,
+            ] as const;
+          }
+        } catch {
+          // Falls through to tier fallback below.
         }
+        return [
+          tier,
+          {
+            easiest: 'easiest in the afternoon',
+            heaviest: 'heaviest at dawn',
+            summary: fallbackSummary(tier),
+          } as DayRibbonLabels,
+        ] as const;
       })
-      .catch(() => {
-        if (!cancelled) {
-          setLabels({ easiest: 'easiest in the afternoon', heaviest: 'heaviest at dawn', summary: fallbackSummary(tier) });
-        }
+    ).then((results) => {
+      if (cancelled) return;
+      setLabelsByTier({
+        worst: results.find(([tier]) => tier === 'worst')?.[1] ?? null,
+        medium: results.find(([tier]) => tier === 'medium')?.[1] ?? null,
+        best: results.find(([tier]) => tier === 'best')?.[1] ?? null,
       });
+    });
+
     return () => {
       cancelled = true;
     };
-  }, [city]);
+  }, []);
 
   return (
-    <div className="mx-auto mt-8 w-full max-w-3xl text-center">
-      <h4 className="text-lg font-extrabold" style={{ color: TEXT }}>
-        How AQI changes over the day
-      </h4>
-      <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed" style={{ color: MUTED }}>
+    <section className="mx-auto mt-12 w-full max-w-[144rem] text-center">
+      <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: '#0C447C' }}>
+        Daily pattern
+      </p>
+      <h3 className="mt-3 text-center text-4xl font-black leading-[1.02] tracking-tight text-slate-950 md:text-6xl">
+        How AQI <span style={{ color: '#00A5CF' }}>Changes</span> Over The Day
+      </h3>
+      <p className="mx-auto mt-4 max-w-4xl text-base leading-relaxed" style={{ color: MUTED }}>
         {labels?.summary ?? fallbackSummary(activeTier)}
       </p>
 
       <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
         {TIER_ORDER.map((tier) => {
           const active = activeTier === tier;
-          const tierCity = AGENTIC_CITIES_PRIMARY.find((c) => AGENTIC_CITIES_PRIMARY_TIER[c] === tier)!;
           return (
             <button
               key={tier}
               type="button"
-              onClick={() => setCity(tierCity)}
+              onClick={() => setActiveTier(tier)}
               style={{
                 color: active ? '#fff' : TEXT,
                 background: active ? ACCENT : '#fff',
@@ -151,6 +174,6 @@ export const DiurnalRibbon: React.FC = () => {
           </span>
         </div>
       </div>
-    </div>
+    </section>
   );
 };

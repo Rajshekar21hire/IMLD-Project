@@ -3,7 +3,7 @@ import { motion, useReducedMotion } from 'framer-motion';
 
 type Props = {
   eyebrow: string;
-  title: string;
+  title: React.ReactNode;
   accent: string;
   children: React.ReactNode;
   className?: string;
@@ -29,7 +29,7 @@ export const AgenticBeat: React.FC<Props> = ({ eyebrow, title, accent, children,
       className={className ?? 'relative z-[1] mx-auto w-full max-w-[510rem] px-6 py-20 md:px-10'}
     >
       <div className="flex items-center justify-center gap-2.5 text-center">
-        <span className="text-sm font-bold uppercase tracking-[0.22em]" style={{ color: accent }}>
+        <span className="text-sm font-bold uppercase tracking-[0.22em]" style={{ color: '#0C447C' }}>
           {eyebrow}
         </span>
       </div>
