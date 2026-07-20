@@ -12,10 +12,11 @@ export const AirCanGetBetterSection: React.FC = () => {
       <h2 className="mt-4 text-4xl font-black leading-[1.02] tracking-tight text-slate-950 md:text-6xl">
         The Air Can Get <span style={{ color: '#357A4A' }}>Better</span>. Here&apos;s How.
       </h2>
+      <br/>
       <p className="mt-5 text-center text-slate-700 leading-relaxed">
         Four categories, 12 things that genuinely work. Explore each intervention and flip every tile to see the evidence.
       </p>
-
+      <br/>
       </div>
 
 

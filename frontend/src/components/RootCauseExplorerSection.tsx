@@ -375,9 +375,11 @@ export const RootCauseExplorerSection: React.FC = () => {
           <div className="text-center">
             <p className="font-mono text-xs uppercase tracking-[0.2em] font-bold text-[#0C447C]">Root-cause explorer</p>
              <h2 className="mt-4 text-4xl font-black leading-[1.02] tracking-tight text-slate-950 md:text-6xl"> Pick a <span style={{ color: '#00a5cf' }}> City. </span> See What&apos;s Actually In Its Air.</h2>
+              <br/>
               <p className="mt-5 w-full text-center text-base leading-relaxed text-slate-700">
               Each city shares the same seven root causes, but the mix and severity are different everywhere. Select a city to break down its air quality index and what&apos;s driving it.
             </p>
+            <br/>
           </div>
 
           <div className="flex flex-wrap justify-center gap-2">
@@ -413,7 +415,7 @@ export const RootCauseExplorerSection: React.FC = () => {
               );
             })}
           </div>
-
+          <br/>
           <div className="grid grid-cols-1 gap-5 lg:grid-cols-[300px_minmax(0,1fr)]">
             <article className="rounded-2xl border bg-white p-7 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md" style={{ borderColor: theme.border }}>
               <h3 className="text-2xl font-black text-slate-950">{selectedCity.name}</h3>

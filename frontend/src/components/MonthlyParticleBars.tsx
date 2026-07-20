@@ -21,6 +21,12 @@ const MUTED = 'var(--ss-muted)';
 const TIERS: AgenticCityTier[] = ['worst', 'medium', 'best'];
 const GLOBAL_MAX_AQI = Math.max(...AGENTIC_TIERED_CITIES.flatMap((c) => c.monthly.map(pm25ToAqi)));
 
+const TIER_BUTTON_COLORS: Record<AgenticCityTier, string> = {
+  worst: '#D85A30',
+  medium: '#B8D53A',
+  best: '#639922',
+};
+
 const FALLBACK_EXPLAIN = {
   how_to_use: 'Pick a city, then hover or tap any bar to see that month’s AQI.',
   description:
@@ -102,6 +108,7 @@ export const MonthlyParticleBars: React.FC = () => {
   const [city, setCity] = useState<string>(AGENTIC_TIERED_CITIES[0].city);
   const [pinned, setPinned] = useState<number | null>(null);
   const [hovered, setHovered] = useState<number | null>(null);
+  const [hoveredCity, setHoveredCity] = useState<string | null>(null);
   const [activeEffectId, setActiveEffectId] = useState<string | null>(null);
   const [explain, setExplain] = useState(FALLBACK_EXPLAIN);
 
@@ -200,23 +207,26 @@ export const MonthlyParticleBars: React.FC = () => {
 
   return (
     <div>
-      <div className="mx-auto mb-1 max-w-[72rem] text-center text-sm" style={{ color: MUTED }}>
+      <div className="mx-auto mb-1 max-w-[84rem] text-center" style={{ color: TEXT, fontSize: '1.125rem', lineHeight: 1.8, fontFamily: 'inherit' }}>
         {explain.how_to_use}
+        <br />
       </div>
-      <div className="mx-auto mb-6 max-w-[72rem] text-center text-sm" style={{ color: MUTED }}>
+      <div className="mx-auto mb-6 max-w-[84rem] text-center" style={{ color: TEXT, fontSize: '1.125rem', lineHeight: 1.8, fontFamily: 'inherit' }}>
         {explain.description}
+        <br />
       </div>
 
       <div className="flex flex-wrap items-start justify-center gap-6">
         {TIERS.map((tier) => (
           <div key={tier} className="flex flex-col items-center gap-2">
-            <div className="text-[10px] font-bold uppercase tracking-[0.15em]" style={{ color: MUTED }}>
+            <div className="text-sm font-bold uppercase tracking-[0.15em] text-slate-900" style={{}}>
               {AGENTIC_TIER_LABELS[tier]}
             </div>
             <div className="flex flex-wrap justify-center gap-2">
               {AGENTIC_TIERED_CITIES.filter((c) => c.tier === tier).map((c) => {
                 const active = c.city === city;
-                const swatch = rgbCss(aqiToRgb(pm25ToAqi(averageOf(c.monthly))));
+                const highlighted = active || hoveredCity === c.city;
+                const tierColor = TIER_BUTTON_COLORS[tier];
                 return (
                   <button
                     key={c.city}
@@ -225,11 +235,16 @@ export const MonthlyParticleBars: React.FC = () => {
                       setCity(c.city);
                       setPinned(null);
                     }}
+                    onMouseEnter={() => setHoveredCity(c.city)}
+                    onMouseLeave={() => setHoveredCity(null)}
+                    onFocus={() => setHoveredCity(c.city)}
+                    onBlur={() => setHoveredCity(null)}
                     className="rounded-full px-3.5 py-1.5 text-sm font-semibold transition-all"
                     style={{
-                      backgroundColor: active ? swatch : 'rgba(255,255,255,0.7)',
-                      color: active ? '#173764' : MUTED,
-                      border: `1.5px solid ${active ? swatch : 'var(--ss-border)'}`,
+                      backgroundColor: highlighted ? tierColor : 'rgba(255,255,255,0.82)',
+                      color: highlighted ? '#fff' : MUTED,
+                      border: `1.5px solid ${highlighted ? tierColor : 'rgba(148, 163, 184, 0.45)'}`,
+                      boxShadow: highlighted ? `0 6px 16px rgba(0, 0, 0, 0.15)` : '0 1px 2px rgba(15, 23, 42, 0.04)',
                     }}
                     aria-pressed={active}
                   >
@@ -317,7 +332,8 @@ export const MonthlyParticleBars: React.FC = () => {
         )}
       </div>
 
-      <div className="mt-4 text-center text-xs" style={{ color: MUTED }}>
+      <div className="mt-4 text-center" style={{ color: TEXT, fontSize: '1.125rem', lineHeight: 1.8, fontFamily: 'inherit' }}>
+        <br />
         More particles and a redder tint mean worse air that month; fewer particles and green mean cleaner air. Hover or tap any bar to see its AQI.
       </div>
 
@@ -354,7 +370,7 @@ export const MonthlyParticleBars: React.FC = () => {
         )}
       </div>
 
-      <AgenticCaption text={caption} loading={status === 'loading'} generated={status === 'done'} />
+      <AgenticCaption text={caption} loading={status === 'loading'} generated={false} />
 
       <style>{`
         .mpb-dot { border-radius: 9999px; }

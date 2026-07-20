@@ -65,14 +65,14 @@ export const AirshedHeroSection: React.FC = () => {
           <h2 className="mt-4 text-4xl font-black leading-[1.02] tracking-tight text-slate-950 md:text-6xl">
             Five cities. One <span style={{ color: '#00A5CF' }}>Airshed.</span> A Shared Crisis.
           </h2>
-
+          <br/>
           <p className="mt-5 w-full text-center text-base leading-relaxed text-slate-700">
             Lahore, Delhi, New Delhi, Dhaka and Ghaziabad top the world&apos;s worst
             air-quality rankings. Their pollution isn&apos;t five separate stories. It&apos;s
             one structural pattern of transport, kilns and industry, trapped by
             geography and let through by weak governance.
           </p>
-
+          <br/>
           <div className="mt-6 grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))' }}>
             {animatedReadouts.map((item) => (
               <article

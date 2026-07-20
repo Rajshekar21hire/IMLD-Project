@@ -10,6 +10,7 @@ export const DeepDivesWorstAffectedSection: React.FC = () => {
         <h2 className="mt-4 text-4xl font-black leading-[1.02] tracking-tight text-slate-950 md:text-6xl">
           The <span style={{ color: '#ba324f' }}>Worst-Affected </span> Cities
         </h2>
+        <br/>
             <p className="mt-4 text-center text-slate-700 leading-relaxed"> 
                 In order to deep dive, we need to know what are the best and worst cities according to the air quality index.
             </p>

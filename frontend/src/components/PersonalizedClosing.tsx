@@ -148,18 +148,18 @@ export const PersonalizedClosing: React.FC = () => {
 
       {status !== 'idle' && (
         <div
-          className="mx-auto mt-8 max-w-[72rem] rounded-[24px] px-6 py-8 text-center md:px-10"
+          className="mx-auto mt-8 max-w-[84rem] rounded-[24px] px-6 py-8 text-center md:px-10"
           style={{ backgroundColor: 'rgba(255,255,255,0.86)', border: '1px solid var(--ss-border)', minHeight: 320 }}
         >
           {!result.text && (
-            <div className="text-base" style={{ color: MUTED }}>
+            <div className="text-base" style={{ color: TEXT, fontSize: '1.125rem', lineHeight: 1.8, fontFamily: 'inherit' }}>
               Writing something for {forWhom?.toLowerCase()}, about {concern?.toLowerCase()}, for {city}…
             </div>
           )}
 
           {result.text && (
             <>
-              <div className="text-xl leading-relaxed" style={{ fontFamily: SERIF, color: TEXT }}>
+              <div className="leading-relaxed" style={{ fontFamily: 'inherit', color: TEXT, fontSize: '1.125rem', lineHeight: 1.8 }}>
                 <span className="mr-2" aria-hidden="true">{result.mood === 'sad' ? '😔' : '🙂'}</span>
                 {result.text}
               </div>

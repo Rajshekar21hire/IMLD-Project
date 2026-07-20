@@ -26,17 +26,20 @@ export const AgenticBeat: React.FC<Props> = ({ eyebrow, title, accent, children,
       whileInView={whileInView}
       viewport={{ once: true, margin: '-80px' }}
       transition={{ duration: 0.5, ease: 'easeOut' }}
-      className={className ?? 'relative z-[1] mx-auto w-full max-w-[510rem] px-6 py-20 md:px-10'}
+      className={className ?? 'relative z-[1] mx-auto w-full px-0 py-16 md:px-0'}
     >
       <div className="flex items-center justify-center gap-2.5 text-center">
         <span className="text-sm font-bold uppercase tracking-[0.22em]" style={{ color: '#0C447C' }}>
           {eyebrow}
         </span>
       </div>
-      <h3 className="mt-3 text-center text-4xl font-black leading-[1.02] tracking-tight text-slate-950 md:text-6xl">
+      <h3
+        className="mt-3 text-center text-4xl font-black leading-[1.02] tracking-tight md:text-6xl"
+        style={{ color: 'var(--ss-text)' }}
+      >
         {title}
       </h3>
-      <div className="mt-7">{children}</div>
+      <div className="mt-6">{children}</div>
     </motion.section>
   );
 };

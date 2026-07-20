@@ -60,7 +60,9 @@ export const SourceMixComparator: React.FC = () => {
           Same <span style={{ color: '#00A5CF' }}>Ingredients,</span> Different <span style={{ color: '#FF6D00' }}>Proportions</span>
         </h2>
         <p className="mt-2 text-base leading-relaxed text-slate-600">
+          <br />
           Scroll or tap through the five cities - the same five causes are always present, just in different proportions.
+          <br />
         </p>
       </div>
 

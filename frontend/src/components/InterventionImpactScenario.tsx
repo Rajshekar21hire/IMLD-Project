@@ -97,8 +97,10 @@ export const InterventionImpactScenario: React.FC = () => {
           How Far Can <span style={{ color: '#357A4A' }}>Policy</span> Actually Move the Number?
         </h2>
         <p className="mt-2 text-base leading-relaxed text-slate-600">
+          <br />
           Toggle interventions for one city and watch the projected PM2.5 move against the WHO guideline.
           Cities span the full range - two of the cleanest, two mid-range, and two of the most polluted.
+          <br />
         </p>
       </div>
 
@@ -174,11 +176,11 @@ export const InterventionImpactScenario: React.FC = () => {
         </div>
       </div>
 
-      <div className="mt-3 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
+      <div className="mt-5 rounded-2xl border border-blue-100 bg-white p-4 shadow-sm transition-all duration-200 hover:-translate-y-0.5 hover:border-blue-300 hover:shadow-md">
         <h6 className="text-base font-bold" style={{ color: '#1e3a5f' }}>
           Analyst read
         </h6>
-        <div className="mt-2">
+        <div className="mt-3 max-w-none">
           {!interacted && <p className="text-base leading-relaxed text-slate-500">Toggle an intervention above to generate commentary.</p>}
           {interacted && <OllamaCommentaryBody status={status} text={text} />}
         </div>

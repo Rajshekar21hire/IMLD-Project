@@ -4,7 +4,8 @@ import { AGENTIC_TIER_LABELS, AgenticCityTier } from '../data/agenticMechanismDa
 
 const TEXT = 'var(--ss-text)';
 const MUTED = 'var(--ss-muted)';
-const ACCENT = '#0284c7';
+const ACCENT = '#6fb8d3';
+const ACCENT_DARK = '#3f8ca9';
 
 // Heavy at dawn, easing by mid-afternoon, thickening again at night - extracted from the
 // retired TodaysAirInWords.tsx, which paired this ribbon with a per-city sentence that's now
@@ -32,18 +33,34 @@ function tierIntensity(tier: AgenticCityTier, hour: number) {
   return lo + norm * (hi - lo);
 }
 
-const SAGE = [126, 150, 104];
-const AMBER = [176, 132, 72];
-const TERRACOTTA = [129, 67, 47];
+const GREEN = [99, 153, 34];
+const YELLOW_GREEN = [184, 213, 58];
+const ORANGE = [239, 159, 39];
+const RED_ORANGE = [216, 90, 48];
 
 function lerp(a: number, b: number, t: number) {
   return a + (b - a) * t;
 }
 
 function ribbonColor(intensity: number) {
-  const from = intensity < 0.5 ? SAGE : AMBER;
-  const to = intensity < 0.5 ? AMBER : TERRACOTTA;
-  const t = intensity < 0.5 ? intensity / 0.5 : (intensity - 0.5) / 0.5;
+  let from: number[];
+  let to: number[];
+  let t: number;
+
+  if (intensity < 0.33) {
+    from = GREEN;
+    to = YELLOW_GREEN;
+    t = intensity / 0.33;
+  } else if (intensity < 0.67) {
+    from = YELLOW_GREEN;
+    to = ORANGE;
+    t = (intensity - 0.33) / 0.34;
+  } else {
+    from = ORANGE;
+    to = RED_ORANGE;
+    t = (intensity - 0.67) / 0.33;
+  }
+
   const [r, g, b] = [
     Math.round(lerp(from[0], to[0], t)),
     Math.round(lerp(from[1], to[1], t)),
@@ -55,6 +72,12 @@ function ribbonColor(intensity: number) {
 type DayRibbonLabels = { easiest: string; heaviest: string; summary: string };
 
 const TIER_ORDER: AgenticCityTier[] = ['worst', 'medium', 'best'];
+
+const TIER_BUTTON_COLORS: Record<AgenticCityTier, string> = {
+  worst: '#D85A30',
+  medium: '#B8D53A',
+  best: '#639922',
+};
 
 // Mirrors AGENTIC_DAY_RIBBON_CONTEXT in backend/app/routes/story_routes.py, but generalized to
 // the tier rather than a specific city, since the summary no longer names a city.
@@ -70,6 +93,7 @@ function fallbackSummary(tier: AgenticCityTier) {
 
 export const DiurnalRibbon: React.FC = () => {
   const [activeTier, setActiveTier] = useState<AgenticCityTier>('worst');
+  const [hoveredTier, setHoveredTier] = useState<AgenticCityTier | null>(null);
   const [labelsByTier, setLabelsByTier] = useState<Record<AgenticCityTier, DayRibbonLabels | null>>({
     worst: null,
     medium: null,
@@ -122,36 +146,47 @@ export const DiurnalRibbon: React.FC = () => {
   }, []);
 
   return (
-    <section className="mx-auto mt-12 w-full max-w-[144rem] text-center">
+    <section className="mx-auto w-full max-w-[84rem] text-center">
       <p className="text-xs font-bold uppercase tracking-[0.2em]" style={{ color: '#0C447C' }}>
         Daily pattern
       </p>
       <h3 className="mt-3 text-center text-4xl font-black leading-[1.02] tracking-tight text-slate-950 md:text-6xl">
-        How AQI <span style={{ color: '#00A5CF' }}>Changes</span> Over The Day
+        How AQI Changes Over <span style={{ color: '#792CA2' }}>The Day</span>
       </h3>
-      <p className="mx-auto mt-4 max-w-4xl text-base leading-relaxed" style={{ color: MUTED }}>
+      <br />
+      <p className="mx-auto max-w-4xl text-base leading-relaxed text-slate-700">
         {labels?.summary ?? fallbackSummary(activeTier)}
       </p>
+      <br />
 
       <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
         {TIER_ORDER.map((tier) => {
           const active = activeTier === tier;
+          const highlighted = active || hoveredTier === tier;
+          const tierColor = TIER_BUTTON_COLORS[tier];
           return (
             <button
               key={tier}
               type="button"
               onClick={() => setActiveTier(tier)}
+              onMouseEnter={() => setHoveredTier(tier)}
+              onMouseLeave={() => setHoveredTier(null)}
+              onFocus={() => setHoveredTier(tier)}
+              onBlur={() => setHoveredTier(null)}
               style={{
-                color: active ? '#fff' : TEXT,
-                background: active ? ACCENT : '#fff',
-                border: `1.5px solid ${active ? ACCENT : 'var(--ss-border)'}`,
+                color: highlighted ? '#ffffff' : TEXT,
+                backgroundColor: highlighted ? tierColor : '#ffffff',
+                borderColor: highlighted ? tierColor : 'var(--ss-border)',
+                borderStyle: 'solid',
+                borderWidth: '1.5px',
                 borderRadius: '999px',
                 padding: '10px 24px',
                 cursor: 'pointer',
-                fontWeight: active ? 700 : 600,
-                boxShadow: active ? '0 4px 14px rgba(2,132,199,0.28)' : '0 1px 2px rgba(0,0,0,0.03)',
+                fontWeight: highlighted ? 700 : 600,
+                boxShadow: highlighted ? `0 4px 14px ${tierColor}33` : '0 1px 2px rgba(0,0,0,0.03)',
+                transform: highlighted ? 'translateY(-1px)' : 'translateY(0)',
               }}
-              className="text-base transition-all duration-200 hover:-translate-y-0.5 sm:text-lg"
+              className="text-base transition-all duration-200 sm:text-lg"
             >
               {AGENTIC_TIER_LABELS[tier]}
             </button>
@@ -159,17 +194,24 @@ export const DiurnalRibbon: React.FC = () => {
         })}
       </div>
 
-      <div className="relative mt-6 w-full">
+      <div className="relative mx-auto mt-6 max-w-3xl">
         <div className="flex" style={{ height: '48px', borderRadius: '16px', overflow: 'hidden' }}>
           {HOUR_INTENSITY.map((_, hour) => (
             <div key={hour} style={{ flex: 1, backgroundColor: ribbonColor(tierIntensity(activeTier, hour)) }} />
           ))}
         </div>
-        <div className="relative mt-2 h-6 text-sm" style={{ color: MUTED }}>
-          <span className="absolute -translate-x-1/2" style={{ left: `${((LIGHTEST_HOUR + 0.5) / 24) * 100}%` }}>
-            {labels?.easiest ?? ' '}
+        <div className="relative mt-3 flex justify-between text-xs font-semibold" style={{ color: MUTED }}>
+          <span>00:00</span>
+          <span>06:00</span>
+          <span>12:00</span>
+          <span>18:00</span>
+          <span>24:00</span>
+        </div>
+        <div className="relative mt-3 h-6 text-xs font-semibold">
+          <span className="absolute -translate-x-1/2" style={{ left: `${((LIGHTEST_HOUR + 0.5) / 24) * 100}%`, color: '#639922' }}>
+            {labels?.easiest ?? ' '}
           </span>
-          <span className="absolute -translate-x-1/2" style={{ left: `${((HEAVIEST_HOUR + 0.5) / 24) * 100}%`, color: ACCENT }}>
+          <span className="absolute -translate-x-1/2" style={{ left: `${((HEAVIEST_HOUR + 0.5) / 24) * 100}%`, color: '#D85A30' }}>
             {labels?.heaviest ?? ' '}
           </span>
         </div>

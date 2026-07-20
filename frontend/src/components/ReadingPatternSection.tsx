@@ -29,7 +29,9 @@ export const ReadingPatternSection: React.FC = () => {
           <div className="text-center">
             <p className="font-mono text-xs uppercase tracking-[0.2em] text-[#0C447C] font-bold">Reading the pattern</p>
              <h2 className="mt-4 text-4xl font-black leading-[1.02] tracking-tight text-slate-950 md:text-6xl">Not Five Crises. <span style={{ color: '#ff6d00' }}>  One Mechanism, </span> Repeated.</h2>
+            <br/>
           </div>
+          <br/>
 
           <div className="grid grid-cols-1 gap-4 min-[820px]:grid-cols-[1fr_auto_1fr_auto_1fr] min-[820px]:items-stretch">
             {steps.map((step, index) => (

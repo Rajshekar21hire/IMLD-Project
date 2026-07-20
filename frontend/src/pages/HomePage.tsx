@@ -417,6 +417,7 @@ export const HomePage: React.FC = () => {
               <Globe className="w-7 h-7 text-blue-400" />
               <h2 className="text-6xl font-extrabold shimmer-text">Worldwide Air Quality</h2>
             </div>
+            <br />
             <p className="text-slate-600 text-2xl mt-2">
               Explore the average Air Quality Index (AQI) for each country based on historical data. Drag to pan, and scroll or use the buttons to zoom.
             </p>

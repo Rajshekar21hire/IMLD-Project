@@ -18,11 +18,22 @@ export const DeepDiveFlowSection: React.FC = () => (
   <div className="s4h-root relative w-full overflow-hidden bg-transparent">
     <FogDriftLayer opacity={0.7} />
     <PollutionScrollField severity={0.4} />
-    <div className="relative z-[1] flex flex-col gap-8 py-4">
-      <SourceMixComparator />
-      <InterventionImpactScenario />
-      <InterventionLedger />
-      <InversionChamber />
+    <div className="relative z-[1] flex flex-col gap-6 py-4">
+      <section className="ss-structural mx-auto w-full max-w-[84rem] bg-white py-16 px-6 md:px-12">
+        <SourceMixComparator />
+      </section>
+
+      <section className="ss-structural mx-auto w-full max-w-[84rem] bg-white py-16 px-6 md:px-12">
+        <InterventionImpactScenario />
+      </section>
+
+      <section className="ss-structural mx-auto w-full max-w-[84rem] bg-white py-16 px-6 md:px-12">
+        <InterventionLedger />
+      </section>
+
+      <section className="ss-structural mx-auto w-full max-w-[84rem] bg-white py-16 px-6 md:px-12">
+        <InversionChamber />
+      </section>
     </div>
   </div>
 );

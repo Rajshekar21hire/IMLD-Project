@@ -36,6 +36,12 @@ function hexToRgba(hex: string, alpha: number) {
   return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
 }
 
+const TIER_BUTTON_COLORS: Record<AgenticCityTier, string> = {
+  worst: '#D85A30',
+  medium: '#B8D53A',
+  best: '#639922',
+};
+
 const FALLBACK_EXPLAIN = {
   how_to_use: 'Pick a city and some solutions, then drag the years slider to see the projection.',
   description:
@@ -270,22 +276,24 @@ export const CitySimulation: React.FC = () => {
 
   return (
     <div>
-      <div className="mx-auto mb-1 max-w-[72rem] text-center text-sm" style={{ color: MUTED }}>
+      <div className="mx-auto mb-1 max-w-[84rem] text-center" style={{ color: TEXT, fontSize: '1.125rem', lineHeight: 1.8, fontFamily: 'inherit' }}>
         {explain.how_to_use}
       </div>
-      <div className="mx-auto mb-6 max-w-[72rem] text-center text-sm" style={{ color: MUTED }}>
+      <div className="mx-auto mb-6 max-w-[84rem] text-center" style={{ color: TEXT, fontSize: '1.125rem', lineHeight: 1.8, fontFamily: 'inherit' }}>
         {explain.description}
+        <br />
       </div>
 
       <div className="flex flex-wrap items-start justify-center gap-6">
         {TIERS.map((tier) => (
           <div key={tier} className="flex flex-col items-center gap-2">
-            <div className="text-[10px] font-bold uppercase tracking-[0.15em]" style={{ color: MUTED }}>
+            <div className="text-sm font-bold uppercase tracking-[0.15em] text-slate-900" style={{}}>
               {AGENTIC_TIER_LABELS[tier]}
             </div>
             <div className="flex flex-wrap justify-center gap-2">
               {AGENTIC_TIERED_CITIES.filter((c) => c.tier === tier).map((c) => {
                 const active = c.city === city;
+                const tierColor = TIER_BUTTON_COLORS[tier];
                 return (
                   <button
                     key={c.city}
@@ -293,9 +301,10 @@ export const CitySimulation: React.FC = () => {
                     onClick={() => setCity(c.city)}
                     className="rounded-full px-3.5 py-1.5 text-sm font-semibold transition-all"
                     style={{
-                      backgroundColor: active ? '#d97706' : 'rgba(255,255,255,0.7)',
+                      backgroundColor: active ? tierColor : 'rgba(255,255,255,0.7)',
                       color: active ? '#fff' : MUTED,
-                      border: `1.5px solid ${active ? '#d97706' : 'var(--ss-border)'}`,
+                      border: `1.5px solid ${active ? tierColor : 'var(--ss-border)'}`,
+                      boxShadow: active ? `0 6px 16px rgba(0, 0, 0, 0.15)` : 'none',
                     }}
                     aria-pressed={active}
                   >
@@ -383,16 +392,11 @@ export const CitySimulation: React.FC = () => {
                 about {Math.round(projectedPm25)} µg/m³, down from {Math.round(currentPm25)} today
               </div>
               <div
-                className="mt-3 text-sm leading-relaxed transition-opacity duration-300"
-                style={{ opacity: storyStatus === 'loading' ? 0.5 : 1, color: TEXT }}
+                className="mt-3 transition-opacity duration-300"
+                style={{ opacity: storyStatus === 'loading' ? 0.5 : 1, color: TEXT, fontSize: '1.125rem', lineHeight: 1.8, fontFamily: 'inherit' }}
               >
                 {story}
               </div>
-              {storyStatus === 'done' && (
-                <div className="mt-1.5 text-[10px] font-semibold uppercase tracking-[0.14em]" style={{ color: '#b8b2a6' }}>
-                  Ollama generated
-                </div>
-              )}
             </div>
           )}
         </div>

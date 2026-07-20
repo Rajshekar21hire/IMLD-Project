@@ -217,8 +217,8 @@ export const RecoveryClock: React.FC = () => {
           {activeArc && status[activeArc.id] !== 'loading' && (
             <>
               <div
-                className="text-lg leading-relaxed"
-                style={{ fontFamily: 'inherit', color: TEXT }}
+                className="leading-relaxed"
+                style={{ fontFamily: 'inherit', color: TEXT, fontSize: '1.125rem', lineHeight: 1.8 }}
               >
                 {texts[activeArc.id]}
                 {status[activeArc.id] === 'streaming' && <span className="rc-cursor">|</span>}

@@ -295,7 +295,9 @@ export const InversionChamber: React.FC = () => {
             See <span style={{ color: '#d17117' }}>Pollution</span> in Motion
           </h2>
           <p className="mx-auto mt-2 max-w-4xl text-base leading-relaxed text-slate-600">
+            <br />
             Adjust emissions and mixing height to see how a lower atmospheric lid traps pollution and spikes concentration.
+            <br />
           </p>
         </div>
 

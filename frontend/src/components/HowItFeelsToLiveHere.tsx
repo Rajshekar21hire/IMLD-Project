@@ -16,11 +16,11 @@ const COUNT_ANIM_MS = 900;
 // Same five-colour palette used for these cities everywhere else in the section (PersonalizedClosing's
 // CITY_PALETTE), so a city keeps the same identity colour across every beat.
 const CITY_COLORS: Record<MechanismCity, string> = {
-  Delhi: '#8fa77c',
-  Lahore: '#c9a86a',
-  Dhaka: '#c17f5e',
-  Kathmandu: '#5b9aa8',
-  Kolkata: '#a78bfa',
+  Delhi: '#a8b98a',
+  Lahore: '#d8bd7a',
+  Dhaka: '#d69a78',
+  Kathmandu: '#7fb3bc',
+  Kolkata: '#bca7f5',
 };
 
 const RANKED_CITIES = [...AGENTIC_MECHANISM_CITIES].sort(
@@ -28,8 +28,8 @@ const RANKED_CITIES = [...AGENTIC_MECHANISM_CITIES].sort(
 );
 
 // Ranked worst->best colors for the city selector pills, intentionally moving from
-// purple (worst burden) toward green (cleaner burden).
-const RANK_BUTTON_COLORS = ['#a78bfa', '#8b9be6', '#7ea6d6', '#83b39d', '#8fa77c'];
+// purple (worst burden) toward green (cleaner burden), but softened so they feel lighter.
+const RANK_BUTTON_COLORS = ['#bca7f5', '#9faee8', '#8fb7df', '#9dc2a8', '#a8b98a'];
 const BUTTON_COLOR_BY_CITY: Record<MechanismCity, string> = RANKED_CITIES.reduce((acc, city, index) => {
   acc[city] = RANK_BUTTON_COLORS[index] || RANK_BUTTON_COLORS[RANK_BUTTON_COLORS.length - 1];
   return acc;
@@ -116,6 +116,7 @@ const RealisticCigarette: React.FC<{ color: string; intensity: number }> = ({ co
 export const HowItFeelsToLiveHere: React.FC = () => {
   const [city, setCity] = useState<MechanismCity>(RANKED_CITIES[0]);
   const [factorId, setFactorId] = useState<string | null>(null);
+  const [hoveredCity, setHoveredCity] = useState<MechanismCity | null>(null);
   const [displayedCount, setDisplayedCount] = useState(cigarettesPerDay(averageAnnualPm25(RANKED_CITIES[0])));
   const [text, setText] = useState(fallbackBaseText(RANKED_CITIES[0], displayedCount));
   const [textStatus, setTextStatus] = useState<'idle' | 'loading' | 'done'>('idle');
@@ -209,16 +210,17 @@ export const HowItFeelsToLiveHere: React.FC = () => {
 
   return (
     <div>
-      <div className="mx-auto mb-1 max-w-[72rem] text-center text-sm" style={{ color: MUTED }}>
+      <div className="mx-auto mb-1 max-w-[84rem] text-center text-slate-700" style={{ fontSize: '1.125rem', lineHeight: 1.8, fontFamily: 'inherit' }}>
         {explain.how_to_use}
       </div>
-      <div className="mx-auto mb-6 max-w-[72rem] text-center text-sm" style={{ color: MUTED }}>
+      <div className="mx-auto mb-6 max-w-[84rem] text-center text-slate-700" style={{ fontSize: '1.125rem', lineHeight: 1.8, fontFamily: 'inherit' }}>
         {explain.description}
       </div>
 
       <div className="flex flex-wrap items-center justify-center gap-2">
         {RANKED_CITIES.map((c) => {
           const active = c === city;
+          const highlighted = active || hoveredCity === c;
           return (
             <button
               key={c}
@@ -227,12 +229,17 @@ export const HowItFeelsToLiveHere: React.FC = () => {
                 setCity(c);
                 setFactorId(null);
               }}
-              className="rounded-full px-3.5 py-1.5 text-sm font-semibold transition-all"
+              onMouseEnter={() => setHoveredCity(c)}
+              onMouseLeave={() => setHoveredCity(null)}
+              onFocus={() => setHoveredCity(c)}
+              onBlur={() => setHoveredCity(null)}
+              className={`hifl-city-pill rounded-full px-3.5 py-1.5 text-sm font-semibold transition-all ${active ? 'is-active' : ''}`}
               style={{
-                backgroundColor: active ? BUTTON_COLOR_BY_CITY[c] : 'rgba(255,255,255,0.7)',
-                color: active ? '#fff' : MUTED,
-                border: `1.5px solid ${active ? BUTTON_COLOR_BY_CITY[c] : 'var(--ss-border)'}`,
-                boxShadow: active ? `0 6px 16px ${BUTTON_COLOR_BY_CITY[c]}55` : 'none',
+                ['--pill-color' as any]: BUTTON_COLOR_BY_CITY[c],
+                backgroundColor: highlighted ? BUTTON_COLOR_BY_CITY[c] : 'rgba(255,255,255,0.82)',
+                color: highlighted ? '#fff' : MUTED,
+                border: `1.5px solid ${highlighted ? BUTTON_COLOR_BY_CITY[c] : 'rgba(148, 163, 184, 0.45)'}`,
+                boxShadow: highlighted ? `0 6px 16px ${hexToRgba(BUTTON_COLOR_BY_CITY[c], 0.24)}` : '0 1px 2px rgba(15, 23, 42, 0.04)',
               }}
               aria-pressed={active}
             >
@@ -253,7 +260,7 @@ export const HowItFeelsToLiveHere: React.FC = () => {
           cigarettes a day, just by breathing in {city}
         </div>
 
-        <div className="mx-auto mt-3 flex justify-center">
+        <div className="mx-auto mt-2 flex justify-center">
           <RealisticCigarette color={color} intensity={intensity} />
         </div>
       </div>
@@ -304,13 +311,23 @@ export const HowItFeelsToLiveHere: React.FC = () => {
             boxShadow: `0 8px 22px ${hexToRgba(activeButtonColor, 0.16)}`,
           }}
         >
-          <p className="text-base leading-relaxed" style={{ fontFamily: SERIF, color: MUTED }}>
+          <p className="leading-relaxed text-slate-700" style={{ fontFamily: 'inherit', fontSize: '1.125rem', lineHeight: 1.8 }}>
             {text}
           </p>
         </div>
       </div>
 
       <style>{`
+        .hifl-city-pill {
+          --pill-color: transparent;
+        }
+        .hifl-city-pill:hover,
+        .hifl-city-pill:focus-visible,
+        .hifl-city-pill.is-active {
+          background-color: var(--pill-color);
+          color: #fff !important;
+          border-color: var(--pill-color);
+        }
         .hifl-flip-card {
           width: 10.75rem;
           height: 6.25rem;

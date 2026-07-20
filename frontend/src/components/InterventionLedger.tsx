@@ -180,7 +180,9 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
           Impact Studio For <span style={{ color: '#368566' }}>Air Quality Prevention</span>
         </h2>
         <div className="mx-auto mt-2 max-w-4xl text-base leading-relaxed text-slate-600">
+          <br />
           <OllamaCommentaryBody status={ledgerStatus} text={ledgerText} />
+          <br />
         </div>
         <div style={{ marginTop: '20px', marginBottom: '24px' }} />
 
@@ -211,7 +213,7 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
           </div>
         </div>
 
-        <div className="mx-auto mt-10 grid max-w-[90rem] gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(24rem,0.8fr)] lg:items-start lg:justify-center">
+        <div className="mx-auto mt-10 grid max-w-[90rem] gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(24rem,0.8fr)] lg:items-start lg:justify-center">
           <div className="flex flex-col items-center gap-0">
             <div className="mb-3 rounded-2xl border p-4 text-center" style={{ borderColor: PANEL_BORDER, background: 'rgba(255,255,255,0.6)', width: '100%', maxWidth: '760px' }}>
               <button
@@ -313,8 +315,8 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
                 {selectedItems.map((item) => (
                   <div
                     key={item.id}
-                    className="flex items-center justify-between py-2 text-sm"
-                    style={{ borderBottom: `1px solid ${PANEL_BORDER}`, color: PRIMARY_NUM }}
+                    className="mb-3 flex items-center justify-between rounded-xl border px-4 py-3 text-[13px]"
+                    style={{ borderColor: PANEL_BORDER, background: 'rgba(255,255,255,0.7)', color: PRIMARY_NUM }}
                   >
                     <span>{item.name}</span>
                     <span style={{ color: SECONDARY_TEXT }}>
@@ -326,9 +328,9 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
             )}
           </div>
 
-          <div className="flex w-full flex-col gap-3">
+          <div className="flex w-full flex-col gap-4">
             <div
-              className="w-full rounded-2xl border p-4 text-center text-sm"
+              className="w-full rounded-2xl border p-4 text-center text-[13px] leading-relaxed"
               style={{ borderColor: PANEL_BORDER, background: 'rgba(255,255,255,0.6)' }}
             >
               {hoveredItem ? (
@@ -346,7 +348,7 @@ Be blunt. Avoid hedging language like "could" or "may help." Name one real, spec
 
             {(drafting || draftVisible || draftError) && (
               <div
-                className="w-full rounded-2xl p-4 text-sm leading-relaxed"
+                className="w-full rounded-2xl p-4 text-[13px] leading-relaxed"
                 style={{ border: `1px solid ${PANEL_BORDER}`, background: 'rgba(255,255,255,0.6)', color: PRIMARY_NUM }}
               >
                 {draftError && <span style={{ color: SECONDARY_TEXT }}>{draftError}</span>}

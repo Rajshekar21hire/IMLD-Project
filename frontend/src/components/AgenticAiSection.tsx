@@ -52,7 +52,7 @@ function useAgenticSlideDeck(
   return wipeKey;
 }
 
-const SLIDE_COUNT = 6;
+const SLIDE_COUNT = 7;
 
 export const AgenticAiSection: React.FC = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -65,12 +65,12 @@ export const AgenticAiSection: React.FC = () => {
   };
 
   return (
-    <div ref={sectionRef} className="relative w-full overflow-hidden bg-transparent">
+    <section ref={sectionRef} className="relative w-full overflow-hidden bg-transparent px-6 py-16 md:px-12">
       <AgenticHazeLayer tint={tint} haze={haze} prefersReducedMotion={prefersReducedMotion} />
       <PollutionScrollField severity={haze} />
       <AgenticFogWipe triggerKey={wipeKey} />
 
-      <div className="relative z-[1] mx-auto max-w-[510rem] px-6 py-4 text-center md:px-10">
+      <div className="relative z-[1] mx-auto w-full max-w-[84rem] px-0 py-4 text-center md:px-0">
         <p className="truncate text-sm" style={{ color: 'var(--ss-muted)' }}>
           <span className="font-bold uppercase tracking-[0.25em]" style={{ color: 'var(--ss-accent)' }}>
             Agentic AI
@@ -84,59 +84,72 @@ export const AgenticAiSection: React.FC = () => {
         </p>
       </div>
 
-      <div className="relative z-[1]">
-        <div ref={setSlideRef(0)} className="agentic-slide flex min-h-[42.5vh] flex-col justify-center">
+      <div className="relative z-[1] mx-auto flex w-full max-w-[84rem] flex-col gap-6">
+        <div ref={setSlideRef(0)} className="agentic-slide mb-2 flex min-h-[42.5vh] flex-col justify-center">
           <AgenticBeat
             eyebrow="In plain terms"
             title={<>How It Feels To <span style={{ color: '#FF6D00' }}>Live</span> Here</>}
             accent="#f87171"
           >
             <HowItFeelsToLiveHere />
-            <DiurnalRibbon />
           </AgenticBeat>
         </div>
 
-        <div ref={setSlideRef(1)} className="agentic-slide flex min-h-[42.5vh] flex-col justify-center">
-          <AgenticBeat eyebrow="The shape of a year" title="Twelve Months, in Particles" accent="#38bdf8">
+        <div ref={setSlideRef(1)} className="agentic-slide mb-2 flex min-h-[42.5vh] flex-col justify-center">
+          <DiurnalRibbon />
+        </div>
+
+        <div ref={setSlideRef(2)} className="agentic-slide flex min-h-[42.5vh] flex-col justify-center">
+          <AgenticBeat eyebrow="The shape of a year" title={<><span style={{ color: '#443199' }}>Twelve Months</span>, in Particles</>} accent="#38bdf8">
             <MonthlyParticleBars />
           </AgenticBeat>
         </div>
 
-        <div ref={setSlideRef(2)} className="agentic-slide flex min-h-[42.5vh] flex-col justify-center">
-          <AgenticBeat eyebrow="Play it forward" title="Simulate The Next Years" accent="#f59e0b">
+        <div ref={setSlideRef(3)} className="agentic-slide flex min-h-[42.5vh] flex-col justify-center">
+          <AgenticBeat eyebrow="Play it forward" title={<>Simulate The <span style={{ color: '#792CA2' }}>Next Years</span></>} accent="#f59e0b">
             <CitySimulation />
           </AgenticBeat>
         </div>
 
-        <div ref={setSlideRef(3)} className="agentic-slide flex min-h-[42.5vh] flex-col justify-center">
-          <AgenticBeat eyebrow="The reversal" title="One Recovery, at Every Scale" accent="#16a34a">
+        <div ref={setSlideRef(4)} className="agentic-slide flex min-h-[42.5vh] flex-col justify-center">
+          <AgenticBeat eyebrow="The reversal" title={<>One <span style={{ color: '#5B7E3C' }}>Recovery</span>, at Every Scale</>} accent="#16a34a">
+            <p className="mx-auto max-w-[84rem] text-center text-slate-700" style={{ fontSize: '1.125rem', lineHeight: 1.8, fontFamily: 'inherit' }}>
+              Every intervention counts! From clean cookstoves today to WHO 2030 targets, each recovery moves us one step closer to cleaner air.
+              <br />
+              Select an intervention to see how each action contributes to cleaner air.
+            </p>
+            <br />
             <RecoveryClock />
           </AgenticBeat>
         </div>
 
-        <div ref={setSlideRef(4)} className="agentic-slide flex min-h-[42.5vh] flex-col justify-center">
-          <AgenticBeat eyebrow="Reminders" title="Quiet Truths About the Air" accent="#38bdf8">
-            <p className="mx-auto -mt-3 mb-6 max-w-xl text-center text-sm" style={{ color: 'var(--ss-muted)' }}>
-              Six small, true things about air and the people who breathe it - tap a card to read one more thought.
+        <div ref={setSlideRef(5)} className="agentic-slide flex min-h-[42.5vh] flex-col justify-center">
+          <AgenticBeat eyebrow="Reminders" title={<>Quiet <span style={{ color: '#F08D39' }}>Truths</span> About the Air</>} accent="#38bdf8">
+            <p className="mx-auto -mt-3 mb-6 w-[calc(100%-104px)] max-w-none text-center whitespace-nowrap" style={{ color: 'var(--ss-text)', fontSize: '1.125rem', lineHeight: 1.8, fontFamily: 'inherit' }}>
+              <br />
+              Six small, true things about air and the people who breathe it.  Tap a card to read one more thought.
+              <br />
             </p>
             <SmallThingsThatHold />
           </AgenticBeat>
         </div>
 
-        <div ref={setSlideRef(5)} className="agentic-slide flex min-h-[42.5vh] flex-col justify-center">
+        <div ref={setSlideRef(6)} className="agentic-slide flex min-h-[42.5vh] flex-col justify-center">
           <AgenticBeat
             eyebrow="Finally"
-            title="Make It About You"
+            title={<>Make It <span style={{ color: '#088395' }}>About You</span></>}
             accent="#7ab8e6"
-            className="relative z-[1] mx-auto w-full max-w-[510rem] px-6 pb-16 pt-20 text-center md:px-10"
+            className="relative z-[1] mx-auto w-full px-0 pb-16 pt-20 text-center md:px-0"
           >
-            <p className="mx-auto -mt-3 mb-6 max-w-xl text-center text-sm" style={{ color: 'var(--ss-muted)' }}>
-              Pick your city, who you're asking for, and what's on your mind - we'll write something just for that.
+            <p className="mx-auto -mt-3 mb-6 max-w-[84rem] text-center whitespace-nowrap" style={{ color: 'var(--ss-text)', fontSize: '1.125rem', lineHeight: 1.8, fontFamily: 'inherit' }}>
+              <br />
+              Pick your city, who you're asking for, and what's on your mind. We'll write something just for that.
+              <br />
             </p>
             <PersonalizedClosing />
           </AgenticBeat>
         </div>
       </div>
-    </div>
+    </section>
   );
 };

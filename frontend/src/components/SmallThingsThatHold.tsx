@@ -137,7 +137,7 @@ export const SmallThingsThatHold: React.FC = () => {
                 }}
                 aria-pressed={isSelected}
               >
-                <span className="text-sm font-semibold leading-snug" style={{ fontFamily: SERIF, color: TEXT }}>
+                <span className="leading-snug" style={{ fontFamily: 'inherit', color: TEXT, fontSize: '1.125rem', lineHeight: 1.8 }}>
                   {facts[index] || FALLBACK_FACTS[index]}
                 </span>
                 <span className="mt-4 text-xs font-bold uppercase tracking-widest" style={{ color: theme.accent }}>
@@ -159,20 +159,20 @@ export const SmallThingsThatHold: React.FC = () => {
         </button>
       </div>
 
-      <div className="mt-2 text-center text-xs" style={{ color: MUTED }}>
+      <div className="mt-2 text-center" style={{ color: TEXT, fontSize: '1.125rem', lineHeight: 1.8, fontFamily: 'inherit' }}>
         Drag, scroll, or use the arrows - tap a card to sit with it a little longer.
       </div>
 
-      <div className="mx-auto mt-5 w-full max-w-xl text-left">
+      <div className="mx-auto mt-5 w-[calc(100%-104px)] max-w-none text-left">
         <div className="min-h-[120px] rounded-2xl px-5 py-4" style={{ backgroundColor: PANEL_BG, border: '1px solid var(--ss-border)' }}>
           {selected === null && (
-            <div className="text-base" style={{ color: MUTED }}>
+            <div className="text-base" style={{ color: TEXT, fontSize: '1.125rem', lineHeight: 1.8, fontFamily: 'inherit' }}>
               Click a memory above to sit with it a little longer.
             </div>
           )}
           {selected !== null && loadingIndex === selected && <AgenticTypingDots />}
           {selected !== null && loadingIndex !== selected && (
-            <div className="text-lg leading-relaxed" style={{ fontFamily: SERIF, color: TEXT }}>
+            <div className="leading-relaxed" style={{ fontFamily: 'inherit', color: TEXT, fontSize: '1.125rem', lineHeight: 1.8 }}>
               {details[selected]}
             </div>
           )}
