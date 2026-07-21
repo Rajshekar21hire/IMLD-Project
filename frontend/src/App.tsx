@@ -1,5 +1,5 @@
-import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
+import React, { Suspense, lazy, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { Wind } from 'lucide-react';
 import { FilterProvider } from './hooks/useFilters';
 import './styles/App.css';
@@ -16,10 +16,21 @@ const PageLoader = () => (
   </div>
 );
 
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+  }, [pathname]);
+
+  return null;
+};
+
 function App() {
   return (
     <FilterProvider>
       <Router>
+        <ScrollToTop />
         <div className="relative isolate min-h-screen overflow-x-clip bg-transparent">
           {/* Navigation */}
           <nav className="bg-white shadow">

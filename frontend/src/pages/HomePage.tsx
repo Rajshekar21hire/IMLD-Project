@@ -415,7 +415,7 @@ export const HomePage: React.FC = () => {
           <div className="mb-6">
             <div className="flex items-center justify-center gap-3 mb-1">
               <Globe className="w-7 h-7 text-blue-400" />
-              <h2 className="text-6xl font-extrabold shimmer-text">Worldwide Air Quality</h2>
+              <h2 className="text-6xl font-extrabold leading-[1.15] pb-1 shimmer-text">Worldwide Air Quality</h2>
             </div>
             <br />
             <p className="text-slate-600 text-2xl mt-2">

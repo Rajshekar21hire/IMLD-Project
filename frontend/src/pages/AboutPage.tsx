@@ -9,6 +9,28 @@ export const AboutPage: React.FC = () => {
   const PAGE_BG = '#F9FAFF';
   const TEXT = '#2B3557';
   const BODY_PARAGRAPH = 'text-slate-700 text-2xl leading-relaxed text-justify';
+  const [flippedMember, setFlippedMember] = React.useState<string | null>(null);
+
+  const teamMembers = [
+    {
+      id: 'manasa',
+      name: 'Manasa Suresh Bhat',
+      photo: '/Manasa.jpg',
+      detail: 'TU Dresden Student',
+    },
+    {
+      id: 'subodhi',
+      name: 'W. V. Subodhi Kalpani Wasalthilaka',
+      photo: '/Subodhi.jpg',
+      detail: 'TU Dresden Student',
+    },
+    {
+      id: 'rajshekar',
+      name: 'Rajshekar Hiremath',
+      photo: '/Rajshekar.jpg',
+      detail: 'TU Dresden Student',
+    },
+  ];
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: PAGE_BG }}>
@@ -28,7 +50,7 @@ export const AboutPage: React.FC = () => {
       </div>
 
       {/* Content */}
-      <div className="max-w-6xl mx-auto px-6 py-16 space-y-14">
+      <div className="max-w-7xl mx-auto px-6 py-16 space-y-14">
 
         {/* Introduction */}
         <section>
@@ -73,15 +95,50 @@ export const AboutPage: React.FC = () => {
             This project was collaboratively designed and developed by:
           </p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-            {['Manasa Suresh Bhat', 'W. V. Subodhi Kalpani Wasalthilaka', 'Rajshekar Hiremath'].map((name) => (
-              <div key={name} className="rounded-2xl border bg-white px-6 py-5 text-center shadow-sm" style={{ borderColor: ACCENT_BORDER }}>
-                <div className="w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3" style={{ backgroundColor: ACCENT }}>
-                  <span className="text-slate-900 text-3xl font-bold">{name[0]}</span>
-                </div>
-                <p className="font-semibold text-slate-900 text-xl">{name}</p>
-              </div>
-            ))}
+            {teamMembers.map((member) => {
+              const isFlipped = flippedMember === member.id;
+
+              return (
+                <button
+                  key={member.id}
+                  type="button"
+                  onClick={() => setFlippedMember(isFlipped ? null : member.id)}
+                  className="relative h-64 w-full rounded-2xl border text-left"
+                  style={{ borderColor: ACCENT_BORDER, perspective: '1200px' }}
+                  aria-label={`Flip card for ${member.name}`}
+                >
+                  <div
+                    className="relative h-full w-full rounded-2xl shadow-sm transition-transform duration-500"
+                    style={{ transformStyle: 'preserve-3d', transform: isFlipped ? 'rotateY(180deg)' : 'rotateY(0deg)' }}
+                  >
+                    <div
+                      className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-white px-6 py-5 text-center"
+                      style={{ backfaceVisibility: 'hidden' }}
+                    >
+                      <div className="mb-3 h-24 w-24 rounded-full border-4 p-1" style={{ borderColor: ACCENT_BORDER, backgroundColor: '#FFFFFF' }}>
+                        <img
+                          src={member.photo}
+                          alt={member.name}
+                          className="h-full w-full rounded-full object-cover"
+                        />
+                      </div>
+                      <p className="font-semibold text-slate-900 text-xl leading-tight">{member.name}</p>
+                    </div>
+
+                    <div
+                      className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl px-6 py-5 text-center"
+                      style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)', backgroundColor: ACCENT_SOFT }}
+                    >
+                      <p className="text-2xl font-bold" style={{ color: '#5761D8' }}>{member.name}</p>
+                      <p className="mt-2 text-lg font-semibold text-slate-700">{member.detail}</p>
+                      <p className="mt-2 text-base text-slate-600">IMLD Project Contributor</p>
+                    </div>
+                  </div>
+                </button>
+              );
+            })}
           </div>
+          <p className="mt-3 text-center text-base text-slate-500">Tap a card to flip and view details.</p>
           <p className={`${BODY_PARAGRAPH} mt-6`}>
             Together, we combined our expertise in data visualization, web development, and user experience design to create an engaging platform that communicates the global impact of air pollution through interactive storytelling.
           </p>
@@ -97,7 +154,7 @@ export const AboutPage: React.FC = () => {
           </p>
           <div className="flex flex-wrap gap-3">
             {['World Health Organization (WHO)', 'OpenAQ', 'World Air Quality Index (WAQI)', 'Other publicly available environmental monitoring datasets'].map((src) => (
-              <span key={src} className="rounded-full px-4 py-2 text-lg font-semibold text-slate-700" style={{ backgroundColor: ACCENT_MINT, border: `1px solid ${ACCENT_BORDER}` }}>
+              <span key={src} className="rounded-full px-4 py-2 text-lg font-semibold" style={{ backgroundColor: ACCENT_SOFT, border: `1px solid ${ACCENT_BORDER}`, color: '#5761D8' }}>
                 {src}
               </span>
             ))}
@@ -126,7 +183,7 @@ export const AboutPage: React.FC = () => {
         {/* Vision */}
         <section>
           <h2 className="text-5xl font-bold text-slate-900 mb-6">Our Vision</h2>
-          <blockquote className="rounded-2xl p-8 text-slate-800 text-3xl font-semibold italic leading-relaxed text-center shadow-lg" style={{ backgroundColor: ACCENT_MINT }}>
+          <blockquote className="rounded-2xl p-8 text-3xl font-semibold italic leading-relaxed text-center shadow-lg" style={{ backgroundColor: '#5761D8', color: '#FFFFFF' }}>
             "Every breath matters. By making air quality data more accessible and understandable, we hope to inspire greater awareness of one of the world's most pressing environmental challenges and encourage informed conversations about creating a healthier, more sustainable future."
           </blockquote>
         </section>

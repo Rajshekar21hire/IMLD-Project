@@ -313,8 +313,8 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
               <DataComponent
                 type="monotone"
                 dataKey={selectedPollution}
-                stroke="#2563eb"
-                fill="#2563eb"
+                stroke="#5761D8"
+                fill="#5761D8"
               />
             )}
           </ChartComponent>
@@ -326,19 +326,19 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
   return (
     <div className="min-h-screen bg-transparent">
       <AirParticlesBackground />
-      <div className="border-b border-[#0284C7] bg-[#0284C7] text-white">
+      <div className="border-b border-[#B5BAFF] shadow" style={{ background: 'linear-gradient(135deg, #9FA1FF 0%, #B5BAFF 45%, #AEE2FF 100%)', color: '#2B3557' }}>
         <div className="max-w-7xl mx-auto px-4 py-7">
           <div className="flex items-center gap-3">
-            <BarChart3 className="w-8 h-8 text-sky-300" />
+            <BarChart3 className="w-8 h-8" />
             <div>
               <h1 className="text-3xl font-bold">Analytics Dashboard</h1>
-              <p className="text-sky-100 mt-1">
+              <p className="mt-1 text-[#2B3557]">
                 Filter the CSV-backed air-quality dataset, generate an Ollama summary, and review the charts below.
               </p>
             </div>
           </div>
 
-          <div className="mt-4 inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-sm text-sky-100">
+          <div className="mt-4 inline-flex items-center gap-2 rounded-full border border-[#B5BAFF] bg-white/35 px-4 py-2 text-sm text-[#2B3557]">
             <Database className="w-4 h-4" />
             Source: waqi-airquality-master-dataset.csv loaded into the database on startup
           </div>
@@ -348,7 +348,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
       <div className="max-w-7xl mx-auto px-4 py-8">
         <div className="bg-white rounded-2xl shadow-md border border-slate-200 p-6 mb-6">
           <div className="flex items-center gap-2 mb-4">
-            <Filter className="w-5 h-5 text-blue-600" />
+            <Filter className="w-5 h-5" style={{ color: '#5761D8' }} />
             <h2 className="text-xl font-bold text-slate-900">Filters & Options</h2>
           </div>
 
@@ -358,7 +358,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
               <select
                 value={selectedCountry}
                 onChange={(e) => setSelectedCountry(e.target.value)}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5761D8]"
               >
                 <option value="">All Countries</option>
                 {countries.map((country) => (
@@ -375,7 +375,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
                 value={selectedCity}
                 onChange={(e) => setSelectedCity(e.target.value)}
                 disabled={!selectedCountry}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5761D8] disabled:opacity-50"
               >
                 <option value="">All Cities</option>
                 {filteredCities.map((city) => (
@@ -394,7 +394,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
                   setSelectedPollution(e.target.value);
                   setSelectedPollutants([e.target.value]);
                 }}
-                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5761D8]"
               >
                 {pollutionTypes.map((type) => (
                   <option key={type.value} value={type.value}>
@@ -410,7 +410,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
                 <select
                   value={timeUnit}
                   onChange={(e) => setTimeUnit(e.target.value as TimeUnit)}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5761D8]"
                 >
                   <option value="days">Days</option>
                   <option value="months">Months</option>
@@ -420,7 +420,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
                 <select
                   value={timeValue}
                   onChange={(e) => setTimeValue(Number(e.target.value))}
-                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5761D8]"
                 >
                   {timePeriodOptions[timeUnit].map((value) => (
                     <option key={value} value={value}>
@@ -442,7 +442,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
                     onClick={() => setChartType(type.value as any)}
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       chartType === type.value
-                        ? 'bg-[#0284C7] text-white'
+                        ? 'bg-[#5761D8] text-white'
                         : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
                     }`}
                   >
@@ -466,7 +466,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
           </div>
 
           {compareMode && (
-            <div className="mb-4 p-4 bg-blue-50 rounded-xl border border-blue-200">
+            <div className="mb-4 p-4 rounded-xl border" style={{ backgroundColor: '#EEF5FF', borderColor: '#B5BAFF' }}>
               <p className="text-sm font-medium text-slate-700 mb-3">Select pollutants to compare:</p>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                 {pollutionTypes.map((type) => (
@@ -475,7 +475,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
                     onClick={() => togglePollutant(type.value)}
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       selectedPollutants.includes(type.value)
-                        ? 'bg-[#0284C7] text-white'
+                        ? 'bg-[#5761D8] text-white'
                         : 'bg-white text-slate-700 border border-slate-300 hover:bg-slate-50'
                     }`}
                   >
@@ -491,7 +491,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
               onClick={handleLoadData}
               disabled={loading || summaryLoading}
               className="w-full text-white py-3 rounded-lg font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-              style={{ backgroundColor: '#0284C7' }}
+              style={{ backgroundColor: '#5761D8' }}
             >
               {loading || summaryLoading ? (
                 <>
@@ -523,13 +523,13 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
         )}
 
         {analyticsSummary && (
-          <div className="mb-6 rounded-2xl border border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-blue-950 p-6 text-white shadow-xl">
+          <div className="mb-6 rounded-2xl border border-[#B5BAFF] p-6 shadow-xl" style={{ background: 'linear-gradient(135deg, #9FA1FF 0%, #B5BAFF 45%, #AEE2FF 100%)', color: '#2B3557' }}>
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex-1">
                 <div className="flex items-center gap-3 mb-3">
-                  <Sparkles className="w-6 h-6 text-sky-300" />
+                  <Sparkles className="w-6 h-6" style={{ color: '#5761D8' }} />
                   <div>
-                    <p className="text-xs uppercase tracking-[0.2em] text-sky-200">
+                    <p className="text-xs uppercase tracking-[0.2em]" style={{ color: '#2B3557' }}>
                       Ollama summary for selected data
                     </p>
                     <h3 className="text-2xl font-bold">
@@ -537,29 +537,29 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
                     </h3>
                   </div>
                 </div>
-                <p className="text-sm text-sky-200 mb-3">
+                <p className="text-sm mb-3" style={{ color: '#2B3557' }}>
                   Time window: {getSelectedPeriodLabel()}
                 </p>
 
-                <p className="text-base leading-7 text-slate-100">
+                <p className="text-base leading-7" style={{ color: '#2B3557' }}>
                   {analyticsSummary.summary.summary}
                 </p>
               </div>
 
-              <div className="lg:w-72 rounded-2xl bg-white/10 p-4 backdrop-blur">
-                <p className="text-sm font-semibold text-sky-100 mb-2">Model details</p>
-                <div className="space-y-2 text-sm text-slate-100">
+              <div className="lg:w-72 rounded-2xl border border-[#B5BAFF] bg-white/45 p-4 backdrop-blur">
+                <p className="mb-2 text-sm font-semibold" style={{ color: '#2B3557' }}>Model details</p>
+                <div className="space-y-2 text-sm" style={{ color: '#2B3557' }}>
                   <p>
-                    <span className="text-sky-200">Provider:</span> {analyticsSummary.provider}
+                    <span style={{ color: '#5761D8' }}>Provider:</span> {analyticsSummary.provider}
                   </p>
                   <p>
-                    <span className="text-sky-200">Model:</span> {analyticsSummary.model}
+                    <span style={{ color: '#5761D8' }}>Model:</span> {analyticsSummary.model}
                   </p>
                   <p>
-                    <span className="text-sky-200">Records:</span> {analyticsSummary.record_count}
+                    <span style={{ color: '#5761D8' }}>Records:</span> {analyticsSummary.record_count}
                   </p>
                   <p>
-                    <span className="text-sky-200">Assessment:</span> {analyticsSummary.summary.overall_assessment}
+                    <span style={{ color: '#5761D8' }}>Assessment:</span> {analyticsSummary.summary.overall_assessment}
                   </p>
                 </div>
               </div>
@@ -567,8 +567,8 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
               <div className="rounded-xl bg-white/10 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-sky-200 mb-2">Highlights</p>
-                <ul className="space-y-2 text-sm text-slate-100">
+                <p className="mb-2 text-xs uppercase tracking-[0.2em]" style={{ color: '#5761D8' }}>Highlights</p>
+                <ul className="space-y-2 text-sm" style={{ color: '#2B3557' }}>
                   {analyticsSummary.summary.highlights.map((item) => (
                     <li key={item} className="leading-6">
                       {item}
@@ -578,8 +578,8 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
               </div>
 
               <div className="rounded-xl bg-white/10 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-sky-200 mb-2">Risks</p>
-                <ul className="space-y-2 text-sm text-slate-100">
+                <p className="mb-2 text-xs uppercase tracking-[0.2em]" style={{ color: '#5761D8' }}>Risks</p>
+                <ul className="space-y-2 text-sm" style={{ color: '#2B3557' }}>
                   {analyticsSummary.summary.risks.map((item) => (
                     <li key={item} className="leading-6">
                       {item}
@@ -589,8 +589,8 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
               </div>
 
               <div className="rounded-xl bg-white/10 p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-sky-200 mb-2">Recommendations</p>
-                <ul className="space-y-2 text-sm text-slate-100">
+                <p className="mb-2 text-xs uppercase tracking-[0.2em]" style={{ color: '#5761D8' }}>Recommendations</p>
+                <ul className="space-y-2 text-sm" style={{ color: '#2B3557' }}>
                   {analyticsSummary.summary.recommendations.map((item) => (
                     <li key={item} className="leading-6">
                       {item}
@@ -605,7 +605,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
         {summaryLoading && !analyticsSummary && (
           <div className="mb-6 rounded-2xl border border-slate-200 bg-white p-6 shadow-md">
             <div className="flex items-center gap-3 text-slate-700">
-              <RefreshCw className="w-5 h-5 animate-spin text-blue-600" />
+              <RefreshCw className="w-5 h-5 animate-spin" style={{ color: '#5761D8' }} />
               <p>Generating the Ollama summary for the selected CSV data...</p>
             </div>
           </div>
@@ -619,7 +619,7 @@ export const AnalyticsPage: React.FC<AnalyticsPageProps> = () => {
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                 <div className="bg-white rounded-2xl shadow-md border border-slate-200 p-6">
                   <p className="text-slate-600 text-sm font-medium">Average</p>
-                  <p className="text-3xl font-bold text-blue-600">{statistics.avg.toFixed(2)}</p>
+                  <p className="text-3xl font-bold" style={{ color: '#5761D8' }}>{statistics.avg.toFixed(2)}</p>
                 </div>
                 <div className="bg-white rounded-2xl shadow-md border border-slate-200 p-6">
                   <p className="text-slate-600 text-sm font-medium">Minimum</p>

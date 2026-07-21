@@ -217,19 +217,19 @@ export const RealtimePollutionPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-transparent">
       <AirParticlesBackground />
-      <div className="bg-[#0284C7] text-white shadow">
+      <div className="border-b border-[#B5BAFF] shadow" style={{ background: 'linear-gradient(135deg, #9FA1FF 0%, #B5BAFF 45%, #AEE2FF 100%)', color: '#2B3557' }}>
         <div className="max-w-7xl mx-auto px-4 py-8">
           <div className="flex items-center gap-3 mb-2">
             <Activity className="w-8 h-8" />
             <h1 className="text-3xl font-bold">Real-Time Pollution Dashboard</h1>
           </div>
-          <p className="text-blue-100">Live air quality readings for selected locations</p>
+          <p className="text-[#2B3557]">Live air quality readings for selected locations</p>
           {lastUpdate && (
-            <p className="text-sm text-blue-200 mt-2">
+            <p className="text-sm text-[#2B3557] mt-2">
               Last updated: {lastUpdate.toLocaleString()}
             </p>
           )}
-          <p className="text-sm text-blue-200 mt-1">Source: {sourceLabel}</p>
+          <p className="text-sm text-[#2B3557] mt-1">Source: {sourceLabel}</p>
         </div>
       </div>
 
@@ -243,7 +243,7 @@ export const RealtimePollutionPage: React.FC = () => {
               <select
                 value={selectedCountry}
                 onChange={(e) => setSelectedCountry(e.target.value)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5761D8]"
               >
                 <option value="">All Countries</option>
                 {countries.map((country) => (
@@ -261,7 +261,7 @@ export const RealtimePollutionPage: React.FC = () => {
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value as any)}
-                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#5761D8]"
               >
                 <option value="aqi">AQI (Highest)</option>
                 <option value="pm25">PM2.5 (Highest)</option>
@@ -283,7 +283,7 @@ export const RealtimePollutionPage: React.FC = () => {
                     onClick={() => toggleCity(city)}
                     className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       selectedCities.includes(city)
-                        ? 'bg-[#0284C7] text-white'
+                        ? 'bg-[#5761D8] text-white'
                         : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                     }`}
                   >
@@ -298,7 +298,7 @@ export const RealtimePollutionPage: React.FC = () => {
             <button
               onClick={loadReadings}
               disabled={loading}
-              className="flex items-center gap-2 bg-[#0284C7] text-white px-6 py-2 rounded-lg font-semibold hover:brightness-110 transition-colors disabled:opacity-50"
+              className="flex items-center gap-2 bg-[#5761D8] text-white px-6 py-2 rounded-lg font-semibold hover:brightness-110 transition-colors disabled:opacity-50"
             >
               <RefreshCw size={18} />
               {loading ? 'Loading...' : 'Load Data'}
@@ -335,11 +335,11 @@ export const RealtimePollutionPage: React.FC = () => {
                   key={`${reading.city}-${reading.country}-${idx}`}
                   className={`rounded-lg shadow-md border-2 overflow-hidden transition-transform hover:scale-105 ${health.bgColor}`}
                 >
-                  <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-4">
+                  <div className="p-4" style={{ background: 'linear-gradient(135deg, #9FA1FF 0%, #B5BAFF 45%, #AEE2FF 100%)', color: '#2B3557' }}>
                     <div className="flex items-start justify-between mb-2">
                       <div>
                         <h3 className="text-lg font-bold">{reading.city}</h3>
-                        <p className="text-sm text-blue-100">{reading.country}</p>
+                        <p className="text-sm" style={{ color: '#2B3557' }}>{reading.country}</p>
                       </div>
                       <span className="text-sm font-bold bg-white/20 px-2 py-1 rounded">
                         {health.icon}
