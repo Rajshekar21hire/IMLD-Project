@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Globe, Users, Wind, HeartPulse, Megaphone, Quote } from 'lucide-react';
+import { Globe, Users, Wind, HeartPulse, Megaphone, Quote, MessageSquare } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
@@ -20,6 +20,7 @@ import {
 } from 'recharts';
 import { storyAPI } from '../services/api';
 import { storyModes } from '../data/storyModes';
+import { FEEDBACK_LINKS } from '../data/feedbackLinks';
 import { storyThemes } from '../data/storyThemeData';
 import { StoryMode, StoryTheme, StorySection, StoryCategoryBlock } from '../data/storyTypes';
 import { DotPlot } from '../components/BubbleMatrix';
@@ -1722,6 +1723,17 @@ export const DashboardPage: React.FC = () => {
                             </button>
                           );
                         })}
+                      </div>
+                      <div className="mt-4 flex justify-center">
+                        <a
+                          href={FEEDBACK_LINKS[selectedMode]}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-white px-5 py-2.5 text-sm font-semibold text-sky-700 shadow-sm transition-colors hover:bg-sky-50"
+                        >
+                          <MessageSquare className="h-4 w-4" />
+                          Share feedback on {storyModes.find((mode) => mode.id === selectedMode)?.label}
+                        </a>
                       </div>
                     </div>
                   </div>

@@ -2,6 +2,7 @@ import React, { Suspense, lazy, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Link, useLocation } from 'react-router-dom';
 import { Wind } from 'lucide-react';
 import { FilterProvider } from './hooks/useFilters';
+import { FEEDBACK_LINKS } from './data/feedbackLinks';
 import './styles/App.css';
 
 const HomePage = lazy(() => import('./pages/HomePage').then(m => ({ default: m.HomePage })));
@@ -102,7 +103,16 @@ function App() {
                   <h4 className="text-lg font-semibold mb-4">Information</h4>
                   <ul className="space-y-2 text-gray-400">
                     <li><Link to="/about" className="hover:text-white transition-colors">About</Link></li>
-                    <li><span className="hover:text-white transition-colors cursor-default">Feedback</span></li>
+                    <li>
+                      <a
+                        href={FEEDBACK_LINKS.overall}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hover:text-white transition-colors"
+                      >
+                        Feedback
+                      </a>
+                    </li>
                   </ul>
                 </div>
               </div>
