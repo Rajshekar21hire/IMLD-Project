@@ -3,11 +3,12 @@ import { Link } from 'react-router-dom';
 import {
   Wind, Map as MapIcon, Activity, BookOpen, Zap,
   Globe, ChevronRight, Leaf, Database,
-  ZoomIn, ZoomOut, RotateCcw, AlertCircle,
+  ZoomIn, ZoomOut, RotateCcw, AlertCircle, X, MessageSquare,
 } from 'lucide-react';
 import { ComposableMap, Geographies, Geography, Marker, ZoomableGroup } from 'react-simple-maps';
 import apiClient from '../services/api';
 import CloudBackground from '../components/CloudBackground';
+import { FEEDBACK_LINKS } from '../data/feedbackLinks';
 
 const AQI_BANDS = [
   { color: '#22c55e', label: 'Good', range: '0–50', desc: 'Air quality is satisfactory' },
@@ -217,6 +218,22 @@ export const HomePage: React.FC = () => {
     if (statsRef.current) observer.observe(statsRef.current);
     return () => observer.disconnect();
   }, []);
+
+  // ── End-of-scroll feedback popup ────────────────────────────────────────
+  const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
+  const [feedbackDismissed, setFeedbackDismissed] = useState(false);
+  const pageEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !feedbackDismissed) setShowFeedbackPopup(true);
+      },
+      { threshold: 0.4 }
+    );
+    if (pageEndRef.current) observer.observe(pageEndRef.current);
+    return () => observer.disconnect();
+  }, [feedbackDismissed]);
 
   // ── Map state ────────────────────────────────────────────────────────────
   const [countryMap, setCountryMap] = useState<Map<string, CountryAQI>>(new Map());
@@ -710,6 +727,40 @@ export const HomePage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      <div ref={pageEndRef} />
+
+      {showFeedbackPopup && (
+        <div className="fixed bottom-6 right-6 z-50 w-[calc(100%-3rem)] max-w-sm animate-[fade-up_0.4s_ease-out_both] rounded-2xl border border-blue-100 bg-white p-5 shadow-2xl shadow-blue-900/20">
+          <button
+            type="button"
+            onClick={() => { setShowFeedbackPopup(false); setFeedbackDismissed(true); }}
+            aria-label="Dismiss feedback prompt"
+            className="absolute right-3 top-3 text-slate-400 transition-colors hover:text-slate-600"
+          >
+            <X className="h-4 w-4" />
+          </button>
+          <div className="flex items-start gap-3 pr-4">
+            <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-blue-100">
+              <MessageSquare className="h-5 w-5 text-blue-600" />
+            </div>
+            <div>
+              <p className="font-semibold text-slate-900">Enjoying AirStory?</p>
+              <p className="mt-1 text-sm text-slate-600">We'd love your valuable feedback here to help us improve.</p>
+              <a
+                href={FEEDBACK_LINKS.overall}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={() => setFeedbackDismissed(true)}
+                className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+              >
+                Give Feedback
+                <ChevronRight className="h-4 w-4" />
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
     </div>
   );
